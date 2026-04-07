@@ -1,0 +1,188 @@
+"use client";
+
+import React from "react";
+import type { ProductAccessValue } from "./ProductAccessProvider";
+
+export type PlanTierButtonVariant =
+  | "sidebar-expanded"
+  | "sidebar-collapsed";
+
+function planDisplay(access: ProductAccessValue): {
+  title: string;
+  subtitle?: string;
+} {
+  if (access.loading) {
+    return { title: "Plan", subtitle: "Loading…" };
+  }
+
+  if (access.labsAccess) {
+    const p = access.plan.toLowerCase();
+    if (p === "proplus") return { title: "Premium" };
+    return { title: "PRO" };
+  }
+
+  const p = access.plan.toLowerCase();
+  const active = access.status === "active";
+
+  if (active && p === "basic") {
+    return { title: "Basic", subtitle: "Upgrade to PRO for Labs" };
+  }
+
+  if ((p === "pro" || p === "proplus") && !access.labsAccess) {
+    return {
+      title: p === "proplus" ? "Premium" : "PRO",
+      subtitle: "Renew to access Labs",
+    };
+  }
+
+  return { title: "Free", subtitle: "Upgrade to PRO for Labs" };
+}
+
+/** Abbreviated tier label (sidebar collapsed + mobile bottom tab) */
+function collapsedAbbrev(title: string): string {
+  const t = title.toUpperCase();
+  if (t === "PREMIUM") return "MAX";
+  if (t === "PRO") return "PRO";
+  if (t === "BASIC") return "BAS";
+  if (t === "PLAN") return "…";
+  return "FREE";
+}
+
+/** Single small tab in mobile BottomNav row — same visual weight as Oracle / Labs / etc. */
+export function BottomNavPlanTab({
+  access,
+  onOpenPlans,
+}: {
+  access: ProductAccessValue;
+  onOpenPlans: () => void;
+}) {
+  const { title, subtitle } = planDisplay(access);
+  const abbrev = collapsedAbbrev(title);
+  const tip = subtitle ? `${title} — ${subtitle}` : title;
+  const icon =
+    title === "Premium" ? "💎" : title === "PRO" ? "⭐" : "◆";
+
+  const paidActive = access.labsAccess;
+  const freeOrBasicUpgrade =
+    !paidActive && (title === "Free" || title === "Basic");
+  const renewTier =
+    !paidActive && (title === "PRO" || title === "Premium");
+
+  const shellClass = paidActive
+    ? "border-white/[0.06] bg-white/[0.02]"
+    : freeOrBasicUpgrade
+      ? "border-gold/35 bg-gradient-to-b from-[#C8922A]/15 to-[#0a1220]/90 shadow-[0_0_12px_rgba(200,146,42,0.12)]"
+      : renewTier
+        ? "border-amber-500/25 bg-amber-500/[0.06]"
+        : "border-white/[0.05] bg-black/20";
+
+  const mainTone = paidActive
+    ? title === "Premium"
+      ? "text-[#C4B5FD]/90"
+      : "text-gold-h/90"
+    : freeOrBasicUpgrade
+      ? "text-gold-h"
+      : renewTier
+        ? "text-amber-200/90"
+        : "text-cream/40";
+
+  const promoLine = freeOrBasicUpgrade
+    ? "upgrade to pro"
+    : renewTier
+      ? "renew labs"
+      : null;
+
+  return (
+    <button
+      type="button"
+      onClick={onOpenPlans}
+      title={tip}
+      aria-label={`Plan: ${tip}. Open subscription and plans.`}
+      className="outline-none flex-1 min-w-0 flex justify-center"
+    >
+      <div
+        className={`flex flex-col items-center justify-center gap-0.5 py-1 px-0.5 rounded-lg border transition-colors w-full max-w-[4.75rem] ${shellClass}`}
+      >
+        <span className={`text-lg leading-none ${mainTone}`}>{icon}</span>
+        <span
+          className={`font-ui text-[8px] tracking-[0.06em] uppercase text-center leading-tight ${mainTone}`}
+        >
+          {abbrev}
+        </span>
+        {promoLine ? (
+          <span className="font-ui text-[6.5px] tracking-[0.04em] lowercase text-teal-m/85 text-center leading-none px-0.5">
+            {promoLine}
+          </span>
+        ) : null}
+      </div>
+    </button>
+  );
+}
+
+interface PlanTierButtonProps {
+  access: ProductAccessValue;
+  variant: PlanTierButtonVariant;
+  onOpenPlans: () => void;
+}
+
+export default function PlanTierButton({
+  access,
+  variant,
+  onOpenPlans,
+}: PlanTierButtonProps) {
+  const { title, subtitle } = planDisplay(access);
+
+  const isPaidActive = access.labsAccess;
+  const accentClass = isPaidActive
+    ? title === "Premium"
+      ? "border-[#7C3AED]/50 hover:border-[#A78BFA]/55 shadow-[0_0_14px_rgba(124,58,237,0.12)]"
+      : "border-[#C8922A]/40 hover:border-[#7DD3FC]/40 shadow-[0_0_18px_rgba(43,108,176,0.14)]"
+    : "border-[#C8922A]/35 hover:border-[#C8922A]/55";
+
+  if (variant === "sidebar-collapsed") {
+    const abbr = collapsedAbbrev(title);
+    return (
+      <div className="px-2 pb-2">
+        <button
+          type="button"
+          onClick={onOpenPlans}
+          title={`${title}${subtitle ? ` — ${subtitle}` : ""}`}
+          aria-label={`${title}. ${subtitle ?? "Open plans and subscription"}`}
+          className={`w-full flex items-center justify-center py-2.5 rounded-xl border bg-gradient-to-br from-[#C8922A]/[0.12] via-[#0a1220] to-[#2563eb]/[0.12] transition-all text-[9px] font-ui font-semibold tracking-[0.12em] uppercase text-cream/85 ${accentClass}`}
+        >
+          {abbr}
+        </button>
+      </div>
+    );
+  }
+
+  if (variant === "sidebar-expanded") {
+    return (
+      <div className="px-3 pb-3">
+        <button
+          type="button"
+          onClick={onOpenPlans}
+          className={`w-full text-left px-3 py-2.5 rounded-xl border bg-gradient-to-br from-[#C8922A]/[0.14] via-[#0a1220] to-[#2563eb]/[0.16] transition-all hover:border-[#7DD3FC]/35 ${accentClass}`}
+        >
+          <div className="font-ui text-[10px] tracking-[0.2em] uppercase text-cream/55">
+            Your plan
+          </div>
+          <div
+            className={`font-ui text-sm font-semibold tracking-wide mt-0.5 ${
+              title === "Premium" ? "text-[#C4B5FD]" : "text-gold-h"
+            }`}
+          >
+            {title}
+          </div>
+          {subtitle ? (
+            <p className="font-body text-[11px] text-cream/45 leading-snug mt-1">
+              {subtitle}
+            </p>
+          ) : null}
+        </button>
+      </div>
+    );
+  }
+
+  return null;
+}
