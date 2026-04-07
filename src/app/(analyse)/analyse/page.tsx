@@ -25,7 +25,12 @@ import { useMediaQuery } from "@/hooks/analyse/useMediaQuery";
 import { useToast } from "@/hooks/useToast";
 import { saveEntry, patchEntry } from "@/lib/analyse/history";
 import type { HistoryEntry } from "@/lib/analyse/history";
-import type { AnalysisMode, HeatmapState, DicomMetadataType } from "@/lib/analyse/types";
+import type {
+  AnalysisMode,
+  HeatmapState,
+  DicomMetadataType,
+  Finding,
+} from "@/lib/analyse/types";
 import {
   buildClinicalNotesForApi,
   buildPatientContextJsonForApi,
@@ -216,7 +221,7 @@ export default function ScannerPage() {
       type Sev = "critical" | "warning" | "info" | "clear";
       const order: Sev[] = ["critical", "warning", "info", "clear"];
       const topSeverity: Sev = result.findings.reduce<Sev>(
-        (worst, f) =>
+        (worst: Sev, f: Finding) =>
           order.indexOf(f.severity as Sev) < order.indexOf(worst) ? (f.severity as Sev) : worst,
         "clear"
       );
