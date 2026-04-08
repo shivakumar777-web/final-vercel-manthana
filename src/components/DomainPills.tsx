@@ -91,7 +91,7 @@ const symbolStyleFor = (id: string) => {
 interface DomainPillsProps {
   activeDomain: string;
   onSelect: (domain: string) => void;
-  /** Hide M5 when Oracle is limited to single-domain (free tier). */
+  /** Hide M5 pill (e.g. product experiments); normally false — M5 is on for all tiers. */
   hideM5?: boolean;
 }
 

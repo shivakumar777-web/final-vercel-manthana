@@ -17,6 +17,21 @@ function planDisplay(access: ProductAccessValue): {
 
   if (access.labsAccess) {
     const p = access.plan.toLowerCase();
+    const trialLeft = access.labsTrialRemaining;
+    if (
+      trialLeft !== null &&
+      trialLeft > 0 &&
+      p !== "pro" &&
+      p !== "proplus"
+    ) {
+      return {
+        title: "Free",
+        subtitle:
+          trialLeft === 1
+            ? "1 free Labs scan left"
+            : `${trialLeft} free Labs scans left`,
+      };
+    }
     if (p === "proplus") return { title: "Premium" };
     return { title: "PRO" };
   }
@@ -35,7 +50,17 @@ function planDisplay(access: ProductAccessValue): {
     };
   }
 
-  return { title: "Free", subtitle: "Upgrade to PRO for Labs" };
+  if (access.signedIn && access.labsTrialRemaining === 0) {
+    return {
+      title: "Free",
+      subtitle: "Labs trial used — upgrade to PRO",
+    };
+  }
+
+  return {
+    title: "Free",
+    subtitle: "Sign in for 3 free Labs scans, or upgrade to PRO",
+  };
 }
 
 /** Abbreviated tier label (sidebar collapsed + mobile bottom tab) */
@@ -62,13 +87,14 @@ export function BottomNavPlanTab({
   const icon =
     title === "Premium" ? "💎" : title === "PRO" ? "⭐" : "◆";
 
-  const paidActive = access.labsAccess;
+  const subscriptionLabsActive =
+    access.labsAccess && access.labsTrialRemaining === null;
   const freeOrBasicUpgrade =
-    !paidActive && (title === "Free" || title === "Basic");
+    !subscriptionLabsActive && (title === "Free" || title === "Basic");
   const renewTier =
-    !paidActive && (title === "PRO" || title === "Premium");
+    !subscriptionLabsActive && (title === "PRO" || title === "Premium");
 
-  const shellClass = paidActive
+  const shellClass = subscriptionLabsActive
     ? "border-white/[0.06] bg-white/[0.02]"
     : freeOrBasicUpgrade
       ? "border-gold/35 bg-gradient-to-b from-[#C8922A]/15 to-[#0a1220]/90 shadow-[0_0_12px_rgba(200,146,42,0.12)]"
@@ -76,7 +102,7 @@ export function BottomNavPlanTab({
         ? "border-amber-500/25 bg-amber-500/[0.06]"
         : "border-white/[0.05] bg-black/20";
 
-  const mainTone = paidActive
+  const mainTone = subscriptionLabsActive
     ? title === "Premium"
       ? "text-[#C4B5FD]/90"
       : "text-gold-h/90"
@@ -132,7 +158,8 @@ export default function PlanTierButton({
 }: PlanTierButtonProps) {
   const { title, subtitle } = planDisplay(access);
 
-  const isPaidActive = access.labsAccess;
+  const isPaidActive =
+    access.labsAccess && access.labsTrialRemaining === null;
   const accentClass = isPaidActive
     ? title === "Premium"
       ? "border-[#7C3AED]/50 hover:border-[#A78BFA]/55 shadow-[0_0_14px_rgba(124,58,237,0.12)]"

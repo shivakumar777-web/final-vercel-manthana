@@ -199,14 +199,24 @@ export default function Sidebar({
               className="w-full text-left"
               onClick={() => {
                 addToast(
-                  "Manthana Labs requires an active PRO plan. Open Plans to upgrade.",
+                  access.signedIn
+                    ? "You've used all 3 free Manthana Labs trial scans. Open Plans to upgrade to PRO for full Labs."
+                    : "Sign in for 3 free Manthana Labs trial scans, or upgrade to PRO for full access.",
                   "info",
-                  6000
+                  7000
                 );
                 onOpenSubscriptionSettings();
               }}
-              title="Labs — PRO required"
-              aria-label="Labs — upgrade to PRO"
+              title={
+                access.signedIn
+                  ? "Labs — trial used or PRO required"
+                  : "Labs — sign in or upgrade"
+              }
+              aria-label={
+                access.signedIn
+                  ? "Labs — upgrade to PRO after free trial"
+                  : "Labs — sign in for trial or upgrade to PRO"
+              }
             >
               <div className="relative">
                 {content}

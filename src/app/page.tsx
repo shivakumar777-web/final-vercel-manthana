@@ -86,7 +86,7 @@ export default function OraclePage() {
       if (res.status === 429) {
         const j = (await res.json().catch(() => ({}))) as { cap?: number };
         addToast(
-          `Daily Oracle limit reached (${j.cap ?? access.oracleDailyCap} messages). Upgrade to PRO for full Oracle, M5, and Labs.`,
+          `Daily Oracle limit reached (${j.cap ?? access.oracleDailyCap} messages). Upgrade to PRO for clinical depth, Manthana Web, and full Labs.`,
           "error",
           9000
         );
@@ -109,9 +109,9 @@ export default function OraclePage() {
   useEffect(() => {
     if (searchParams.get("labsLocked") !== "1") return;
     addToast(
-      "Manthana Labs requires an active PRO or Enterprise subscription.",
+      "Manthana Labs: your 3 free trial scans are used up, or you need an active PRO plan. Open Plans to upgrade.",
       "warning",
-      9000
+      10000
     );
     router.replace("/", { scroll: false });
   }, [searchParams, router, addToast]);
@@ -119,10 +119,8 @@ export default function OraclePage() {
   useEffect(() => {
     if (access.loading || access.oracleTier === "full") return;
     setIntensity((i) => (i === "clinical" || i === "deep" ? "quick" : i));
-    setMode((m) =>
-      m === "m5" || m === "search" || m === "deep-research" ? "auto" : m
-    );
-    setActiveDomain((d) => (d === "m5" ? "allopathy" : d));
+    // Free tier: keep M5; still reset Web / Deep Research-only modes.
+    setMode((m) => (m === "search" || m === "deep-research" ? "auto" : m));
   }, [access.loading, access.oracleTier]);
 
   // Manthana Labs → Oracle: load one-shot report context from sessionStorage (?labsHandoff=1)
@@ -147,8 +145,6 @@ export default function OraclePage() {
         ? crypto.randomUUID()
         : `labs-${Date.now()}`;
 
-    const tierLimited = access.oracleTier === "limited";
-
     setMessages([
       {
         id: msgId,
@@ -158,32 +154,19 @@ export default function OraclePage() {
     ]);
     setQuery(payload.suggestedFollowUp);
     setSearchResults(null);
-    if (tierLimited) {
-      setMode("auto");
-      setActiveDomain("allopathy");
-      setIntensity("quick");
-      setPersona("patient");
-      addToast(
-        "Labs report loaded. Upgrade to PRO for M5, clinical Oracle, and full Labs.",
-        "success",
-        9000
-      );
-    } else {
-      setMode("m5");
-      setActiveDomain("m5");
-      setIntensity("clinical");
-      setPersona("clinician");
-      addToast(
-        "Labs report loaded. Choose M5 — All 5 or a single domain, then press send.",
-        "success",
-        9000
-      );
-    }
+    setMode("m5");
+    setActiveDomain("m5");
+    setIntensity("clinical");
+    setPersona("clinician");
+    addToast(
+      "Labs report loaded. M5 — All 5 is selected; adjust domain or intensity, then press send.",
+      "success",
+      9000
+    );
     router.replace(cleanPath, { scroll: false });
   }, [
     labsHandoffFlag,
     access.loading,
-    access.oracleTier,
     searchParams,
     router,
     addToast,
@@ -319,10 +302,6 @@ export default function OraclePage() {
 
   const coreSubmit = async (trimmed: string) => {
     if (access.loading) return;
-    if (oracleLimited && mode === "m5") {
-      addToast("M5 requires an active PRO or Enterprise plan.", "warning");
-      return;
-    }
     if (oracleLimited && mode === "search") {
       addToast("Manthana Web search requires PRO.", "warning");
       return;
@@ -682,10 +661,6 @@ export default function OraclePage() {
       addToast("Manthana Web search requires PRO.", "info");
       return;
     }
-    if (newMode === "m5" && oracleLimited) {
-      addToast("M5 requires PRO.", "info");
-      return;
-    }
     if (newMode === "m5") {
       setMode("m5");
       updateURL("m5", activeDomain);
@@ -699,10 +674,6 @@ export default function OraclePage() {
   };
 
   const handleDomainChange = (newDomain: string) => {
-    if (newDomain === "m5" && oracleLimited) {
-      addToast("M5 requires PRO.", "info");
-      return;
-    }
     setActiveDomain(newDomain);
     setSearchResults(null); // clear search results when switching domain
     setSearchPage(1);
@@ -731,11 +702,7 @@ export default function OraclePage() {
     <div className="flex flex-col min-h-screen">
       {/* Domain Pills only (Oracle domains) */}
       <div className="px-4 py-3">
-        <DomainPills
-          activeDomain={activeDomain}
-          onSelect={handleDomainChange}
-          hideM5={oracleLimited}
-        />
+        <DomainPills activeDomain={activeDomain} onSelect={handleDomainChange} />
       </div>
 
       {/* ── EMPTY STATE (hero) ── */}

@@ -4,6 +4,7 @@ import {
   canAccessLabs,
   freeOracleDailyCap,
   isOracleFullTier,
+  labsTrialRemainingForProfile,
   normalizeSubscriptionPlan,
 } from "@/lib/product-access";
 
@@ -12,6 +13,7 @@ type ProfileRow = {
   subscription_plan: string;
   oracle_limited_day?: string | null;
   oracle_limited_used?: number | null;
+  labs_free_trial_used?: number | null;
 };
 
 export async function GET() {
@@ -23,6 +25,7 @@ export async function GET() {
   if (!user) {
     return NextResponse.json({
       labsAccess: false,
+      labsTrialRemaining: null,
       oracleTier: "limited",
       oracleDailyCap: freeOracleDailyCap(),
       oracleUsedToday: 0,
@@ -35,7 +38,7 @@ export async function GET() {
   const fullSelect = await supabase
     .from("profiles")
     .select(
-      "subscription_status, subscription_plan, oracle_limited_day, oracle_limited_used"
+      "subscription_status, subscription_plan, oracle_limited_day, oracle_limited_used, labs_free_trial_used"
     )
     .eq("id", user.id)
     .single();
@@ -52,11 +55,13 @@ export async function GET() {
           ...(fallback.data as ProfileRow),
           oracle_limited_day: null,
           oracle_limited_used: 0,
+          labs_free_trial_used: 0,
         }
       : null;
   }
 
   const labs = canAccessLabs(profile);
+  const trialLeft = labsTrialRemainingForProfile(profile);
   const full = isOracleFullTier(profile);
   const today = new Date().toISOString().slice(0, 10);
   const used =
@@ -66,6 +71,7 @@ export async function GET() {
 
   return NextResponse.json({
     labsAccess: labs,
+    labsTrialRemaining: trialLeft,
     oracleTier: full ? "full" : "limited",
     oracleDailyCap: freeOracleDailyCap(),
     oracleUsedToday: used,

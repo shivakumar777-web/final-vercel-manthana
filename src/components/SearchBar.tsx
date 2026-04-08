@@ -63,7 +63,7 @@ interface SearchBarProps {
   onEvidenceChange?: (val: string) => void;
   isThinking?: boolean;
   onStop?: () => void;
-  /** Free / non-PRO Oracle: quick-only panel, no M5 shortcut. */
+  /** Free / non-PRO Oracle: quick-only intensity, Web locked; M5 is available on all tiers. */
   oracleLimited?: boolean;
 }
 
@@ -339,8 +339,7 @@ export default function SearchBar({
                 </div>
               </div>
 
-              {/* M5 Five Domain Mode */}
-              {!oracleLimited && (
+              {/* M5 Five Domain Mode — all tiers */}
               <div className="p-3 border-t border-white/[0.06]">
                 <a
                   href="/?mode=m5"
@@ -363,10 +362,9 @@ export default function SearchBar({
                   <span className="text-xs text-gold/60 group-hover:text-gold">5×</span>
                 </a>
               </div>
-              )}
               {oracleLimited && (
                 <div className="px-3 py-2 border-t border-white/[0.06] text-[9px] text-cream/45 font-ui tracking-wide">
-                  PRO unlocks M5, clinical depth, Manthana Web, and Manthana Labs.
+                  PRO unlocks clinical query depth, Manthana Web search, and full Labs quotas.
                 </div>
               )}
 

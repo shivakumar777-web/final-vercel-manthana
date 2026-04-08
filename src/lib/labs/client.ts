@@ -3,7 +3,13 @@
  */
 
 export type PreflightLabsResponse =
-  | { allowed: true; skipped?: boolean; tier?: string; plan?: string }
+  | {
+      allowed: true;
+      skipped?: boolean;
+      tier?: string;
+      plan?: string;
+      trialRemaining?: number;
+    }
   | {
       allowed: false;
       reason?: string;
@@ -52,6 +58,9 @@ export async function recordLabsScan(
     /* ignore */
   }
   if (res.ok) {
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("manthana:product-access-invalidate"));
+    }
     return { ok: true };
   }
   const msg =

@@ -118,9 +118,11 @@ export default function BottomNav({
             type="button"
             onClick={() => {
               addToast(
-                "Manthana Labs requires an active PRO plan. Open Plans to upgrade.",
+                access.signedIn
+                  ? "You've used all 3 free Manthana Labs trial scans. Open Plans to upgrade to PRO for full Labs."
+                  : "Sign in for 3 free Manthana Labs trial scans, or upgrade to PRO for full access.",
                 "info",
-                6000,
+                7000,
               );
               onOpenSubscriptionSettings?.();
             }}

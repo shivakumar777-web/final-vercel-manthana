@@ -28,6 +28,8 @@ export function labsQuotaMessage(
       return `${brand} medium-tier limit reached (${limit ?? (isPremium ? PREMIUM_LABS_LIMITS.mediumMonthly : PRO_LABS_LIMITS.mediumMonthly)}/mo: ultrasound, mammography, pathology, cytology).`;
     case "not_pro_active":
       return "Active Pro or Premium subscription is required for Labs scans.";
+    case "trial_exhausted":
+      return `You have used all ${limit ?? 3} free Manthana Labs trial scans. Upgrade to PRO for full Labs access.`;
     default:
       return "Labs quota exceeded.";
   }

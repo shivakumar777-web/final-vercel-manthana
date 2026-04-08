@@ -23,7 +23,11 @@ const PLANS: Plan[] = [
     price: 0,
     period: "forever",
     scans: 10,
-    features: ["10 scans per month", "Oracle free tier", "Labs requires upgrade"],
+    features: [
+      "10 scans per month",
+      "Oracle free tier + M5 (five medical traditions)",
+      "3 lifetime Manthana Labs trial scans when signed in",
+    ],
   },
   {
     id: "pro",

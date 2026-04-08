@@ -6,11 +6,16 @@ import {
   type PaidLabsPlan,
 } from "@/lib/labs/modality-tier";
 import { labsQuotaMessage } from "@/lib/labs/quota-messages";
-import { normalizeSubscriptionPlan } from "@/lib/product-access";
+import {
+  FREE_LABS_TRIAL_TOTAL,
+  hasActiveProLabsPlan,
+  normalizeSubscriptionPlan,
+} from "@/lib/product-access";
 
 type ProfileRow = {
   subscription_status: string;
   subscription_plan: string;
+  labs_free_trial_used: number | null;
   labs_usage_month: string | null;
   labs_light_count: number | null;
   labs_ct_mri_count: number | null;
@@ -50,7 +55,7 @@ export async function POST(req: Request) {
     const { data: raw, error } = await supabase
       .from("profiles")
       .select(
-        "subscription_status, subscription_plan, labs_usage_month, labs_light_count, labs_ct_mri_count, labs_medium_count, labs_usage_day, labs_scans_today, scans_this_month"
+        "subscription_status, subscription_plan, labs_free_trial_used, labs_usage_month, labs_light_count, labs_ct_mri_count, labs_medium_count, labs_usage_day, labs_scans_today, scans_this_month"
       )
       .eq("id", user.id)
       .single();
@@ -61,13 +66,28 @@ export async function POST(req: Request) {
 
     const p = raw as ProfileRow;
     const plan = normalizeSubscriptionPlan(p.subscription_plan);
-    const active = p.subscription_status === "active";
+    const accessProfile = {
+      subscription_status: p.subscription_status,
+      subscription_plan: p.subscription_plan,
+      labs_free_trial_used: p.labs_free_trial_used,
+    };
 
-    if (!active || (plan !== "pro" && plan !== "proplus")) {
+    if (!hasActiveProLabsPlan(accessProfile)) {
+      const trialUsed = p.labs_free_trial_used ?? 0;
+      if (trialUsed >= FREE_LABS_TRIAL_TOTAL) {
+        return NextResponse.json({
+          allowed: false,
+          reason: "trial_exhausted",
+          message: labsQuotaMessage("trial_exhausted"),
+          limit: FREE_LABS_TRIAL_TOTAL,
+        });
+      }
+      const tier = labsScanTierForModality(modalityId);
       return NextResponse.json({
-        allowed: false,
-        reason: "not_pro",
-        message: "Active Pro or Premium subscription required for Labs scan quotas.",
+        allowed: true,
+        tier,
+        plan: "free_trial",
+        trialRemaining: FREE_LABS_TRIAL_TOTAL - trialUsed,
       });
     }
 

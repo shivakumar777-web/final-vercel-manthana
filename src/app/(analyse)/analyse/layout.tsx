@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 /**
  * Radiology / imaging module — full-width layout (no host sidebar).
  * Theme tokens match Manthana Radiologist Copilot (CSS in analyse-design-system.css).
- * Labs requires active PRO or Pro Plus (`profiles`).
+ * Labs: active PRO / Premium, or signed-in free tier with lifetime trial scans remaining (`profiles`).
  */
 export default async function AnalyseLayout({
   children,
@@ -22,7 +22,7 @@ export default async function AnalyseLayout({
   }
   const { data: profile } = await supabase
     .from("profiles")
-    .select("subscription_status, subscription_plan")
+    .select("subscription_status, subscription_plan, labs_free_trial_used")
     .eq("id", user.id)
     .single();
   if (!canAccessLabs(profile)) {
