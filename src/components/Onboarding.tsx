@@ -22,7 +22,7 @@ const STEPS = [
   {
     key: "modes",
     icon: "◎",
-    heading: "Manthana Analyse",
+    heading: "Manthana Labs",
     body: "Dedicated imaging workflows are not enabled in this build. Use Oracle, Manthana Web, and Med Deep Research for questions, search, and structured research.",
     cta: "Next →",
   },
