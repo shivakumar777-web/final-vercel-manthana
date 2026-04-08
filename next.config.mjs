@@ -78,6 +78,8 @@ const nextConfig = {
       process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"
     ).replace(/\/$/, "");
     return [
+      // Browsers request /favicon.ico by default; manifest referenced it but file was missing.
+      { source: "/favicon.ico", destination: "/icons/icon.svg" },
       // 1. Auth stays local — handled by Next.js API route
       { source: "/api/auth/:path*", destination: "/api/auth/:path*" },
       // 2. Oracle: handled by app/api/oracle-backend/[[...path]]/route.ts (do not rewrite here — breaks SSE).

@@ -103,7 +103,20 @@ export const authClient = {
         },
       },
     });
-    if (error) return { error };
+    if (error) {
+      const raw = error.message ?? "";
+      if (
+        /Unsupported provider|provider is not enabled/i.test(raw) ||
+        /validation_failed/i.test(raw)
+      ) {
+        return {
+          error: new Error(
+            "Google sign-in is turned off in Supabase. Open your project → Authentication → Providers → Google, enable it, and add your Google OAuth Client ID and Client Secret (from Google Cloud Console). Redirect URI in Google must be https://<your-project-ref>.supabase.co/auth/v1/callback."
+          ),
+        };
+      }
+      return { error };
+    }
     if (data?.url && typeof window !== "undefined") {
       window.location.assign(data.url);
     }

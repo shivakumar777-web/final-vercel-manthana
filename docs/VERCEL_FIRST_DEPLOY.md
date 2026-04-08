@@ -70,15 +70,15 @@ Set at least these for **Production** (and Preview if you use preview URLs).
 | `NEXT_PUBLIC_APP_URL` | Your live site, e.g. `https://manthana.yourdomain.com` |
 | `NEXT_PUBLIC_APP_DOMAIN` | Hostname used in emails/links if your code references it |
 
-### Backend / Oracle (until Railway step 2 is done)
+### Backend / Oracle (Railway step 2)
 
-Point these at wherever your APIs run (temporary: existing server, tunnel, or later Railway).
+Point these at wherever your APIs run. For **Manthana production** on `manthana.quaasx108.com`, the intended Oracle base is **`https://oracle.manthana.quaasx108.com`** (no trailing slash): deploy **oracle-service** on Railway, add that custom domain in Railway, create a DNS **CNAME** for `oracle.manthana` to Railway’s target, then set `ORACLE_INTERNAL_URL` in Vercel to match. Until the custom domain verifies, use Railway’s **`https://<service>.up.railway.app`** URL temporarily.
 
 | Name | Notes |
 |------|--------|
 | `NEXT_PUBLIC_GATEWAY_URL` | Often same-origin: `/api/oracle-backend` or full URL to gateway |
 | `NEXT_PUBLIC_API_URL` | Public API base the **browser** may call |
-| `ORACLE_INTERNAL_URL` | **Server-side only** — URL Vercel serverless uses to reach Oracle (Railway/internal) |
+| `ORACLE_INTERNAL_URL` | **Server-side only** — URL Vercel serverless uses to reach Oracle (Railway); not localhost on Vercel |
 
 Use **relative** paths like `/api/oracle-backend` for same-origin routes where your Next app proxies.
 
@@ -99,7 +99,19 @@ Copy values from your local `.env.local`; **do not commit** `.env.local`.
 - **Site URL**: your production URL (HTTPS).
 - **Redirect URLs**: add  
   `https://YOUR-VERCEL-APP.vercel.app/**`  
-  and your custom domain if any.
+  and your custom domain if any (e.g. `https://manthana.quaasx108.com/**`).
+
+### Google sign-in (`Unsupported provider` / `provider is not enabled`)
+
+That response comes from **Supabase**, not Vercel. Updating env vars on Vercel does not enable Google.
+
+1. **Supabase** → **Authentication** → **Providers** → **Google** → turn **Enable** on.
+2. In **Google Cloud Console** → **APIs & Services** → **Credentials** → **OAuth 2.0 Client ID** (Web application):
+   - **Authorized redirect URIs** must include exactly:  
+     `https://<YOUR_SUPABASE_PROJECT_REF>.supabase.co/auth/v1/callback`  
+     (use the ref from `NEXT_PUBLIC_SUPABASE_URL`, not your Vercel domain).
+   - Optionally **Authorized JavaScript origins**: your site `https://manthana.quaasx108.com` (and localhost for dev).
+3. Paste **Client ID** and **Client Secret** into the Supabase Google provider form and **Save**.
 
 ---
 

@@ -39,6 +39,11 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
+  icons: {
+    icon: [{ url: "/icons/icon.svg", type: "image/svg+xml" }],
+    shortcut: "/icons/icon.svg",
+    apple: "/icons/icon.svg",
+  },
   title: "MANTHANA — Cosmic Medical Intelligence",
   description:
     "MANTHANA churns five oceans of medicine — Ayurveda, Allopathy, Homeopathy, Siddha, and Unani — extracting Amrita: pure, verified medical knowledge.",
