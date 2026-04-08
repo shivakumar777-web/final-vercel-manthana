@@ -176,10 +176,15 @@ function Section({
           ▾
         </span>
       </button>
+      {/* Tall sections (e.g. Subscription) must not clip: parent `.settings-scroll` scrolls the full panel */}
       <div
-        className={`overflow-hidden transition-all duration-300 ease-out ${isOpen ? "max-h-[min(85dvh,2000px)] opacity-100" : "max-h-0 opacity-0"}`}
+        className={`transition-[max-height,opacity] duration-300 ease-out ${
+          isOpen
+            ? "max-h-[8000px] opacity-100"
+            : "max-h-0 opacity-0 overflow-hidden pointer-events-none"
+        }`}
       >
-        <div className="px-6 pb-5 space-y-5">{children}</div>
+        <div className="px-6 pb-5 space-y-5 min-h-0">{children}</div>
       </div>
     </div>
   );
@@ -245,7 +250,7 @@ export default function SettingsOverlay({ onClose, initialSection }: SettingsOve
       />
 
       {/* Panel — slides from right */}
-      <div className="settings-panel relative w-full max-w-md h-full bg-[#050A14] border-l border-gold/[0.08] flex flex-col">
+      <div className="settings-panel relative w-full max-w-md h-full max-h-[100dvh] bg-[#050A14] border-l border-gold/[0.08] flex flex-col min-h-0">
         {/* ─── Header ─── */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-white/[0.06] flex-shrink-0">
           <div>
@@ -267,7 +272,7 @@ export default function SettingsOverlay({ onClose, initialSection }: SettingsOve
         </div>
 
         {/* ─── Scrollable sections ─── */}
-        <div className="flex-1 overflow-y-auto settings-scroll">
+        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain settings-scroll pb-[max(1rem,env(safe-area-inset-bottom,0px))]">
           {/* 0. Account */}
           <div className="border-b border-white/[0.04] px-6 py-4">
             {session?.user ? (

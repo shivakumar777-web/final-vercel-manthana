@@ -354,69 +354,91 @@ export default function SubscriptionCard() {
       {subscriptionLoading ? (
         <div className="text-center text-cream/50 text-sm">Loading plans...</div>
       ) : (
-        <div className="grid grid-cols-1 gap-3">
+        <div className="grid grid-cols-1 gap-2.5 sm:gap-3">
           {PLANS.map((plan) => {
             const isCurrentPlan = currentPlanCanonical === plan.id;
             const isPlanActive = isCurrentPlan && isActive;
+            const isFree = plan.id === "free";
+            const onFreeTier = isFree && isCurrentPlan;
+            const needsReactivate =
+              isCurrentPlan && !isActive && !isFree && plan.price > 0;
+
+            const ctaLabel = isPlanActive
+              ? "Current Plan"
+              : onFreeTier
+                ? "Your plan"
+                : needsReactivate
+                  ? "Reactivate"
+                  : loading
+                    ? "Processing..."
+                    : isFree
+                      ? "Free"
+                      : "Subscribe";
+
+            const ctaDisabled =
+              loading ||
+              isPlanActive ||
+              onFreeTier ||
+              (isFree && !isCurrentPlan);
 
             return (
               <div
                 key={plan.id}
-                className={`rounded-xl border p-4 relative transition-all ${
+                className={`rounded-xl border p-3 sm:p-4 relative transition-all ${
                   plan.highlighted
                     ? "border-gold/40 bg-gold/[0.05]"
                     : "border-white/[0.08] bg-white/[0.02]"
                 } ${isPlanActive ? "ring-1 ring-emerald-400/50" : ""}`}
               >
                 {plan.highlighted && (
-                  <span className="absolute -top-2 left-4 bg-gold/20 text-gold text-[10px] px-2 py-0.5 rounded">
+                  <span className="absolute -top-2 left-3 sm:left-4 bg-gold/20 text-gold text-[10px] px-2 py-0.5 rounded">
                     POPULAR
                   </span>
                 )}
 
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h3 className="font-ui text-sm uppercase tracking-wider text-cream mb-1">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-ui text-xs sm:text-sm uppercase tracking-wider text-cream mb-0.5 sm:mb-1">
                       {plan.name}
                     </h3>
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-2xl font-semibold text-cream">
+                    <div className="flex items-baseline gap-1 flex-wrap">
+                      <span className="text-xl sm:text-2xl font-semibold text-cream tabular-nums">
                         {plan.price === 0 ? "Free" : `₹${plan.price}`}
                       </span>
                       {plan.price > 0 && (
-                        <span className="text-cream/50 text-xs">/{plan.period}</span>
+                        <span className="text-cream/50 text-[11px] sm:text-xs">
+                          /{plan.period}
+                        </span>
                       )}
                     </div>
                   </div>
 
                   <button
-                    onClick={() => !isCurrentPlan && handleSubscribe(plan.id)}
-                    disabled={loading || isPlanActive}
-                    className={`py-2 px-4 rounded-lg text-xs font-ui uppercase tracking-wider transition-all ${
-                      isPlanActive
-                        ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 cursor-default"
+                    type="button"
+                    onClick={() =>
+                      !ctaDisabled && !onFreeTier && handleSubscribe(plan.id)
+                    }
+                    disabled={ctaDisabled}
+                    className={`shrink-0 py-2 px-3 sm:px-4 rounded-lg text-[10px] sm:text-xs font-ui uppercase tracking-wider transition-all ${
+                      isPlanActive || onFreeTier
+                        ? "bg-emerald-500/15 text-emerald-300/90 border border-emerald-500/25 cursor-default"
                         : plan.highlighted
-                        ? "bg-gold/20 text-gold border border-gold/40 hover:bg-gold/30"
-                        : "bg-white/[0.05] text-cream border border-white/[0.12] hover:bg-white/[0.08]"
-                    } disabled:opacity-50 disabled:cursor-not-allowed`}
+                          ? "bg-gold/20 text-gold border border-gold/40 hover:bg-gold/30"
+                          : "bg-white/[0.05] text-cream border border-white/[0.12] hover:bg-white/[0.08]"
+                    } disabled:opacity-60 disabled:cursor-not-allowed`}
                   >
-                    {isPlanActive
-                      ? "Current Plan"
-                      : isCurrentPlan && !isActive
-                      ? "Reactivate"
-                      : loading
-                      ? "Processing..."
-                      : plan.price === 0
-                      ? "Free"
-                      : "Subscribe"}
+                    {ctaLabel}
                   </button>
                 </div>
 
-                <ul className="space-y-1.5 mt-3">
+                <ul className="space-y-1 sm:space-y-1.5 mt-2.5 sm:mt-3">
                   {plan.features.map((feature, i) => (
-                    <li key={i} className="text-xs text-cream/70 flex items-center gap-2">
-                      <span className="text-emerald-400">✓</span>
-                      {feature}
+                    <li
+                      key={i}
+                      className="text-[11px] sm:text-xs text-cream/70 flex items-start gap-2 leading-snug"
+                    >
+                      <span className="text-emerald-400 shrink-0 mt-0.5">✓</span>
+                      <span>{feature}</span>
                     </li>
                   ))}
                 </ul>
