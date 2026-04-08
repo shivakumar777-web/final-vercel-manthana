@@ -151,6 +151,9 @@ interface PlanTierButtonProps {
   onOpenPlans: () => void;
 }
 
+const UPGRADE_PROMO =
+  "Upgrade to Pro for premium medically trained AI models and increased Labs quota.";
+
 export default function PlanTierButton({
   access,
   variant,
@@ -160,6 +163,12 @@ export default function PlanTierButton({
 
   const isPaidActive =
     access.labsAccess && access.labsTrialRemaining === null;
+  const showUpgradePromo =
+    !isPaidActive && (title === "Free" || title === "Basic");
+
+  const planHeaderIcon =
+    title === "PRO" ? "⭐" : title === "Premium" ? "💎" : "💎";
+
   const accentClass = isPaidActive
     ? title === "Premium"
       ? "border-[#7C3AED]/50 hover:border-[#A78BFA]/55 shadow-[0_0_14px_rgba(124,58,237,0.12)]"
@@ -173,11 +182,14 @@ export default function PlanTierButton({
         <button
           type="button"
           onClick={onOpenPlans}
-          title={`${title}${subtitle ? ` — ${subtitle}` : ""}`}
-          aria-label={`${title}. ${subtitle ?? "Open plans and subscription"}`}
-          className={`w-full flex items-center justify-center py-2.5 rounded-xl border bg-gradient-to-br from-[#C8922A]/[0.12] via-[#0a1220] to-[#2563eb]/[0.12] transition-all text-[9px] font-ui font-semibold tracking-[0.12em] uppercase text-cream/85 ${accentClass}`}
+          title={`${title}${subtitle ? ` — ${subtitle}` : ""}. ${UPGRADE_PROMO}`}
+          aria-label={`${title}. ${subtitle ?? "Open subscription in Settings"}. ${showUpgradePromo ? UPGRADE_PROMO : ""}`}
+          className={`w-full flex flex-col items-center justify-center gap-0.5 py-2 min-h-[44px] rounded-xl border bg-gradient-to-br from-[#C8922A]/[0.12] via-[#0a1220] to-[#2563eb]/[0.12] transition-all text-[9px] font-ui font-semibold tracking-[0.12em] uppercase text-cream/85 ${accentClass}`}
         >
-          {abbr}
+          <span className="text-sm leading-none" aria-hidden>
+            {planHeaderIcon}
+          </span>
+          <span>{abbr}</span>
         </button>
       </div>
     );
@@ -185,27 +197,45 @@ export default function PlanTierButton({
 
   if (variant === "sidebar-expanded") {
     return (
-      <div className="px-3 pb-3">
+      <div className="px-2 sm:px-3 pb-2 sm:pb-3">
         <button
           type="button"
           onClick={onOpenPlans}
-          className={`w-full text-left px-3 py-2.5 rounded-xl border bg-gradient-to-br from-[#C8922A]/[0.14] via-[#0a1220] to-[#2563eb]/[0.16] transition-all hover:border-[#7DD3FC]/35 ${accentClass}`}
+          className={`w-full text-left rounded-xl border bg-gradient-to-br from-[#C8922A]/[0.14] via-[#0a1220] to-[#2563eb]/[0.16] transition-all hover:border-[#7DD3FC]/35 active:scale-[0.99] ${accentClass} px-2.5 py-2.5 sm:px-3 sm:py-3 min-h-[44px]`}
+          aria-label={`Your plan: ${title}. ${subtitle ?? ""} Open Subscription in Settings.`}
         >
-          <div className="font-ui text-[10px] tracking-[0.2em] uppercase text-cream/55">
+          <div className="font-ui text-[9px] sm:text-[10px] tracking-[0.18em] sm:tracking-[0.2em] uppercase text-cream/55">
             Your plan
           </div>
-          <div
-            className={`font-ui text-sm font-semibold tracking-wide mt-0.5 ${
-              title === "Premium" ? "text-[#C4B5FD]" : "text-gold-h"
-            }`}
-          >
-            {title}
+          <div className="mt-1 flex items-start gap-2 min-w-0">
+            <span
+              className={`text-base sm:text-lg leading-none shrink-0 mt-0.5 ${
+                title === "Premium" ? "text-[#C4B5FD]" : "text-gold-h/90"
+              }`}
+              aria-hidden
+            >
+              {planHeaderIcon}
+            </span>
+            <div className="min-w-0 flex-1">
+              <div
+                className={`font-ui text-sm sm:text-[15px] font-semibold tracking-wide ${
+                  title === "Premium" ? "text-[#C4B5FD]" : "text-gold-h"
+                }`}
+              >
+                {title}
+              </div>
+              {subtitle ? (
+                <p className="font-body text-[10px] sm:text-[11px] text-cream/45 leading-snug mt-1">
+                  {subtitle}
+                </p>
+              ) : null}
+              {showUpgradePromo ? (
+                <p className="font-body text-[9px] sm:text-[10px] text-cream/38 leading-relaxed mt-2 pt-2 border-t border-white/[0.06]">
+                  {UPGRADE_PROMO}
+                </p>
+              ) : null}
+            </div>
           </div>
-          {subtitle ? (
-            <p className="font-body text-[11px] text-cream/45 leading-snug mt-1">
-              {subtitle}
-            </p>
-          ) : null}
         </button>
       </div>
     );

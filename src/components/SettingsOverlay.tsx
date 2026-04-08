@@ -221,6 +221,22 @@ export default function SettingsOverlay({ onClose, initialSection }: SettingsOve
     initialSection ?? "interface"
   );
 
+  /** Deep links (e.g. sidebar “Your plan”) must open Subscription even if overlay remount timing varies */
+  useEffect(() => {
+    if (initialSection) setOpenSection(initialSection);
+  }, [initialSection]);
+
+  useEffect(() => {
+    if (openSection !== "subscription") return;
+    const t = window.setTimeout(() => {
+      document.getElementById("subscription")?.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+      });
+    }, 320);
+    return () => window.clearTimeout(t);
+  }, [openSection]);
+
   const defaultModeOptions = useMemo(() => {
     const opts: { value: string; label: string }[] = [
       { value: "auto", label: "Auto" },

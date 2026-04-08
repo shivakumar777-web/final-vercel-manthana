@@ -226,7 +226,7 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
       {/* Overlays */}
       {overlay === "settings" && (
         <SettingsOverlay
-          key={settingsInitialSection ?? "default"}
+          key={`settings-${settingsInitialSection ?? "default"}`}
           initialSection={settingsInitialSection}
           onClose={closeOverlay}
         />
