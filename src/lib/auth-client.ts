@@ -8,6 +8,7 @@ import type { Session, User } from "@supabase/supabase-js";
 import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
 import { SUPABASE_AUTH_DISABLED_MESSAGE } from "@/lib/supabase/env";
 import { safeInternalPath } from "@/lib/auth/safe-internal-path";
+import { browserOAuthOrigin } from "@/lib/auth/site-public-origin";
 
 function displayName(user: User | null | undefined): string | undefined {
   if (!user) return undefined;
@@ -91,8 +92,7 @@ export const authClient = {
       return { error: new Error(SUPABASE_AUTH_DISABLED_MESSAGE) };
     }
     const next = safeInternalPath(options?.callbackUrl ?? "/", "/");
-    const origin =
-      typeof window !== "undefined" ? window.location.origin : "";
+    const origin = browserOAuthOrigin();
     const redirectTo = `${origin}/auth/callback?next=${encodeURIComponent(next)}`;
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
@@ -191,7 +191,7 @@ export const authClient = {
           data: { full_name: name, name },
           emailRedirectTo:
             typeof window !== "undefined"
-              ? `${window.location.origin}/auth/callback?next=/`
+              ? `${browserOAuthOrigin()}/auth/callback?next=/`
               : undefined,
         },
       });
@@ -215,7 +215,7 @@ export const authClient = {
     const redirectTo =
       options?.redirectTo ??
       (typeof window !== "undefined"
-        ? `${window.location.origin}/reset-password`
+        ? `${browserOAuthOrigin()}/reset-password`
         : undefined);
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo,

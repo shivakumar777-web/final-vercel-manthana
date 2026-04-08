@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { authClient } from "@/lib/auth-client";
+import { browserOAuthOrigin } from "@/lib/auth/site-public-origin";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -17,7 +18,7 @@ export default function ForgotPasswordPage() {
 
     try {
       await authClient.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+        redirectTo: `${browserOAuthOrigin()}/reset-password`,
       });
       setSubmitted(true);
     } catch (err: unknown) {

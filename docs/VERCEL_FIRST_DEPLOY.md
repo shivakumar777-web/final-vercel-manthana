@@ -96,10 +96,12 @@ Copy values from your local `.env.local`; **do not commit** `.env.local`.
 
 **Authentication → URL configuration**
 
-- **Site URL**: your production URL (HTTPS).
-- **Redirect URLs**: add  
+- **Site URL**: set to your **production** URL (HTTPS), e.g. `https://manthana.quaasx108.com`. If this stays `http://localhost:3000`, OAuth can send users back to localhost after Google.
+- **Redirect URLs**: add (wildcard is fine)  
   `https://YOUR-VERCEL-APP.vercel.app/**`  
-  and your custom domain if any (e.g. `https://manthana.quaasx108.com/**`).
+  and your custom domain, including the auth callback explicitly, e.g.  
+  `https://manthana.quaasx108.com/auth/callback`  
+  and `http://localhost:3000/**` for local dev.
 
 ### Google sign-in (`Unsupported provider` / `provider is not enabled`)
 
