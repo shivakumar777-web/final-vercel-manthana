@@ -6,6 +6,7 @@
 import { useEffect, useState } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
+import { SUPABASE_AUTH_DISABLED_MESSAGE } from "@/lib/supabase/env";
 
 function displayName(user: User | null | undefined): string | undefined {
   if (!user) return undefined;
@@ -33,6 +34,11 @@ export function useSession(): {
 
   useEffect(() => {
     const supabase = createBrowserSupabaseClient();
+    if (!supabase) {
+      setSession(null);
+      setPending(false);
+      return;
+    }
     supabase.auth
       .getSession()
       .then(({ data: { session: s } }) => {
@@ -55,6 +61,9 @@ export function useSession(): {
 
 export async function getSession(): Promise<{ data: { session: Session | null } }> {
   const supabase = createBrowserSupabaseClient();
+  if (!supabase) {
+    return { data: { session: null } };
+  }
   const {
     data: { session },
   } = await supabase.auth.getSession();
@@ -73,6 +82,10 @@ export const authClient = {
 
   async signOut(opts?: { fetchOptions?: { onSuccess?: () => void } }) {
     const supabase = createBrowserSupabaseClient();
+    if (!supabase) {
+      opts?.fetchOptions?.onSuccess?.();
+      return;
+    }
     await supabase.auth.signOut({ scope: "local" });
     opts?.fetchOptions?.onSuccess?.();
   },
@@ -90,6 +103,11 @@ export const authClient = {
       callbacks?: EmailCb
     ) {
       const supabase = createBrowserSupabaseClient();
+      if (!supabase) {
+        const err = new Error(SUPABASE_AUTH_DISABLED_MESSAGE);
+        callbacks?.onError?.({ error: { message: err.message } });
+        return { data: null, error: err };
+      }
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -118,6 +136,11 @@ export const authClient = {
       callbacks?: EmailCb
     ) {
       const supabase = createBrowserSupabaseClient();
+      if (!supabase) {
+        const err = new Error(SUPABASE_AUTH_DISABLED_MESSAGE);
+        callbacks?.onError?.({ error: { message: err.message } });
+        return { data: null, error: err };
+      }
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -143,6 +166,9 @@ export const authClient = {
     options?: { redirectTo?: string }
   ) {
     const supabase = createBrowserSupabaseClient();
+    if (!supabase) {
+      throw new Error(SUPABASE_AUTH_DISABLED_MESSAGE);
+    }
     const redirectTo =
       options?.redirectTo ??
       (typeof window !== "undefined"

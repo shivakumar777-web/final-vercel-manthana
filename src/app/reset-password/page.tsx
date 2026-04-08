@@ -3,6 +3,7 @@
 import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
+import { SUPABASE_AUTH_DISABLED_MESSAGE } from "@/lib/supabase/env";
 
 function ResetPasswordForm() {
   const [password, setPassword] = useState("");
@@ -11,9 +12,14 @@ function ResetPasswordForm() {
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [configError, setConfigError] = useState<string | null>(null);
 
   useEffect(() => {
     const supabase = createBrowserSupabaseClient();
+    if (!supabase) {
+      setConfigError(SUPABASE_AUTH_DISABLED_MESSAGE);
+      return;
+    }
 
     const init = async () => {
       const {
@@ -59,6 +65,10 @@ function ResetPasswordForm() {
 
     try {
       const supabase = createBrowserSupabaseClient();
+      if (!supabase) {
+        setError(SUPABASE_AUTH_DISABLED_MESSAGE);
+        return;
+      }
       const { error: upErr } = await supabase.auth.updateUser({ password });
       if (upErr) throw new Error(upErr.message);
       setSuccess(true);
@@ -70,6 +80,22 @@ function ResetPasswordForm() {
       setLoading(false);
     }
   };
+
+  if (configError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#020610] p-4">
+        <div className="w-full max-w-md text-center rounded-xl border border-white/[0.08] bg-black/40 p-8">
+          <p className="text-red-300 text-sm mb-4">{configError}</p>
+          <Link
+            href="/sign-in"
+            className="text-gold-h hover:text-gold-p underline underline-offset-2 text-sm"
+          >
+            Back to sign in
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   if (!recoveryReady) {
     return (

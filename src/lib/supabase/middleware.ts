@@ -1,25 +1,13 @@
 import { createServerClient, type SetAllCookies } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-
-/**
- * Read Supabase env without throwing — middleware runs on every request (including Vercel Edge).
- * Missing vars must not crash the app; auth stays inactive until configured.
- */
-function readSupabaseEnv(): { url: string; key: string } | null {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
-  const key =
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim() ||
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY?.trim();
-  if (!url || !key) return null;
-  return { url, key };
-}
+import { getSupabasePublicEnv } from "./env";
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
   });
 
-  const env = readSupabaseEnv();
+  const env = getSupabasePublicEnv();
   if (!env) {
     return { supabaseResponse, user: null };
   }
