@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
 import { SUPABASE_AUTH_DISABLED_MESSAGE } from "@/lib/supabase/env";
+import { safeInternalPath } from "@/lib/auth/safe-internal-path";
 
 function displayName(user: User | null | undefined): string | undefined {
   if (!user) return undefined;
@@ -79,6 +80,35 @@ export const authClient = {
   useSession,
 
   getSession,
+
+  /**
+   * Google OAuth — user is sent to Google, then back to `/auth/callback`.
+   * Enable the provider in Supabase Dashboard → Authentication → Providers → Google.
+   */
+  async signInWithGoogle(options?: { callbackUrl?: string | null }) {
+    const supabase = createBrowserSupabaseClient();
+    if (!supabase) {
+      return { error: new Error(SUPABASE_AUTH_DISABLED_MESSAGE) };
+    }
+    const next = safeInternalPath(options?.callbackUrl ?? "/", "/");
+    const origin =
+      typeof window !== "undefined" ? window.location.origin : "";
+    const redirectTo = `${origin}/auth/callback?next=${encodeURIComponent(next)}`;
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo,
+        queryParams: {
+          prompt: "select_account",
+        },
+      },
+    });
+    if (error) return { error };
+    if (data?.url && typeof window !== "undefined") {
+      window.location.assign(data.url);
+    }
+    return { error: null };
+  },
 
   async signOut(opts?: { fetchOptions?: { onSuccess?: () => void } }) {
     const supabase = createBrowserSupabaseClient();

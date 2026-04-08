@@ -9,6 +9,7 @@ import {
   ONBOARDING_COOKIE,
   ONBOARDING_COOKIE_MAX_AGE,
 } from "@/lib/auth/onboarding-cookie";
+import GoogleSignInButton from "@/components/GoogleSignInButton";
 
 function SignUpForm() {
   const router = useRouter();
@@ -56,9 +57,22 @@ function SignUpForm() {
       <h1 className="font-ui text-lg tracking-[0.2em] uppercase text-gold-h mb-1">
         Sign up
       </h1>
-      <p className="text-cream/50 text-sm mb-6">
-        Create your MANTHANA account
+      <p className="text-cream/50 text-sm mb-5">
+        Use Google for instant access (no verification email), or register with email below.
       </p>
+
+      <GoogleSignInButton callbackUrl={callbackUrl} />
+
+      <div className="relative my-7">
+        <div className="absolute inset-0 flex items-center" aria-hidden>
+          <div className="w-full border-t border-white/[0.1]" />
+        </div>
+        <div className="relative flex justify-center">
+          <span className="px-3 font-ui text-[9px] tracking-[0.25em] uppercase text-cream/30 bg-black/50">
+            or email
+          </span>
+        </div>
+      </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
