@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { GATEWAY_URL } from "@/lib/analyse/constants";
-import { getGatewayAuthToken } from "@/lib/analyse/auth-token";
 
 interface Props {
   onAccept: (patientId: string) => void;
@@ -33,13 +32,11 @@ export function ConsentGate({ onAccept, onConsentBodyScroll }: Props) {
         return;
       }
 
-      const token = getGatewayAuthToken();
-      const res = await fetch(`${GATEWAY_URL}/consent`, {
+      /** Same-origin: uses Supabase session cookie — does not depend on Oracle/gateway POST /consent */
+      const res = await fetch("/api/labs/consent", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
         body: JSON.stringify({
           patient_id: patientId || "ANONYMOUS",
           purpose: "radiology_second_opinion",
@@ -52,8 +49,7 @@ export function ConsentGate({ onAccept, onConsentBodyScroll }: Props) {
           [502, 503, 504].includes(res.status);
         if (devGatewayError) {
           console.warn(
-            `[ConsentGate] Consent gateway returned HTTP ${res.status} (e.g. oracle not running) — entering Manthana Labs in dev only (consent not recorded server-side).`,
-            GATEWAY_URL
+            `[ConsentGate] Consent API returned HTTP ${res.status} — entering Manthana Labs in dev only.`
           );
           onAccept(patientId || "ANONYMOUS");
           return;
