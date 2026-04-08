@@ -148,6 +148,39 @@ body {
   animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* Sidebar service health — soft staggered “live” pulse (respect reduced motion) */
+@keyframes manthana-service-dot-breathe {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    box-shadow: 0 0 0 0 transparent;
+  }
+  40% {
+    opacity: 0.72;
+    transform: scale(1.12);
+    box-shadow: 0 0 10px 2px color-mix(in srgb, currentColor 40%, transparent);
+  }
+  70% {
+    opacity: 0.92;
+    transform: scale(1.04);
+    box-shadow: 0 0 6px 1px color-mix(in srgb, currentColor 25%, transparent);
+  }
+}
+
+.service-health-dot {
+  color: inherit;
+  animation: manthana-service-dot-breathe 2.8s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .service-health-dot {
+    animation: none;
+    box-shadow: none !important;
+  }
+}
+
 @keyframes slideInRight {
   from { transform: translateX(100%); opacity: 0.5; }
   to   { transform: translateX(0);    opacity: 1; }
