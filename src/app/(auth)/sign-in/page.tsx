@@ -5,10 +5,19 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { safeInternalPath } from "@/lib/auth/safe-internal-path";
+import {
+  ONBOARDING_COOKIE,
+  ONBOARDING_COOKIE_MAX_AGE,
+} from "@/lib/auth/onboarding-cookie";
 
 function SignInForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl");
+  const signUpHref =
+    callbackUrl != null && callbackUrl !== ""
+      ? `/sign-up?callbackUrl=${encodeURIComponent(callbackUrl)}`
+      : "/sign-up";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -31,6 +40,7 @@ function SignInForm() {
       setError("Could not establish a session. Please try again.");
       return;
     }
+    document.cookie = `${ONBOARDING_COOKIE}=1; path=/; max-age=${ONBOARDING_COOKIE_MAX_AGE}; SameSite=Lax`;
     // Refresh RSC + middleware cookie view so the user stays signed in across visits
     router.refresh();
     const next = safeInternalPath(searchParams.get("callbackUrl"));
@@ -42,7 +52,10 @@ function SignInForm() {
       <h1 className="font-ui text-lg tracking-[0.2em] uppercase text-gold-h mb-1">
         Sign in
       </h1>
-      <p className="text-cream/50 text-sm mb-6">Access your MANTHANA account</p>
+      <p className="text-cream/50 text-sm mb-6">
+        Sign in with the email and password you used at sign up. If you signed up with email
+        confirmation, open the link in Gmail first, then return here.
+      </p>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
@@ -87,9 +100,18 @@ function SignInForm() {
         </button>
       </form>
 
+      <p className="mt-4 text-center">
+        <Link
+          href="/forgot-password"
+          className="text-xs font-ui tracking-wide text-cream/45 hover:text-gold-h underline underline-offset-2"
+        >
+          Forgot password?
+        </Link>
+      </p>
+
       <p className="mt-6 text-center text-cream/40 text-sm">
         Don&apos;t have an account?{" "}
-        <Link href="/sign-up" className="text-gold-h hover:text-gold-p underline underline-offset-2">
+        <Link href={signUpHref} className="text-gold-h hover:text-gold-p underline underline-offset-2">
           Sign up
         </Link>
       </p>

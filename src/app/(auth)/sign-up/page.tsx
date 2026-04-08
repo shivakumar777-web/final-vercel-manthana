@@ -1,12 +1,23 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { Suspense, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
+import { safeInternalPath } from "@/lib/auth/safe-internal-path";
+import {
+  ONBOARDING_COOKIE,
+  ONBOARDING_COOKIE_MAX_AGE,
+} from "@/lib/auth/onboarding-cookie";
 
-export default function SignUpPage() {
+function SignUpForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl");
+  const signInHref =
+    callbackUrl != null && callbackUrl !== ""
+      ? `/sign-in?callbackUrl=${encodeURIComponent(callbackUrl)}`
+      : "/sign-in";
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -30,8 +41,9 @@ export default function SignUpPage() {
       return;
     }
     if (data?.session) {
+      document.cookie = `${ONBOARDING_COOKIE}=1; path=/; max-age=${ONBOARDING_COOKIE_MAX_AGE}; SameSite=Lax`;
       router.refresh();
-      router.push("/");
+      router.push(safeInternalPath(callbackUrl, "/"));
       return;
     }
     setInfo(
@@ -112,10 +124,24 @@ export default function SignUpPage() {
 
       <p className="mt-6 text-center text-cream/40 text-sm">
         Already have an account?{" "}
-        <Link href="/sign-in" className="text-gold-h hover:text-gold-p underline underline-offset-2">
+        <Link href={signInHref} className="text-gold-h hover:text-gold-p underline underline-offset-2">
           Sign in
         </Link>
       </p>
     </div>
+  );
+}
+
+export default function SignUpPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="rounded-xl border border-white/[0.08] bg-black/40 backdrop-blur-sm p-8 shadow-xl text-center text-cream/50 text-sm">
+          Loading…
+        </div>
+      }
+    >
+      <SignUpForm />
+    </Suspense>
   );
 }

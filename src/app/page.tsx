@@ -15,7 +15,6 @@ import { useLang } from "@/components/LangProvider";
 import { useToast } from "@/hooks/useToast";
 import { isManthanaWebLocked } from "@/lib/manthana-web-locked";
 import { useProductAccess } from "@/components/ProductAccessProvider";
-import { tryConsumeAnonymousOracleSlot } from "@/lib/oracle-anon-quota";
 import {
   consumeOracleLabsHandoff,
   ORACLE_LABS_HANDOFF_QUERY,
@@ -81,28 +80,17 @@ export default function OraclePage() {
 
   const reserveOracleSlot = async (): Promise<boolean> => {
     if (!oracleLimited) return true;
-    if (access.signedIn) {
-      const res = await fetch("/api/me/oracle-consume", { method: "POST" });
-      if (res.status === 429) {
-        const j = (await res.json().catch(() => ({}))) as { cap?: number };
-        addToast(
-          `Daily Oracle limit reached (${j.cap ?? access.oracleDailyCap} messages). Upgrade to PRO for clinical depth, Manthana Web, and full Labs.`,
-          "error",
-          9000
-        );
-        return false;
-      }
-      void access.refetch();
-      return true;
-    }
-    if (!tryConsumeAnonymousOracleSlot(access.oracleDailyCap)) {
+    const res = await fetch("/api/me/oracle-consume", { method: "POST" });
+    if (res.status === 429) {
+      const j = (await res.json().catch(() => ({}))) as { cap?: number };
       addToast(
-        "Daily Oracle limit reached. Sign in or upgrade to PRO for more.",
+        `Daily Oracle limit reached (${j.cap ?? access.oracleDailyCap} messages). Upgrade to PRO for clinical depth, Manthana Web, and full Labs.`,
         "error",
-        8000
+        9000
       );
       return false;
     }
+    void access.refetch();
     return true;
   };
 

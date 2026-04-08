@@ -15,9 +15,17 @@ import { ProductAccessProvider } from "./ProductAccessProvider";
 // Lazy-load heavy overlays
 const SettingsOverlay = dynamic(() => import("./SettingsOverlay"), { ssr: false });
 const ChatHistory = dynamic(() => import("./ChatHistory"), { ssr: false });
-const Onboarding = dynamic(() => import("./Onboarding"), { ssr: false });
-
 type OverlayType = "settings" | "history" | null;
+
+function isBareAuthPath(pathname: string): boolean {
+  if (pathname === "/welcome") return true;
+  if (pathname.startsWith("/sign-in")) return true;
+  if (pathname.startsWith("/sign-up")) return true;
+  if (pathname === "/forgot-password") return true;
+  if (pathname === "/reset-password") return true;
+  if (pathname.startsWith("/auth/")) return true;
+  return false;
+}
 
 function readSettingsTabFromUrl(): string | null {
   if (typeof window === "undefined") return null;
@@ -36,19 +44,6 @@ function stripSettingsQueryFromUrl() {
   q.delete("tab");
   const nq = q.toString();
   window.history.replaceState({}, "", nq ? `${window.location.pathname}?${nq}` : window.location.pathname);
-}
-
-function useFirstVisit() {
-  const [isFirst, setIsFirst] = useState<boolean | null>(null);
-  useEffect(() => {
-    const seen = localStorage.getItem("manthana_seen");
-    setIsFirst(!seen);
-  }, []);
-  const markSeen = () => {
-    localStorage.setItem("manthana_seen", "1");
-    setIsFirst(false);
-  };
-  return { isFirst, markSeen };
 }
 
 function MobileLangBar() {
@@ -81,7 +76,6 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
   const [mobileTopOpen, setMobileTopOpen] = useState(false);
   const [overlay, setOverlay] = useState<OverlayType>(null);
   const [settingsInitialSection, setSettingsInitialSection] = useState<string | null>(null);
-  const { isFirst, markSeen } = useFirstVisit();
   const router = useRouter();
 
   const openOverlay = (key: string) => {
@@ -141,6 +135,22 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
               <ToastContainer />
             </div>
           </ProductAccessProvider>
+        </ToastProvider>
+      </LangProvider>
+    );
+  }
+
+  if (isBareAuthPath(pathname)) {
+    return (
+      <LangProvider>
+        <ToastProvider>
+          <div className="relative min-h-screen bg-[#020610] overflow-x-hidden">
+            <CosmicBackground />
+            <div className="relative z-10 min-h-screen flex flex-col items-center justify-center p-4">
+              <ErrorBoundary>{children}</ErrorBoundary>
+            </div>
+            <ToastContainer />
+          </div>
         </ToastProvider>
       </LangProvider>
     );
@@ -222,9 +232,6 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
         />
       )}
       {overlay === "history" && <ChatHistory onClose={closeOverlay} />}
-
-      {/* Onboarding — first visit only */}
-      {isFirst === true && <Onboarding onComplete={markSeen} />}
 
       {/* Global Toast Notifications */}
       <ToastContainer />
