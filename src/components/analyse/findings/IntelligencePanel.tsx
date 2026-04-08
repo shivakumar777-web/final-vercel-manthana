@@ -104,7 +104,7 @@ export default function IntelligencePanel({
         maxWidth: compact ? "none" : 380,
         flexShrink: 0,
         flex: compact ? 1 : undefined,
-        minHeight: compact ? "calc(100vh - 40px)" : undefined,
+        minHeight: compact ? "calc(100dvh - 40px)" : undefined,
         display: "flex",
         flexDirection: "column",
         overflow: compact ? "visible" : "hidden",

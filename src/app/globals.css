@@ -70,7 +70,8 @@ body {
   background: var(--g1);
   color: var(--white);
   font-family: "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
-  min-height: 100vh;
+  min-height: 100vh; /* fallback */
+  min-height: 100dvh;
   overflow-x: hidden;
 }
 

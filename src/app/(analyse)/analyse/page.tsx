@@ -537,7 +537,7 @@ export default function ScannerPage() {
       style={{
         display: "flex",
         flexDirection: "column",
-        height: "100vh",
+        height: "100dvh",
         overflow: "hidden",
       }}
     >

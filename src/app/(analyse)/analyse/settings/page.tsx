@@ -12,7 +12,7 @@ export default function SettingsPage() {
   const { theme } = useTheme();
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
+    <div style={{ display: "flex", flexDirection: "column", minHeight: "100dvh" }}>
       <TopBar />
 
       <main style={{ flex: 1, padding: "32px 24px", overflowY: "auto" }}>

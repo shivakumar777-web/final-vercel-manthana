@@ -27,7 +27,7 @@ export default function BottomSheet({
 
   const heights: Record<SheetState, string> = {
     collapsed: `${peekHeight}px`,
-    full: "100vh",
+    full: "100dvh",
   };
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {

@@ -130,7 +130,7 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
       <LangProvider>
         <ToastProvider>
           <ProductAccessProvider>
-            <div className="relative min-h-screen overflow-x-hidden">
+            <div className="relative min-h-dvh overflow-x-hidden">
               <ErrorBoundary>{children}</ErrorBoundary>
               <ToastContainer />
             </div>
@@ -144,9 +144,9 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
     return (
       <LangProvider>
         <ToastProvider>
-          <div className="relative min-h-screen bg-[#020610] overflow-x-hidden">
+          <div className="relative min-h-dvh bg-[#020610] overflow-x-hidden">
             <CosmicBackground />
-            <div className="relative z-10 min-h-screen flex flex-col items-center justify-center p-4">
+            <div className="relative z-10 min-h-dvh flex flex-col items-center justify-center p-4">
               <ErrorBoundary>{children}</ErrorBoundary>
             </div>
             <ToastContainer />
@@ -160,7 +160,7 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
     <LangProvider>
       <ToastProvider>
       <ProductAccessProvider>
-      <div className="relative min-h-screen bg-[#020610] overflow-x-hidden">
+      <div className="relative min-h-dvh bg-[#020610] overflow-x-hidden">
       {/* Cosmic background canvas */}
       <CosmicBackground />
 
@@ -174,9 +174,9 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
 
       {/* Main content area — shifts right on expanded sidebar */}
       <main
-        className={`relative z-10 min-h-screen transition-all duration-300 ease-out
+        className={`relative z-10 min-h-dvh transition-all duration-300 ease-out
           md:ml-[60px] ${expanded ? "md:ml-[280px]" : ""}
-          pb-14 md:pb-0`}
+          pb-[max(3.5rem,env(safe-area-inset-bottom,0px))] md:pb-0`}
         id="main-content"
         style={{ isolation: "isolate", willChange: "transform" }}
       >
