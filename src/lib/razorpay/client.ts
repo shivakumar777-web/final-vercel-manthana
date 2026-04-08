@@ -3,7 +3,6 @@
  * Handles payment processing, subscriptions, and customer management
  */
 import Razorpay from "razorpay";
-import { PREMIUM_LABS_LIMITS } from "@/lib/labs/modality-tier";
 
 // Validate environment variables
 if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
@@ -168,14 +167,14 @@ export const PRO_LABS_MONTHLY_SCAN_CAP = 150;
 export function getScansLimitForPlan(plan: PlanId): number {
   switch (plan) {
     case "free":
-      return 10;
+      return 0;
     case "basic":
       return 100;
     case "pro":
       return PRO_LABS_MONTHLY_SCAN_CAP;
     case "proplus":
-      return PREMIUM_LABS_LIMITS.totalMonthly;
+      return PRO_LABS_MONTHLY_SCAN_CAP;
     default:
-      return 10;
+      return 0;
   }
 }

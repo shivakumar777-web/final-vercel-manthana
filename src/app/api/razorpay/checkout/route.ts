@@ -13,7 +13,13 @@ import {
 } from "@/lib/razorpay/client";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
-import { normalizeSubscriptionPlan } from "@/lib/product-access";
+import {
+  FREE_LABS_TRIAL_TOTAL,
+  freeOracleDailyCap,
+  labsTrialRemainingForProfile,
+  normalizeSubscriptionPlan,
+  profileForLabsAccess,
+} from "@/lib/product-access";
 import { labsLimitsForPlan } from "@/lib/labs/modality-tier";
 
 type ProfileRow = {
@@ -237,18 +243,42 @@ export async function GET() {
           totalRemaining: Math.max(0, L.totalMonthly - totalUsed),
           todayUsed: today,
           todayRemaining: Math.max(0, L.dailyMax - today),
-          pro2dOnly: paidLabsPlan === "pro",
+          pro2dOnly: paidLabsPlan === "pro" || paidLabsPlan === "proplus",
         }
       : null;
+
+    const accessProfile = profileForLabsAccess({
+      subscription_status: profile.subscription_status,
+      subscription_plan: profile.subscription_plan,
+      labs_free_trial_used:
+        (profile as Record<string, unknown>).labs_free_trial_used as
+          | number
+          | null
+          | undefined,
+    });
+    const trialRemaining = labsTrialRemainingForProfile(accessProfile);
+    const labsLifetimeTrial =
+      paidLabsPlan == null
+        ? {
+            total: FREE_LABS_TRIAL_TOTAL,
+            used: Math.min(
+              FREE_LABS_TRIAL_TOTAL,
+              Math.max(0, accessProfile.labs_free_trial_used ?? 0)
+            ),
+            remaining: trialRemaining ?? 0,
+          }
+        : null;
 
     const scansLimitOut = paidLabsPlan
       ? L!.totalMonthly
       : unlimited
         ? SCANS_LIMIT_UNLIMITED_SENTINEL
-        : profile.scans_limit;
-    const scansRemainingOut = unlimited
-      ? SCANS_LIMIT_UNLIMITED_SENTINEL
-      : Math.max(0, scansLimitOut - (profile.scans_this_month ?? 0));
+        : 0;
+    const scansRemainingOut = paidLabsPlan
+      ? Math.max(0, scansLimitOut - (profile.scans_this_month ?? 0))
+      : unlimited
+        ? SCANS_LIMIT_UNLIMITED_SENTINEL
+        : 0;
 
     return NextResponse.json({
       status: profile.subscription_status,
@@ -258,6 +288,10 @@ export async function GET() {
       scansUsed: profile.scans_this_month,
       scansLimit: scansLimitOut,
       scansRemaining: scansRemainingOut,
+      /** Free / non-subscription: no monthly Oracle “scans” bar — use labsLifetimeTrial + oracleDailyCap */
+      monthlyScansBar: Boolean(paidLabsPlan || unlimited),
+      oracleDailyCap: freeOracleDailyCap(),
+      labsLifetimeTrial,
       labsUsage,
     });
   } catch (error: unknown) {

@@ -1,6 +1,6 @@
 import {
-  PREMIUM_LABS_LIMITS,
   PRO_LABS_LIMITS,
+  labsLimitsForPlan,
   type PaidLabsPlan,
 } from "@/lib/labs/modality-tier";
 
@@ -10,24 +10,21 @@ export function labsQuotaMessage(
   limit?: number,
   plan?: PaidLabsPlan
 ): string {
-  const isPremium = plan === "proplus";
-  const brand = isPremium ? "Premium" : "Pro";
+  const L = plan ? labsLimitsForPlan(plan) : PRO_LABS_LIMITS;
+  const brand = plan === "proplus" ? "Pro Plus" : "Pro";
   switch (code) {
     case "daily_cap":
-      return `Daily Labs limit reached (${limit ?? (isPremium ? PREMIUM_LABS_LIMITS.dailyMax : PRO_LABS_LIMITS.dailyMax)} scans per day on ${brand}).`;
+      return `Daily Labs limit reached (${limit ?? L.dailyMax} scans per day on ${brand}).`;
     case "monthly_total":
-      return `Monthly Labs limit reached (${limit ?? (isPremium ? PREMIUM_LABS_LIMITS.totalMonthly : PRO_LABS_LIMITS.totalMonthly)} scans on ${brand}).`;
+      return `Monthly Labs limit reached (${limit ?? L.totalMonthly} scans on ${brand}).`;
     case "light_cap":
-      return `${brand} light-tier limit reached (${limit ?? (isPremium ? PREMIUM_LABS_LIMITS.lightMonthly : PRO_LABS_LIMITS.lightMonthly)}/mo: X-ray, ECG, dermatology, lab reports, oral cancer, etc.).`;
+      return `${brand} light-tier limit reached (${limit ?? L.lightMonthly}/mo: X-ray, ECG, dermatology, lab reports, oral cancer, etc.).`;
     case "ct_mri_cap":
-      if (isPremium) {
-        return `Premium CT/MRI limit reached (${limit ?? PREMIUM_LABS_LIMITS.ctMriMonthly}/mo).`;
-      }
-      return `Pro CT/MRI limit reached (${limit ?? PRO_LABS_LIMITS.ctMriMonthly}/mo). Upgrade to Premium for higher limits.`;
+      return `CT/MRI limit reached (${limit ?? L.ctMriMonthly}/mo on ${brand}). Upgrade for enterprise / higher-modality plans via sales if you need more.`;
     case "medium_cap":
-      return `${brand} medium-tier limit reached (${limit ?? (isPremium ? PREMIUM_LABS_LIMITS.mediumMonthly : PRO_LABS_LIMITS.mediumMonthly)}/mo: ultrasound, mammography, pathology, cytology).`;
+      return `${brand} medium-tier limit reached (${limit ?? L.mediumMonthly}/mo: ultrasound, mammography, pathology, cytology).`;
     case "not_pro_active":
-      return "Active Pro or Premium subscription is required for Labs scans.";
+      return "Active Pro or Pro Plus subscription is required for Labs scans.";
     case "trial_exhausted":
       return `You have used all ${limit ?? 3} free Manthana Labs trial scans. Upgrade to PRO for full Labs access.`;
     default:

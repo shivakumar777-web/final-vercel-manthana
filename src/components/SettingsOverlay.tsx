@@ -257,6 +257,58 @@ export default function SettingsOverlay({ onClose, initialSection }: SettingsOve
   const toggleSection = (id: string) =>
     setOpenSection((prev) => (prev === id ? null : id));
 
+  const subscriptionOnly = initialSection === "subscription";
+
+  if (subscriptionOnly) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-stretch justify-center">
+        <div
+          className="absolute inset-0 bg-black/75 backdrop-blur-md"
+          onClick={onClose}
+          aria-hidden
+        />
+        <div
+          className="relative z-10 flex flex-col w-full h-[100dvh] max-h-[100dvh] min-h-0 bg-[#050A14] border-0 md:border md:border-gold/[0.12] md:max-w-3xl md:my-auto md:max-h-[min(100dvh,920px)] md:rounded-2xl md:shadow-[0_0_80px_rgba(0,0,0,0.45)] overflow-hidden"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="subscription-screen-title"
+        >
+          <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-5 py-4 border-b border-white/[0.06] flex-shrink-0">
+            <button
+              type="button"
+              onClick={onClose}
+              className="shrink-0 px-3 py-2 rounded-xl bg-white/[0.04] border border-white/[0.08] font-ui text-[10px] tracking-[0.15em] uppercase text-cream/60 hover:text-cream hover:border-gold/25 transition-colors"
+            >
+              Back
+            </button>
+            <div className="flex-1 min-w-0 text-center sm:text-left">
+              <h2
+                id="subscription-screen-title"
+                className="font-ui text-[10px] sm:text-xs tracking-[0.35em] uppercase text-cream/50"
+              >
+                Plans &amp; billing
+              </h2>
+              <p className="font-body text-[9px] text-cream/20 mt-0.5 hidden sm:block">
+                Compare tiers and upgrade when you are ready
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-9 h-9 shrink-0 rounded-xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center text-cream/30 hover:text-cream/80 hover:bg-white/[0.06] hover:border-gold/20 transition-all"
+              aria-label="Close"
+            >
+              ✕
+            </button>
+          </div>
+          <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain settings-scroll pb-[max(1.25rem,env(safe-area-inset-bottom,0px))] px-3 sm:px-6 pt-4">
+            <SubscriptionCard />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
       {/* Backdrop */}

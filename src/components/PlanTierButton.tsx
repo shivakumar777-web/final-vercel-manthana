@@ -32,7 +32,7 @@ function planDisplay(access: ProductAccessValue): {
             : `${trialLeft} free Labs scans left`,
       };
     }
-    if (p === "proplus") return { title: "Premium" };
+    if (p === "proplus") return { title: "Pro Plus" };
     return { title: "PRO" };
   }
 
@@ -45,7 +45,7 @@ function planDisplay(access: ProductAccessValue): {
 
   if ((p === "pro" || p === "proplus") && !access.labsAccess) {
     return {
-      title: p === "proplus" ? "Premium" : "PRO",
+      title: p === "proplus" ? "Pro Plus" : "PRO",
       subtitle: "Renew to access Labs",
     };
   }
@@ -59,13 +59,15 @@ function planDisplay(access: ProductAccessValue): {
 
   return {
     title: "Free",
-    subtitle: "Sign in for 3 free Labs scans, or upgrade to PRO",
+    subtitle:
+      "Sign in: 3 lifetime Labs scans • Oracle basic AI (lower daily limits); upgrade for Pro / Pro Plus",
   };
 }
 
 /** Abbreviated tier label (sidebar collapsed + mobile bottom tab) */
 function collapsedAbbrev(title: string): string {
   const t = title.toUpperCase();
+  if (t === "PRO PLUS") return "P+";
   if (t === "PREMIUM") return "MAX";
   if (t === "PRO") return "PRO";
   if (t === "BASIC") return "BAS";
@@ -85,14 +87,15 @@ export function BottomNavPlanTab({
   const abbrev = collapsedAbbrev(title);
   const tip = subtitle ? `${title} — ${subtitle}` : title;
   const icon =
-    title === "Premium" ? "💎" : title === "PRO" ? "⭐" : "◆";
+    title === "Pro Plus" || title === "Premium" ? "💎" : title === "PRO" ? "⭐" : "◆";
 
   const subscriptionLabsActive =
     access.labsAccess && access.labsTrialRemaining === null;
   const freeOrBasicUpgrade =
     !subscriptionLabsActive && (title === "Free" || title === "Basic");
   const renewTier =
-    !subscriptionLabsActive && (title === "PRO" || title === "Premium");
+    !subscriptionLabsActive &&
+    (title === "PRO" || title === "Premium" || title === "Pro Plus");
 
   const shellClass = subscriptionLabsActive
     ? "border-white/[0.06] bg-white/[0.02]"
@@ -103,7 +106,7 @@ export function BottomNavPlanTab({
         : "border-white/[0.05] bg-black/20";
 
   const mainTone = subscriptionLabsActive
-    ? title === "Premium"
+    ? title === "Premium" || title === "Pro Plus"
       ? "text-[#C4B5FD]/90"
       : "text-gold-h/90"
     : freeOrBasicUpgrade
@@ -167,10 +170,10 @@ export default function PlanTierButton({
     !isPaidActive && (title === "Free" || title === "Basic");
 
   const planHeaderIcon =
-    title === "PRO" ? "⭐" : title === "Premium" ? "💎" : "💎";
+    title === "PRO" ? "⭐" : title === "Premium" || title === "Pro Plus" ? "💎" : "💎";
 
   const accentClass = isPaidActive
-    ? title === "Premium"
+    ? title === "Premium" || title === "Pro Plus"
       ? "border-[#7C3AED]/50 hover:border-[#A78BFA]/55 shadow-[0_0_14px_rgba(124,58,237,0.12)]"
       : "border-[#C8922A]/40 hover:border-[#7DD3FC]/40 shadow-[0_0_18px_rgba(43,108,176,0.14)]"
     : "border-[#C8922A]/35 hover:border-[#C8922A]/55";
@@ -210,7 +213,9 @@ export default function PlanTierButton({
           <div className="mt-1 flex items-start gap-2 min-w-0">
             <span
               className={`text-base sm:text-lg leading-none shrink-0 mt-0.5 ${
-                title === "Premium" ? "text-[#C4B5FD]" : "text-gold-h/90"
+                title === "Premium" || title === "Pro Plus"
+                  ? "text-[#C4B5FD]"
+                  : "text-gold-h/90"
               }`}
               aria-hidden
             >
@@ -219,7 +224,9 @@ export default function PlanTierButton({
             <div className="min-w-0 flex-1">
               <div
                 className={`font-ui text-sm sm:text-[15px] font-semibold tracking-wide ${
-                  title === "Premium" ? "text-[#C4B5FD]" : "text-gold-h"
+                  title === "Premium" || title === "Pro Plus"
+                    ? "text-[#C4B5FD]"
+                    : "text-gold-h"
                 }`}
               >
                 {title}

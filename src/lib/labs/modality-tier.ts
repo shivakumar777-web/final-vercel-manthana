@@ -1,6 +1,6 @@
 /**
  * Labs scan tiers: modality → light | ct_mri | medium.
- * Pro vs Premium (Pro Plus) use the same tier split (80% / 10% / 10%) with different caps.
+ * Pro and Pro Plus share the same monthly caps (see labsLimitsForPlan); higher-volume tiers are sales-led.
  */
 
 export type LabsScanTier = "light" | "ct_mri" | "medium";
@@ -52,7 +52,7 @@ export const PRO_LABS_LIMITS = {
   mediumMonthly: 15,
 } as const;
 
-/** Premium (Pro Plus): same tier rules, 3× Pro monthly + higher daily cap. */
+/** Legacy higher caps — reserved for a future `premium_modalities` (sales) tier; Pro Plus (₹999) uses Pro caps. */
 export const PREMIUM_LABS_LIMITS = {
   totalMonthly: 450,
   dailyMax: 40,
@@ -64,5 +64,5 @@ export const PREMIUM_LABS_LIMITS = {
 export type PaidLabsPlan = "pro" | "proplus";
 
 export function labsLimitsForPlan(plan: PaidLabsPlan) {
-  return plan === "proplus" ? PREMIUM_LABS_LIMITS : PRO_LABS_LIMITS;
+  return PRO_LABS_LIMITS;
 }
