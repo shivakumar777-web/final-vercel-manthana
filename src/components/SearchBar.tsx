@@ -222,7 +222,7 @@ export default function SearchBar({
           {showModePanel && !isSearchMode && (
             <div
               ref={modePanelRef}
-              className="absolute left-0 top-full mt-2 z-50 w-[320px] rounded-xl
+              className="absolute left-0 top-full mt-2 z-50 w-[min(320px,calc(100vw-2rem))] max-w-[calc(100vw-2rem)] rounded-xl
                 bg-[#0A1628] border border-white/[0.08] shadow-2xl overflow-hidden"
             >
               {/* Section 1: Query Intensity */}

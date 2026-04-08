@@ -75,6 +75,28 @@ body {
   overflow-x: hidden;
 }
 
+/* PWA standalone: reduce pull-to-refresh reload, respect status bar / notch */
+@media (display-mode: standalone) {
+  html,
+  body {
+    overscroll-behavior-y: contain;
+  }
+  body {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+}
+
+/* Full-viewport Labs shell — contain vertical overscroll */
+.analyse-app-shell {
+  overscroll-behavior-y: contain;
+}
+
+@media (display-mode: standalone) {
+  .bottom-nav-pwa-host nav[role="navigation"] {
+    min-height: 3.75rem;
+  }
+}
+
 /* ── Scroll Performance ──────────────────── */
 
 /* Nav / inline Logo only — hero logo skips this so SVG gradients & filters match desktop on mobile GPUs */

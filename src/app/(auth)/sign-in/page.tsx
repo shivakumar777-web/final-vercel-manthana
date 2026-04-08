@@ -5,10 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { safeInternalPath } from "@/lib/auth/safe-internal-path";
-import {
-  ONBOARDING_COOKIE,
-  ONBOARDING_COOKIE_MAX_AGE,
-} from "@/lib/auth/onboarding-cookie";
+import { setOnboardingCookieClient } from "@/lib/auth/onboarding-cookie";
 import GoogleSignInButton from "@/components/GoogleSignInButton";
 
 function SignInForm() {
@@ -41,7 +38,7 @@ function SignInForm() {
       setError("Could not establish a session. Please try again.");
       return;
     }
-    document.cookie = `${ONBOARDING_COOKIE}=1; path=/; max-age=${ONBOARDING_COOKIE_MAX_AGE}; SameSite=Lax`;
+    setOnboardingCookieClient();
     // Refresh RSC + middleware cookie view so the user stays signed in across visits
     router.refresh();
     const next = safeInternalPath(searchParams.get("callbackUrl"));

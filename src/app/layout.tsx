@@ -40,9 +40,12 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   icons: {
-    icon: [{ url: "/icons/icon.svg", type: "image/svg+xml" }],
+    icon: [
+      { url: "/icons/icon.svg", type: "image/svg+xml" },
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+    ],
     shortcut: "/icons/icon.svg",
-    apple: "/icons/icon.svg",
+    apple: [{ url: "/icons/icon-192.png", sizes: "180x180", type: "image/png" }],
   },
   title: "MANTHANA — Cosmic Medical Intelligence",
   description:
@@ -86,7 +89,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="mobile-web-app-capable" content="yes" />
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem("manthana_theme");if(t&&["default","blackhole","clinical"].indexOf(t)!==-1){if(t==="clinical"&&window.innerWidth<=1024)t="default";document.documentElement.dataset.theme=t}}catch(e){}})()`,
+            __html: `(function(){try{var t=localStorage.getItem("manthana_theme");var st=window.matchMedia&&window.matchMedia("(display-mode: standalone)").matches;if(t&&["default","blackhole","clinical"].indexOf(t)!==-1){if(t==="clinical"&&window.innerWidth<=1024&&!st)t="default";document.documentElement.dataset.theme=t}}catch(e){}})()`,
+          }}
+        />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){if(typeof navigator==="undefined"||!navigator.serviceWorker)return;var h=location.hostname;var ok=location.protocol==="https:"||h==="localhost"||h==="127.0.0.1";if(!ok)return;navigator.serviceWorker.register("/sw.js").catch(function(){})})()`,
           }}
         />
       </head>

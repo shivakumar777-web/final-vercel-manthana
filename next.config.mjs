@@ -40,6 +40,7 @@ function buildConnectOrigins() {
   addAbs(process.env.NEXT_PUBLIC_RESEARCH_API_URL ?? "http://localhost:8201");
   addAbs(process.env.NEXT_PUBLIC_ANALYSIS_API_URL ?? "http://localhost:8202");
   addAbs(process.env.NEXT_PUBLIC_CLINICAL_API_URL);
+  addAbs(process.env.NEXT_PUBLIC_SUPABASE_URL);
 
   const httpOrigins = Array.from(origins);
   const wsOrigins = httpOrigins.map((o) =>
@@ -93,6 +94,15 @@ const nextConfig = {
   // Security headers
   async headers() {
     return [
+      {
+        source: "/sw.js",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "no-cache, no-store, must-revalidate",
+          },
+        ],
+      },
       {
         source: "/(.*)",
         headers: [

@@ -181,7 +181,7 @@ export default function BottomNav({
   }
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden pb-[max(0.25rem,env(safe-area-inset-bottom,0px))]">
+    <div className="bottom-nav-pwa-host fixed bottom-0 left-0 right-0 z-50 md:hidden pb-[max(0.25rem,env(safe-area-inset-bottom,0px))]">
       {mobileNavOpen ? (
         <nav
           className="glass border-t border-gold/10 h-14"

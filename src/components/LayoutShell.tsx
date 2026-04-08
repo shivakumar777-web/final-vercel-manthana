@@ -130,7 +130,7 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
       <LangProvider>
         <ToastProvider>
           <ProductAccessProvider>
-            <div className="relative min-h-dvh overflow-x-hidden">
+            <div className="analyse-app-shell relative min-h-dvh overflow-x-hidden">
               <ErrorBoundary>{children}</ErrorBoundary>
               <ToastContainer />
             </div>

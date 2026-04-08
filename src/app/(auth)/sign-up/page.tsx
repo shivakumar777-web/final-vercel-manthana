@@ -5,10 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { safeInternalPath } from "@/lib/auth/safe-internal-path";
-import {
-  ONBOARDING_COOKIE,
-  ONBOARDING_COOKIE_MAX_AGE,
-} from "@/lib/auth/onboarding-cookie";
+import { setOnboardingCookieClient } from "@/lib/auth/onboarding-cookie";
 import GoogleSignInButton from "@/components/GoogleSignInButton";
 
 function SignUpForm() {
@@ -42,7 +39,7 @@ function SignUpForm() {
       return;
     }
     if (data?.session) {
-      document.cookie = `${ONBOARDING_COOKIE}=1; path=/; max-age=${ONBOARDING_COOKIE_MAX_AGE}; SameSite=Lax`;
+      setOnboardingCookieClient();
       router.refresh();
       router.push(safeInternalPath(callbackUrl, "/"));
       return;

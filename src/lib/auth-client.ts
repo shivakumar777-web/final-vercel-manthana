@@ -5,7 +5,12 @@
  */
 import { useEffect, useState } from "react";
 import type { Session, User } from "@supabase/supabase-js";
-import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
+import {
+  clearSupabaseSessionBackup,
+  createBrowserSupabaseClient,
+  tryRecoverSessionFromBackup,
+} from "@/lib/supabase/browser";
+import { isStandalonePwa } from "@/lib/pwa-install-nudge";
 import { SUPABASE_AUTH_DISABLED_MESSAGE } from "@/lib/supabase/env";
 import { safeInternalPath } from "@/lib/auth/safe-internal-path";
 import { browserOAuthOrigin } from "@/lib/auth/site-public-origin";
@@ -41,13 +46,19 @@ export function useSession(): {
       setPending(false);
       return;
     }
-    supabase.auth
-      .getSession()
-      .then(({ data: { session: s } }) => {
+    void (async () => {
+      try {
+        let s = (await supabase.auth.getSession()).data.session;
+        if (!s) {
+          s = await tryRecoverSessionFromBackup(supabase);
+        }
         setSession(withDisplayName(s));
+      } catch {
+        setSession(null);
+      } finally {
         setPending(false);
-      })
-      .catch(() => setPending(false));
+      }
+    })();
 
     const {
       data: { subscription },
@@ -66,9 +77,12 @@ export async function getSession(): Promise<{ data: { session: Session | null } 
   if (!supabase) {
     return { data: { session: null } };
   }
-  const {
+  let {
     data: { session },
   } = await supabase.auth.getSession();
+  if (!session) {
+    session = await tryRecoverSessionFromBackup(supabase);
+  }
   return { data: { session: withDisplayName(session) } };
 }
 
@@ -94,13 +108,23 @@ export const authClient = {
     const next = safeInternalPath(options?.callbackUrl ?? "/", "/");
     const origin = browserOAuthOrigin();
     const redirectTo = `${origin}/auth/callback?next=${encodeURIComponent(next)}`;
+    const oauthOptions = {
+      redirectTo,
+      queryParams: {
+        prompt: "select_account",
+      },
+    };
+
+    const usePopup =
+      typeof window !== "undefined" &&
+      isStandalonePwa() &&
+      typeof window.open === "function";
+
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo,
-        queryParams: {
-          prompt: "select_account",
-        },
+        ...oauthOptions,
+        ...(usePopup ? { skipBrowserRedirect: true } : {}),
       },
     });
     if (error) {
@@ -118,6 +142,28 @@ export const authClient = {
       return { error };
     }
     if (data?.url && typeof window !== "undefined") {
+      if (usePopup) {
+        const popup = window.open(
+          data.url,
+          "manthana_google_oauth",
+          "width=520,height=680,scrollbars=yes,resizable=yes"
+        );
+        if (!popup) {
+          window.location.assign(data.url);
+          return { error: null };
+        }
+        const dest = next;
+        const poll = window.setInterval(() => {
+          if (!popup.closed) return;
+          window.clearInterval(poll);
+          window.location.assign(dest.startsWith("/") ? dest : `/${dest}`);
+        }, 400);
+        const maxMs = 5 * 60 * 1000;
+        window.setTimeout(() => {
+          window.clearInterval(poll);
+        }, maxMs);
+        return { error: null };
+      }
       window.location.assign(data.url);
     }
     return { error: null };
@@ -130,6 +176,7 @@ export const authClient = {
       return;
     }
     await supabase.auth.signOut({ scope: "local" });
+    clearSupabaseSessionBackup();
     opts?.fetchOptions?.onSuccess?.();
   },
 
