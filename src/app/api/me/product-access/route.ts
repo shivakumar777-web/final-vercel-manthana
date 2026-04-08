@@ -6,6 +6,7 @@ import {
   isOracleFullTier,
   labsTrialRemainingForProfile,
   normalizeSubscriptionPlan,
+  profileForLabsAccess,
 } from "@/lib/product-access";
 
 type ProfileRow = {
@@ -60,9 +61,10 @@ export async function GET() {
       : null;
   }
 
-  const labs = canAccessLabs(profile);
-  const trialLeft = labsTrialRemainingForProfile(profile);
-  const full = isOracleFullTier(profile);
+  const labsInput = profileForLabsAccess(profile);
+  const labs = canAccessLabs(labsInput);
+  const trialLeft = labsTrialRemainingForProfile(labsInput);
+  const full = isOracleFullTier(labsInput);
   const today = new Date().toISOString().slice(0, 10);
   const used =
     profile?.oracle_limited_day === today
@@ -76,7 +78,7 @@ export async function GET() {
     oracleDailyCap: freeOracleDailyCap(),
     oracleUsedToday: used,
     signedIn: true,
-    plan: normalizeSubscriptionPlan(profile?.subscription_plan),
-    status: profile?.subscription_status ?? "inactive",
+    plan: normalizeSubscriptionPlan(labsInput.subscription_plan),
+    status: labsInput.subscription_status ?? "inactive",
   });
 }

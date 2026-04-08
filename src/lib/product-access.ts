@@ -44,6 +44,21 @@ export function labsTrialRemainingForProfile(
   return Math.max(0, FREE_LABS_TRIAL_TOTAL - used);
 }
 
+/**
+ * Missing `profiles` row (e.g. legacy user before trigger) ⇒ treat as free tier, zero trial usage.
+ * Do not use for unauthenticated callers — they must gate before calling `canAccessLabs`.
+ */
+export function profileForLabsAccess(
+  row: ProfileAccessInput | null | undefined
+): ProfileAccessInput {
+  if (row) return row;
+  return {
+    subscription_status: "inactive",
+    subscription_plan: "free",
+    labs_free_trial_used: 0,
+  };
+}
+
 export function canAccessLabs(profile: ProfileAccessInput | null): boolean {
   if (!profile) return false;
   if (hasActiveProLabsPlan(profile)) return true;

@@ -35,7 +35,7 @@ export default function CosmicBackground() {
 
     const buildStars = () => {
       const isMobile = window.innerWidth < 768;
-      const STAR_COUNT = isMobile ? 100 : 200;
+      const STAR_COUNT = isMobile ? 140 : 280;
       seed = 42;
       stars = [];
       for (let i = 0; i < STAR_COUNT; i++) {
@@ -67,10 +67,12 @@ export default function CosmicBackground() {
       for (const star of stars) {
         const s1 = Math.sin(t * star.speed + star.phase);
         const s2 = Math.sin(t * star.speed * star.jitter + star.phase * 1.7);
-        const mix = 0.5 + 0.32 * s1 + 0.18 * s2;
+        const s3 = Math.sin(t * star.speed * 0.47 + star.phase * 2.3);
+        const mix = 0.5 + 0.38 * s1 + 0.2 * s2 + 0.12 * s3;
+        const pulse = 0.28 + 1.15 * mix;
         const alpha = Math.min(
-          0.92,
-          Math.max(0.04, star.baseA * (0.55 + 0.9 * mix))
+          0.98,
+          Math.max(0.06, star.baseA * pulse)
         );
 
         ctx.beginPath();
@@ -98,15 +100,14 @@ export default function CosmicBackground() {
   return (
     <div className="fixed inset-0 z-0 pointer-events-none">
       {/* Cosmic gradient layers */}
-      <div className="absolute inset-0 cosmic-bg" />
+      <div className="absolute inset-0 z-0 cosmic-bg" />
 
-      {/* Dot grid overlay */}
-      <div className="absolute inset-0 dot-grid" />
+      {/* Dot grid (static); canvas above so twinkle reads clearly */}
+      <div className="absolute inset-0 z-[1] dot-grid" />
 
-      {/* Star canvas — soft twinkle */}
       <canvas
         ref={canvasRef}
-        className="absolute inset-0"
+        className="absolute inset-0 z-[2] mix-blend-screen"
         aria-hidden="true"
       />
     </div>

@@ -194,37 +194,38 @@ export default function Sidebar({
           ) : isOverlay ? (
             <div>{content}</div>
           ) : labsLocked ? (
-            <button
-              type="button"
-              className="w-full text-left"
-              onClick={() => {
-                addToast(
-                  access.signedIn
-                    ? "You've used all 3 free Manthana Labs trial scans. Open Plans to upgrade to PRO for full Labs."
-                    : "Sign in for 3 free Manthana Labs trial scans, or upgrade to PRO for full access.",
-                  "info",
-                  7000
-                );
-                onOpenSubscriptionSettings();
-              }}
-              title={
-                access.signedIn
-                  ? "Labs — trial used or PRO required"
-                  : "Labs — sign in or upgrade"
-              }
-              aria-label={
-                access.signedIn
-                  ? "Labs — upgrade to PRO after free trial"
-                  : "Labs — sign in for trial or upgrade to PRO"
-              }
-            >
-              <div className="relative">
+            access.signedIn ? (
+              <button
+                type="button"
+                className="w-full text-left"
+                onClick={() => {
+                  addToast(
+                    "You've used all 3 free Manthana Labs trial scans. Open Plans to upgrade to PRO for full Labs.",
+                    "info",
+                    7000
+                  );
+                  onOpenSubscriptionSettings();
+                }}
+                title="Labs — trial used or PRO required"
+                aria-label="Labs — upgrade to PRO after free trial"
+              >
+                <div className="relative">
+                  {content}
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] opacity-60" aria-hidden>
+                    🔒
+                  </span>
+                </div>
+              </button>
+            ) : (
+              <Link
+                href="/sign-in?callbackUrl=/analyse"
+                className="block w-full text-left"
+                title="Labs — sign in for 3 free trial scans"
+                aria-label="Labs — sign in for free trial"
+              >
                 {content}
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] opacity-60" aria-hidden>
-                  🔒
-                </span>
-              </div>
-            </button>
+              </Link>
+            )
           ) : (
             <Link href={item.href!}>{content}</Link>
           );

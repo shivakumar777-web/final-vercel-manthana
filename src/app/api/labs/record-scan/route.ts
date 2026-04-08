@@ -38,15 +38,28 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: true, serverSkipped: true });
     }
 
-    const { data: prof, error: profErr } = await svc
+    let { data: prof, error: profErr } = await svc
       .from("profiles")
       .select("subscription_status, subscription_plan, labs_free_trial_used")
       .eq("id", user.id)
       .single();
 
     if (profErr || !prof) {
-      console.error("[labs/record-scan] profile:", profErr);
-      return NextResponse.json({ error: "no_profile" }, { status: 400 });
+      const ins = await svc.from("profiles").insert({ id: user.id }).select("subscription_status, subscription_plan, labs_free_trial_used").single();
+      if (!ins.error && ins.data) {
+        prof = ins.data;
+      } else {
+        const again = await svc
+          .from("profiles")
+          .select("subscription_status, subscription_plan, labs_free_trial_used")
+          .eq("id", user.id)
+          .single();
+        prof = again.data;
+        if (!prof) {
+          console.error("[labs/record-scan] profile:", profErr, ins.error);
+          return NextResponse.json({ error: "no_profile" }, { status: 400 });
+        }
+      }
     }
 
     if (

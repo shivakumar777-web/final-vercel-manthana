@@ -60,11 +60,21 @@ export async function POST(req: Request) {
       .eq("id", user.id)
       .single();
 
-    if (error || !raw) {
-      return NextResponse.json({ allowed: false, reason: "no_profile" }, { status: 200 });
-    }
-
-    const p = raw as ProfileRow;
+    const p: ProfileRow =
+      raw && !error
+        ? (raw as ProfileRow)
+        : {
+            subscription_status: "inactive",
+            subscription_plan: "free",
+            labs_free_trial_used: 0,
+            labs_usage_month: null,
+            labs_light_count: null,
+            labs_ct_mri_count: null,
+            labs_medium_count: null,
+            labs_usage_day: null,
+            labs_scans_today: null,
+            scans_this_month: null,
+          };
     const plan = normalizeSubscriptionPlan(p.subscription_plan);
     const accessProfile = {
       subscription_status: p.subscription_status,

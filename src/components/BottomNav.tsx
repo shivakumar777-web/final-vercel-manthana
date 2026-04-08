@@ -112,15 +112,28 @@ export default function BottomNav({
         tab.href === "/analyse" && !access.loading && !access.labsAccess;
 
       if (labsLocked) {
-        slot = (
+        const lockedBody = (
+          <div className="flex flex-col items-center justify-center gap-0.5 py-1 px-1 rounded-lg transition-colors text-cream/35 max-w-[4.25rem]">
+            <span className="text-lg relative">
+              {tab.icon}
+              {access.signedIn ? (
+                <span className="absolute -right-1 -top-0.5 text-[8px]" aria-hidden>
+                  🔒
+                </span>
+              ) : null}
+            </span>
+            <span className="font-ui text-[9px] tracking-wider uppercase text-center leading-tight">
+              {tab.label}
+            </span>
+          </div>
+        );
+        slot = access.signedIn ? (
           <button
             key={tab.label}
             type="button"
             onClick={() => {
               addToast(
-                access.signedIn
-                  ? "You've used all 3 free Manthana Labs trial scans. Open Plans to upgrade to PRO for full Labs."
-                  : "Sign in for 3 free Manthana Labs trial scans, or upgrade to PRO for full access.",
+                "You've used all 3 free Manthana Labs trial scans. Open Plans to upgrade to PRO for full Labs.",
                 "info",
                 7000,
               );
@@ -129,21 +142,17 @@ export default function BottomNav({
             className={tabSlotClass}
             aria-label={`${tab.label} — upgrade required`}
           >
-            <div className="flex flex-col items-center justify-center gap-0.5 py-1 px-1 rounded-lg transition-colors text-cream/35 max-w-[4.25rem]">
-              <span className="text-lg relative">
-                {tab.icon}
-                <span
-                  className="absolute -right-1 -top-0.5 text-[8px]"
-                  aria-hidden
-                >
-                  🔒
-                </span>
-              </span>
-              <span className="font-ui text-[9px] tracking-wider uppercase text-center leading-tight">
-                {tab.label}
-              </span>
-            </div>
+            {lockedBody}
           </button>
+        ) : (
+          <Link
+            key={tab.label}
+            href="/sign-in?callbackUrl=/analyse"
+            className={tabSlotClass}
+            aria-label={`${tab.label} — sign in for trial`}
+          >
+            {lockedBody}
+          </Link>
         );
       } else {
         slot = (

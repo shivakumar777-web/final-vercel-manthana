@@ -1,6 +1,6 @@
 import ThemeProvider from "@/components/analyse/shared/ThemeProvider";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { canAccessLabs } from "@/lib/product-access";
+import { canAccessLabs, profileForLabsAccess } from "@/lib/product-access";
 import { redirect } from "next/navigation";
 
 /**
@@ -25,7 +25,7 @@ export default async function AnalyseLayout({
     .select("subscription_status, subscription_plan, labs_free_trial_used")
     .eq("id", user.id)
     .single();
-  if (!canAccessLabs(profile)) {
+  if (!canAccessLabs(profileForLabsAccess(profile))) {
     redirect("/?labsLocked=1");
   }
 
