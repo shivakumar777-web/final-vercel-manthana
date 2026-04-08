@@ -11,7 +11,9 @@ import ViewportControls from "@/components/analyse/scanner/ViewportControls";
 import ThumbnailStrip from "@/components/analyse/scanner/ThumbnailStrip";
 import IntelligencePanel from "@/components/analyse/findings/IntelligencePanel";
 import UnifiedReportPanel from "@/components/analyse/findings/UnifiedReportPanel";
-import PatientContextForm from "@/components/analyse/shared/PatientContextForm";
+import PatientContextForm, {
+  type PatientContext,
+} from "@/components/analyse/shared/PatientContextForm";
 import ECGPatientContextForm from "@/components/analyse/ecg/ECGPatientContextForm";
 import { ConsentGate } from "@/components/analyse/shared/ConsentGate";
 import MultiModelSelector from "@/components/analyse/scanner/MultiModelSelector";
@@ -105,7 +107,7 @@ export default function ScannerPage() {
 
   const [cmdOpen, setCmdOpen] = useState(false);
   const [scanNumber, setScanNumber] = useState(1);
-  const [patientCtx, setPatientCtx] = useState({
+  const [patientCtx, setPatientCtx] = useState<PatientContext>({
     patientId: "ANONYMOUS-001",
     age: "",
     gender: "",
@@ -847,7 +849,7 @@ export default function ScannerPage() {
                 </span>
                 <span className="font-mono" style={{ fontSize: 9, color: "var(--scan-400)" }}>
                   {stage === "complete" && result
-                    ? `${result.findings.length} findings · ${Math.round(result.findings.reduce((s, f) => s + f.confidence, 0) / (result.findings.length || 1))}%`
+                    ? `${result.findings.length} findings · ${Math.round(result.findings.reduce((s: number, f: Finding) => s + f.confidence, 0) / (result.findings.length || 1))}%`
                     : showMultiComplete
                     ? "Unified report ready"
                     : isScanning

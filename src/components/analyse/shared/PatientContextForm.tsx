@@ -4,7 +4,7 @@ import AnalysisModeSwitcher from "./AnalysisModeSwitcher";
 import type { AnalysisMode } from "@/lib/analyse/types";
 import { useMediaQuery } from "@/hooks/analyse/useMediaQuery";
 
-interface PatientContext {
+export interface PatientContext {
   patientId: string;
   age: string;
   gender: string;

@@ -38,7 +38,7 @@ export default function PresentingComplaintSection({
     const set = new Set(data.associated_symptoms);
     if (set.has(label)) set.delete(label);
     else set.add(label);
-    onChange({ associated_symptoms: [...set] });
+    onChange({ associated_symptoms: Array.from(set) });
   };
 
   return (

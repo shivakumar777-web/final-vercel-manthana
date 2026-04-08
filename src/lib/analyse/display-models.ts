@@ -46,5 +46,5 @@ export function formatLabsModelForDisplay(raw: string): string {
 
 export function uniqueFormattedLabsModels(rawList: string[] | undefined): string[] {
   if (!rawList?.length) return [];
-  return [...new Set(rawList.map(formatLabsModelForDisplay).filter(Boolean))];
+  return Array.from(new Set(rawList.map(formatLabsModelForDisplay).filter(Boolean)));
 }

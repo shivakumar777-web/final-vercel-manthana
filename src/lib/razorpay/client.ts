@@ -60,8 +60,27 @@ export async function createRazorpayCustomer(
 
   return {
     id: customer.id,
-    email: customer.email,
+    email: customer.email ?? email,
     name: customer.name,
+  };
+}
+
+/** Normalize Razorpay subscription fields (API allows nulls; SDK create types omit `customer_id`). */
+function subscriptionFromRazorpay(sub: {
+  id: string;
+  status: string;
+  current_end?: number | null;
+  current_start?: number | null;
+  plan_id: string;
+  customer_id?: string | null;
+}): SubscriptionDetails {
+  return {
+    id: sub.id,
+    status: sub.status as SubscriptionDetails["status"],
+    current_end: sub.current_end ?? 0,
+    current_start: sub.current_start ?? 0,
+    plan_id: sub.plan_id,
+    customer_id: sub.customer_id ?? "",
   };
 }
 
@@ -72,21 +91,15 @@ export async function createRazorpaySubscription(
   customerId: string,
   planId: string
 ): Promise<SubscriptionDetails> {
+  // SDK `RazorpaySubscriptionCreateRequestBody` omits `customer_id`; API accepts it.
   const subscription = await razorpay.subscriptions.create({
     plan_id: planId,
     customer_id: customerId,
-    total_count: 12, // 12 months, or omit for ongoing
-    customer_notify: 1, // Notify customer via email
-  });
+    total_count: 12,
+    customer_notify: 1,
+  } as never);
 
-  return {
-    id: subscription.id,
-    status: subscription.status as SubscriptionDetails["status"],
-    current_end: subscription.current_end,
-    current_start: subscription.current_start,
-    plan_id: subscription.plan_id,
-    customer_id: subscription.customer_id,
-  };
+  return subscriptionFromRazorpay(subscription);
 }
 
 /**
@@ -96,15 +109,8 @@ export async function cancelRazorpaySubscription(
   subscriptionId: string,
   cancelAtEndOfPeriod: boolean = true
 ): Promise<void> {
-  if (cancelAtEndOfPeriod) {
-    // Cancel at end of current billing cycle
-    await razorpay.subscriptions.cancel(subscriptionId, {
-      cancel_at_cycle_end: true,
-    });
-  } else {
-    // Cancel immediately
-    await razorpay.subscriptions.cancel(subscriptionId);
-  }
+  // Second arg: `true` / non-zero = end of cycle; `false` / `0` = immediate (per SDK typings).
+  await razorpay.subscriptions.cancel(subscriptionId, cancelAtEndOfPeriod);
 }
 
 /**
@@ -115,14 +121,7 @@ export async function getRazorpaySubscription(
 ): Promise<SubscriptionDetails> {
   const subscription = await razorpay.subscriptions.fetch(subscriptionId);
 
-  return {
-    id: subscription.id,
-    status: subscription.status as SubscriptionDetails["status"],
-    current_end: subscription.current_end,
-    current_start: subscription.current_start,
-    plan_id: subscription.plan_id,
-    customer_id: subscription.customer_id,
-  };
+  return subscriptionFromRazorpay(subscription);
 }
 
 /**

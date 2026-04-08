@@ -26,7 +26,7 @@ export default function LifestyleSection({
     const s = new Set(data.diet_pattern);
     if (s.has(t)) s.delete(t);
     else s.add(t);
-    onChange({ diet_pattern: [...s] });
+    onChange({ diet_pattern: Array.from(s) });
   };
 
   return (

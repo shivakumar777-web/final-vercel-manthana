@@ -19,7 +19,7 @@ export default function CardiacHistorySection({
     const s = new Set(data.prior_arrhythmia);
     if (s.has(x)) s.delete(x);
     else s.add(x);
-    onChange({ prior_arrhythmia: [...s] });
+    onChange({ prior_arrhythmia: Array.from(s) });
   };
 
   const row = (label: string, checked: boolean, on: (v: boolean) => void) => (
