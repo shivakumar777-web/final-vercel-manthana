@@ -117,8 +117,9 @@ const nextConfig = {
             key: "Content-Security-Policy",
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
-              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com",
+              // FastAPI /docs (proxied at /api/oracle-backend/docs) loads Swagger UI from jsDelivr
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net",
+              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com https://cdn.jsdelivr.net",
               "font-src 'self' https://fonts.gstatic.com data:",
               `img-src 'self' data: blob: ${apiOrigin} https:`,
               `connect-src 'self' ${connectOrigins}`,
