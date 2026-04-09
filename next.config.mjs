@@ -122,7 +122,8 @@ const nextConfig = {
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com https://cdn.jsdelivr.net",
               "font-src 'self' https://fonts.gstatic.com data:",
               `img-src 'self' data: blob: ${apiOrigin} https:`,
-              `connect-src 'self' ${connectOrigins}`,
+              // SW fetch() + Swagger UI may request jsDelivr; connect-src governs fetch(), not script-src alone
+              `connect-src 'self' ${connectOrigins} https://cdn.jsdelivr.net`,
               "media-src 'self' blob:",
               // In-app /viewer iframe loads third-party result pages (user-chosen URLs)
               "frame-src 'self' https: http:",

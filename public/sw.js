@@ -44,5 +44,11 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  // Let cross-origin requests bypass the SW so we don't wrap them in fetch() (avoids tight connect-src on CDNs).
+  const scopeOrigin = new URL(self.registration.scope).origin;
+  if (url.origin !== scopeOrigin) {
+    return;
+  }
+
   event.respondWith(fetch(req));
 });
