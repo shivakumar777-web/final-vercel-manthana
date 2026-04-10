@@ -14,6 +14,8 @@ import { randomId } from "@/lib/analyse/random-id";
 import { LABS_CLOUD_AI_PRIMARY } from "@/lib/analyse/display-models";
 import { useToast } from "@/hooks/useToast";
 import { preflightLabsScan, recordLabsScan } from "@/lib/labs/client";
+import { useProductAccess } from "@/components/ProductAccessProvider";
+import { normalizeSubscriptionPlan } from "@/lib/product-access";
 
 const INITIAL_SESSION: MultiModelSession = {
   id: "",
@@ -28,6 +30,7 @@ const INITIAL_SESSION: MultiModelSession = {
 
 export function useMultiModelAnalysis() {
   const { addToast } = useToast();
+  const { plan, status } = useProductAccess();
   const [session, setSession] = useState<MultiModelSession>(INITIAL_SESSION);
   const abortRef = useRef<AbortController | null>(null);
 
@@ -135,12 +138,17 @@ export function useMultiModelAnalysis() {
             continue;
           }
 
+          const subscriptionTier =
+            status === "active"
+              ? normalizeSubscriptionPlan(plan)
+              : "free";
           const result = await analyzeImage(
             file,
             upload.modality,
             undefined,
             undefined,
             undefined,
+            subscriptionTier,
             ctrl.signal
           );
 

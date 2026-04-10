@@ -11,15 +11,18 @@ export async function runSingleAnalysisFlow(
     patientId?: string;
     clinicalNotes?: string;
     patientContext?: Record<string, unknown>;
+    subscriptionTier?: string;
     signal?: AbortSignal;
   }
 ): Promise<AnalysisResponse> {
-  const { patientId, clinicalNotes, patientContext, signal, ...clientCfg } = config;
+  const { patientId, clinicalNotes, patientContext, subscriptionTier, signal, ...clientCfg } =
+    config;
   const client = createApiClient(clientCfg);
   return client.analyzeImage(file, modality, {
     patientId,
     clinicalNotes,
     patientContext,
+    subscriptionTier,
     signal,
   });
 }

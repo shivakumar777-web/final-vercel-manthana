@@ -25,6 +25,7 @@ export const FRONTEND_TO_BACKEND_MODALITY: Record<string, string> = {
   brain_ct: "ct_brain",
   head_ct: "ct_brain",
   ncct_brain: "ct_brain",
+  ct_brain_vista: "ct_brain_vista",
 };
 
 export function canonicalizeModality(id: string): string {

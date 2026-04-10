@@ -131,6 +131,8 @@ export interface Modality {
   port: number;
   description: string;
   models: string[];
+  /** Premium / hospital-grade product row (e.g. VISTA-3D CT). */
+  premium?: boolean;
 }
 
 export type AnalysisMode = "single" | "multi";

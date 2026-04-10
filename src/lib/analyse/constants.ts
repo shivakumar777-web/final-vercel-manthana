@@ -72,6 +72,16 @@ export const MODALITIES: Modality[] = [
     models: ["Manthana Neuro CT Engine", "Manthana Cloud AI (Kimi K2.5)"],
   },
   {
+    id: "ct_brain_vista",
+    label: "CT Brain VISTA-3D",
+    icon: "CT",
+    port: 8017,
+    description:
+      "NVIDIA VISTA-3D foundation model — 127-class 3D CT segmentation path. Requires volumetric DICOM (ZIP) or NIfTI. Pro subscription required.",
+    models: ["NVIDIA VISTA-3D", "MONAI", "Manthana Cloud AI (Kimi K2.5)"],
+    premium: true,
+  },
+  {
     id: "brain_mri",
     label: "Brain MRI",
     icon: "MRI",
@@ -190,6 +200,9 @@ export function getUploadAcceptTypes(
   if (modality === "lab_report") {
     accept =
       "application/pdf,.pdf,.txt,.csv,.tsv,text/*,image/*";
+  } else if (modality === "ct_brain_vista") {
+    accept =
+      "application/zip,.zip,application/dicom,.dcm,.dic,.nii,.nii.gz";
   } else if (modality === "oral_cancer" || modality === "dermatology") {
     accept = "image/jpeg,image/png,image/webp,image/*";
   } else if (modality === "ecg") {

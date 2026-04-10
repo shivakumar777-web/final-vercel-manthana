@@ -22,6 +22,7 @@ import MultiModelProgress from "@/components/analyse/scanner/MultiModelProgress"
 import CopilotActivation from "@/components/analyse/scanner/CopilotActivation";
 import BottomSheet from "@/components/analyse/shared/BottomSheet";
 import { useAnalysis } from "@/hooks/analyse/useAnalysis";
+import { useGatewayAuthBridge } from "@/hooks/analyse/useGatewayAuthBridge";
 import { useMultiModelAnalysis } from "@/hooks/analyse/useMultiModelAnalysis";
 import { useMediaQuery } from "@/hooks/analyse/useMediaQuery";
 import { useToast } from "@/hooks/useToast";
@@ -68,6 +69,7 @@ const WorklistPanel = dynamic(() => import("@/components/analyse/pacs/WorklistPa
 const PacsSettings = dynamic(() => import("@/components/analyse/pacs/PacsSettings"), { ssr: false });
 
 export default function ScannerPage() {
+  useGatewayAuthBridge();
   const router = useRouter();
   const { addToast } = useToast();
   const {

@@ -18,6 +18,7 @@ const MODALITY_COLORS: Record<string, string> = {
   ct_cardiac: "255,120,160",
   ct_spine: "140,180,255",
   ct_brain: "160,200,255",
+  ct_brain_vista: "255,200,120",
   brain_mri: "0,196,176",
   spine_mri: "0,170,160",
   mri: "0,196,176", // legacy id if present in history
@@ -213,6 +214,23 @@ export default function ModalityBar({ activeModality, onSelect }: Props) {
                     flexShrink: 0,
                   }} />
                   <span>{m.label}</span>
+                  {"premium" in m && m.premium ? (
+                    <span
+                      style={{
+                        marginLeft: 4,
+                        padding: "1px 5px",
+                        borderRadius: 4,
+                        fontSize: 7,
+                        fontWeight: 700,
+                        letterSpacing: "0.06em",
+                        background: "rgba(255,200,120,0.25)",
+                        color: "rgb(255,200,120)",
+                        border: "1px solid rgba(255,200,120,0.4)",
+                      }}
+                    >
+                      PRO
+                    </span>
+                  ) : null}
                 </>
               )}
               {/* Active glow dot */}

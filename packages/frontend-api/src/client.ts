@@ -65,6 +65,8 @@ export function createApiClient(config: ApiClientConfig) {
         patientId?: string;
         clinicalNotes?: string;
         patientContext?: Record<string, unknown>;
+        /** Gateway checks this for premium modalities (e.g. ct_brain_vista). */
+        subscriptionTier?: string;
         signal?: AbortSignal;
       }
     ): Promise<AnalysisResponse> {
@@ -77,9 +79,14 @@ export function createApiClient(config: ApiClientConfig) {
         form.append("patient_context_json", JSON.stringify(options.patientContext));
       }
 
+      const headers: Record<string, string> = { ...authHeaders() };
+      if (modality === "ct_brain_vista") {
+        headers["X-Subscription-Tier"] = (options?.subscriptionTier ?? "free").toLowerCase();
+      }
+
       const res = await fetch(`${baseUrl}/analyze`, {
         method: "POST",
-        headers: authHeaders(),
+        headers,
         body: form,
         signal: options?.signal,
       });

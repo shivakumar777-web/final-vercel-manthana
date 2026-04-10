@@ -13,6 +13,9 @@ const LIGHT = new Set([
   "oral_cancer",
 ]);
 
+/** Premium gateway modalities — same monthly bucket as CT/MRI for Labs caps. */
+const PREMIUM_CT = new Set(["ct_brain_vista"]);
+
 /** USG, mammography, pathology, cytology — shared 15/mo cap on Pro (10% bucket). */
 const MEDIUM = new Set([
   "ultrasound",
@@ -38,6 +41,7 @@ function isCtOrMriModality(m: string): boolean {
 export function labsScanTierForModality(modalityId: string): LabsScanTier {
   const m = (modalityId || "").toLowerCase().trim();
   if (!m) return "light";
+  if (PREMIUM_CT.has(m)) return "ct_mri";
   if (MEDIUM.has(m)) return "medium";
   if (isCtOrMriModality(m)) return "ct_mri";
   if (LIGHT.has(m)) return "light";

@@ -34,6 +34,7 @@ const FRONTEND_TO_BACKEND_MODALITY: Record<string, string> = {
   brain_ct: "ct_brain",
   head_ct: "ct_brain",
   ncct_brain: "ct_brain",
+  ct_brain_vista: "ct_brain_vista",
 };
 
 function normalizeResult(data: unknown): AnalysisResponse {
@@ -110,6 +111,7 @@ export async function analyzeImage(
   patientId?: string,
   clinicalNotes?: string,
   patientContext?: Record<string, unknown>,
+  subscriptionTier?: string,
   signal?: AbortSignal
 ): Promise<AnalysisResponse> {
   const form = new FormData();
@@ -126,9 +128,15 @@ export async function analyzeImage(
   }
 
   const token = getGatewayAuthToken();
+  const headers: Record<string, string> = {};
+  if (token) headers.Authorization = `Bearer ${token}`;
+  if (backendModality === "ct_brain_vista") {
+    headers["X-Subscription-Tier"] = (subscriptionTier ?? "free").toLowerCase();
+  }
+
   const res = await fetch(`${GATEWAY_URL}/analyze`, {
     method: "POST",
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    headers,
     body: form,
     signal,
   });

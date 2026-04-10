@@ -2,6 +2,8 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import type { AnalysisResponse, ScanStage, ImageScan } from "@/lib/analyse/types";
 import { analyzeImage } from "@/lib/analyse/api";
+import { useProductAccess } from "@/components/ProductAccessProvider";
+import { normalizeSubscriptionPlan } from "@/lib/product-access";
 import { randomId } from "@/lib/analyse/random-id";
 import { AnalysisCancelledError } from "@/lib/analyse/errors";
 import { useToast } from "@/hooks/useToast";
@@ -23,6 +25,7 @@ const INITIAL: MultiScanState = {
 
 export function useAnalysis() {
   const { addToast } = useToast();
+  const { plan, status } = useProductAccess();
   const [state, setState] = useState<MultiScanState>(INITIAL);
   const abortRef = useRef<AbortController | null>(null);
   const queueRef = useRef<boolean>(false);
@@ -137,6 +140,10 @@ export function useAnalysis() {
     analyzeModalityForApi?: string
   ) => {
     const apiModality = analyzeModalityForApi ?? modality;
+    const subscriptionTier =
+      status === "active"
+        ? normalizeSubscriptionPlan(plan)
+        : "free";
     if (!apiModality || apiModality === "auto") {
       // Frontend-only "auto" state must not be sent to the backend.
       throw new Error("Please select a specific modality before scanning.");
@@ -199,6 +206,7 @@ export function useAnalysis() {
         undefined,
         clinicalNotes,
         patientContext,
+        subscriptionTier,
         ctrl.signal
       );
       if (ctrl.signal.aborted) return;
