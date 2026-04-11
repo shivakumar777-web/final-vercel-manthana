@@ -11,7 +11,14 @@ export function labsQuotaMessage(
   plan?: PaidLabsPlan
 ): string {
   const L = plan ? labsLimitsForPlan(plan) : PRO_LABS_LIMITS;
-  const brand = plan === "proplus" ? "Pro Plus" : "Pro";
+  const brand =
+    plan === "enterprise"
+      ? "Enterprise"
+      : plan === "premium"
+      ? "Premium"
+      : plan === "proplus"
+      ? "Pro Plus"
+      : "Pro";
   switch (code) {
     case "daily_cap":
       return `Daily Labs limit reached (${limit ?? L.dailyMax} scans per day on ${brand}).`;

@@ -133,6 +133,9 @@ export interface Modality {
   models: string[];
   /** Premium / hospital-grade product row (e.g. VISTA-3D CT). */
   premium?: boolean;
+  tier?: "free" | "pro" | "proplus" | "premium" | "enterprise";
+  multiStep?: boolean;
+  strict3D?: boolean;
 }
 
 export type AnalysisMode = "single" | "multi";

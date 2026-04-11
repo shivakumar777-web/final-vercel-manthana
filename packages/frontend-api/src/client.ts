@@ -80,7 +80,7 @@ export function createApiClient(config: ApiClientConfig) {
       }
 
       const headers: Record<string, string> = { ...authHeaders() };
-      if (modality === "ct_brain_vista") {
+      if (modality === "ct_brain_vista" || modality === "premium_ct_unified") {
         headers["X-Subscription-Tier"] = (options?.subscriptionTier ?? "free").toLowerCase();
       }
 

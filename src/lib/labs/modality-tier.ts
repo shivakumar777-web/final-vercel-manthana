@@ -14,7 +14,7 @@ const LIGHT = new Set([
 ]);
 
 /** Premium gateway modalities — same monthly bucket as CT/MRI for Labs caps. */
-const PREMIUM_CT = new Set(["ct_brain_vista"]);
+const PREMIUM_CT = new Set(["ct_brain_vista", "premium_ct_unified"]);
 
 /** USG, mammography, pathology, cytology — shared 15/mo cap on Pro (10% bucket). */
 const MEDIUM = new Set([
@@ -65,8 +65,17 @@ export const PREMIUM_LABS_LIMITS = {
   mediumMonthly: 45,
 } as const;
 
-export type PaidLabsPlan = "pro" | "proplus";
+export const PREMIUM_CT_LIMITS = {
+  totalMonthly: 50,
+  dailyMax: 5,
+  lightMonthly: 0,
+  ctMriMonthly: 50,
+  mediumMonthly: 0,
+} as const;
+
+export type PaidLabsPlan = "pro" | "proplus" | "premium" | "enterprise";
 
 export function labsLimitsForPlan(plan: PaidLabsPlan) {
+  if (plan === "premium" || plan === "enterprise") return PREMIUM_CT_LIMITS;
   return PRO_LABS_LIMITS;
 }

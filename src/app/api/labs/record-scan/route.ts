@@ -95,7 +95,10 @@ export async function POST(req: Request) {
             ? 429
             : 403;
         const planNorm =
-          result?.plan === "proplus" || result?.plan === "pro"
+          result?.plan === "proplus" ||
+          result?.plan === "pro" ||
+          result?.plan === "premium" ||
+          result?.plan === "enterprise"
             ? (result.plan as PaidLabsPlan)
             : undefined;
         return NextResponse.json(

@@ -20,12 +20,13 @@ export function normalizeSubscriptionPlan(
   plan: string | null | undefined
 ): string {
   const p = (plan || "free").toLowerCase();
-  if (p === "enterprise") return "proplus";
+  if (p === "enterprise") return "enterprise";
   return p;
 }
 
 /** Plans that unlock Manthana Labs (/analyse) and full Oracle (active subscription). */
-const LABS_UNLOCK_PLANS = new Set(["pro", "proplus"]);
+const LABS_UNLOCK_PLANS = new Set(["pro", "proplus", "premium", "enterprise"]);
+const PREMIUM_CT_UNLOCK_PLANS = new Set(["premium", "enterprise"]);
 
 export function hasActiveProLabsPlan(profile: ProfileAccessInput | null): boolean {
   if (!profile) return false;
@@ -67,6 +68,13 @@ export function canAccessLabs(profile: ProfileAccessInput | null): boolean {
 
 export function isOracleFullTier(profile: ProfileAccessInput | null): boolean {
   return hasActiveProLabsPlan(profile);
+}
+
+export function hasPremiumCTAccess(profile: ProfileAccessInput | null): boolean {
+  if (!profile) return false;
+  const active = profile.subscription_status === "active";
+  const plan = normalizeSubscriptionPlan(profile.subscription_plan);
+  return active && PREMIUM_CT_UNLOCK_PLANS.has(plan);
 }
 
 export function freeOracleDailyCap(): number {

@@ -80,6 +80,22 @@ export const MODALITIES: Modality[] = [
       "NVIDIA VISTA-3D foundation model — 127-class 3D CT segmentation path. Requires volumetric DICOM (ZIP) or NIfTI. Pro subscription required.",
     models: ["NVIDIA VISTA-3D", "MONAI", "Manthana Cloud AI (Kimi K2.5)"],
     premium: true,
+    tier: "pro",
+    multiStep: true,
+    strict3D: true,
+  },
+  {
+    id: "premium_ct_unified",
+    label: "Premium 3D CT",
+    icon: "CT",
+    port: 8018,
+    description:
+      "Unified NVIDIA VISTA-3D premium pipeline for strict volumetric CT (DICOM ZIP or NIfTI), with 127-class segmentation and multi-step processing. Premium subscription required.",
+    models: ["NVIDIA VISTA-3D (127 classes)", "MONAI", "Manthana Cloud AI (Kimi K2.5)"],
+    premium: true,
+    tier: "premium",
+    multiStep: true,
+    strict3D: true,
   },
   {
     id: "brain_mri",
@@ -200,6 +216,9 @@ export function getUploadAcceptTypes(
   if (modality === "lab_report") {
     accept =
       "application/pdf,.pdf,.txt,.csv,.tsv,text/*,image/*";
+  } else if (modality === "premium_ct_unified") {
+    accept =
+      "application/zip,.zip,application/dicom,.dcm,.dic,.nii,.nii.gz";
   } else if (modality === "ct_brain_vista") {
     accept =
       "application/zip,.zip,application/dicom,.dcm,.dic,.nii,.nii.gz";

@@ -35,6 +35,7 @@ const FRONTEND_TO_BACKEND_MODALITY: Record<string, string> = {
   head_ct: "ct_brain",
   ncct_brain: "ct_brain",
   ct_brain_vista: "ct_brain_vista",
+  premium_ct_unified: "premium_ct_unified",
 };
 
 function normalizeResult(data: unknown): AnalysisResponse {
@@ -130,7 +131,7 @@ export async function analyzeImage(
   const token = getGatewayAuthToken();
   const headers: Record<string, string> = {};
   if (token) headers.Authorization = `Bearer ${token}`;
-  if (backendModality === "ct_brain_vista") {
+  if (backendModality === "ct_brain_vista" || backendModality === "premium_ct_unified") {
     headers["X-Subscription-Tier"] = (subscriptionTier ?? "free").toLowerCase();
   }
 

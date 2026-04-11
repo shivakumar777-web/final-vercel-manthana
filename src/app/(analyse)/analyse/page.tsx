@@ -19,6 +19,8 @@ import { ConsentGate } from "@/components/analyse/shared/ConsentGate";
 import MultiModelSelector from "@/components/analyse/scanner/MultiModelSelector";
 import MultiModelUploadWizard from "@/components/analyse/scanner/MultiModelUploadWizard";
 import MultiModelProgress from "@/components/analyse/scanner/MultiModelProgress";
+import PremiumCTRegionSelector from "@/components/analyse/PremiumCTRegionSelector";
+import PremiumCTProgressPanel from "@/components/analyse/PremiumCTProgressPanel";
 import CopilotActivation from "@/components/analyse/scanner/CopilotActivation";
 import BottomSheet from "@/components/analyse/shared/BottomSheet";
 import { useAnalysis } from "@/hooks/analyse/useAnalysis";
@@ -60,6 +62,7 @@ import {
   ecgFormHasRequiredDemographics,
   type EcgScannerContext,
 } from "@/lib/analyse/ecgPatientContext";
+import type { PremiumCtRegion } from "@/lib/analyse/premium-constants";
 import dynamic from "next/dynamic";
 
 const isCtUiModality = (m: string) => m === "ct" || isCtProductModality(m);
@@ -131,6 +134,8 @@ export default function ScannerPage() {
     colorScheme: "jet",
   });
   const [dicomFiles, setDicomFiles] = useState<File[]>([]);
+  const [premiumCtRegion, setPremiumCtRegion] =
+    useState<PremiumCtRegion>("full_body");
   /** CT flow: wizard output + optional scanner calibration (sent in patient_context_json). */
   const [ctConfig, setCtConfig] = useState<CtWizardState | null>(null);
   const [pacsOpen, setPacsOpen] = useState(false);
@@ -260,6 +265,15 @@ export default function ScannerPage() {
       let pctx: Record<string, unknown> | undefined;
       if (modality === "dermatology") {
         pctx = basePatientJson;
+      } else if (modality === "premium_ct_unified") {
+        pctx = {
+          ...basePatientJson,
+          premium_ct: {
+            vista_region_preference: premiumCtRegion,
+            strict_3d_volumetric_required: true,
+            multi_step_processing: true,
+          },
+        };
       } else if (isCtUiModality(modality) && ctConfig) {
         const lockedWizard = {
           ...ctConfig,
@@ -275,7 +289,7 @@ export default function ScannerPage() {
       }
       return { notes, pctx };
     },
-    [modality, ctConfig, patientCtx, ecgScannerContext]
+    [modality, ctConfig, patientCtx, ecgScannerContext, premiumCtRegion]
   );
 
   const showCtWizard =
@@ -367,6 +381,14 @@ export default function ScannerPage() {
       const files = Array.from(e.target.files || []);
       if (files.length > 0) {
         if (!consentGiven) {
+          e.target.value = "";
+          return;
+        }
+        if (modality === "premium_ct_unified") {
+          addToast(
+            "Premium 3D CT accepts DICOM ZIP or NIfTI only. Camera uploads are disabled.",
+            "warning"
+          );
           e.target.value = "";
           return;
         }
@@ -625,6 +647,13 @@ export default function ScannerPage() {
             )}
           </div>
 
+          {modality === "premium_ct_unified" ? (
+            <PremiumCTRegionSelector
+              value={premiumCtRegion}
+              onChange={setPremiumCtRegion}
+            />
+          ) : null}
+
           {isCtUiModality(modality) && ctConfig && !showCtWizard && (
             <div
               className="glass-panel"
@@ -700,22 +729,27 @@ export default function ScannerPage() {
                   onComplete={setCtConfig}
                 />
               ) : (
-              <ScanViewport
-                onFileDrop={handleFile}
-                imageUrl={imageUrl}
-                stage={stage}
-                zoom={zoom}
-                modality={modality}
-                acceptOverride={isCtUiModality(modality) ? ctFileAccept : undefined}
-                pro2dOnly={proLabs2dOnly}
-                dicomFiles={dicomFiles}
-                onMetadataExtracted={handleDicomMetadata}
-                heatmapUrl={result?.heatmap_url}
-                heatmapState={heatmapState}
-                onHeatmapStateChange={setHeatmapState}
-                findings={result?.findings}
-              />
+                <ScanViewport
+                  onFileDrop={handleFile}
+                  imageUrl={imageUrl}
+                  stage={stage}
+                  zoom={zoom}
+                  modality={modality}
+                  acceptOverride={isCtUiModality(modality) ? ctFileAccept : undefined}
+                  pro2dOnly={proLabs2dOnly}
+                  dicomFiles={dicomFiles}
+                  onMetadataExtracted={handleDicomMetadata}
+                  heatmapUrl={result?.heatmap_url}
+                  heatmapState={heatmapState}
+                  onHeatmapStateChange={setHeatmapState}
+                  findings={result?.findings}
+                />
               )}
+              {modality === "premium_ct_unified" && stage === "analyzing" ? (
+                <div style={{ marginTop: 10 }}>
+                  <PremiumCTProgressPanel step="vista_segmentation" />
+                </div>
+              ) : null}
               <ViewportControls
                 zoom={zoom}
                 onZoomChange={setZoom}
