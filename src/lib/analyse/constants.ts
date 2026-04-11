@@ -23,8 +23,16 @@ export const MODALITIES: Modality[] = [
     label: "X-Ray",
     icon: "XRAY",
     port: 8001,
-    description: "Any body X-ray — chest, bone, abdomen, spine, skull (auto-detects region)",
-    models: ["MedRAX-2", "CheXagent", "YOLOv8", "TotalSeg", "Manthana Cloud AI (Kimi K2.5)"],
+    description:
+      "Any body X-ray — chest, bone, abdomen, spine, skull (auto-detects region). Optional **MedGemma chest** flow: TXRV → follow-up questions → Kimi final report.",
+    models: [
+      "TorchXRayVision (DenseNet ensemble)",
+      "MedRAX-2",
+      "CheXagent",
+      "YOLOv8",
+      "TotalSeg",
+      "Optional: MedGemma 4B + Manthana Cloud AI (Kimi K2.5)",
+    ],
   },
   {
     id: "ct_abdomen",

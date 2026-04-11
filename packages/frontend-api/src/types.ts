@@ -105,6 +105,10 @@ export type ScanStage =
   | "analyzing"
   | "heatmap"
   | "extracting"
+  /** Chest X-ray MedGemma flow: TXRV done; waiting for user answers / skip. */
+  | "medgemma_questions"
+  /** Final Kimi narrative generation after Q&A. */
+  | "medgemma_finalizing"
   | "complete"
   | "error";
 
@@ -122,6 +126,16 @@ export interface ImageScan {
   patientContext?: Record<string, unknown>;
   /** Gateway modality override (e.g. chest_ct while UI shows ct). */
   analyzeModalityForApi?: string;
+  /** When true (set for X-ray uploads), run TXRV-only then MedGemma Q&A + Kimi final report. */
+  useMedgemmaChest?: boolean;
+  medgemmaSessionId?: string;
+  medgemmaQuestions?: Array<{ id: string; question: string; why_needed?: string }>;
+  medgemmaDraft?: {
+    impression_draft?: string;
+    key_observations?: unknown[];
+    uncertainties?: unknown[];
+    safety_flags?: unknown[];
+  };
 }
 
 export interface Modality {

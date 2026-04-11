@@ -68,6 +68,8 @@ export function createApiClient(config: ApiClientConfig) {
         /** Gateway checks this for premium modalities (e.g. ct_brain_vista). */
         subscriptionTier?: string;
         signal?: AbortSignal;
+        /** Chest X-ray: TXRV only, no Kimi narrative (MedGemma middle layer). */
+        skipLlmNarrative?: boolean;
       }
     ): Promise<AnalysisResponse> {
       const form = new FormData();
@@ -77,6 +79,9 @@ export function createApiClient(config: ApiClientConfig) {
       if (options?.clinicalNotes) form.append("clinical_notes", options.clinicalNotes);
       if (options?.patientContext && Object.keys(options.patientContext).length > 0) {
         form.append("patient_context_json", JSON.stringify(options.patientContext));
+      }
+      if (options?.skipLlmNarrative && modality === "xray") {
+        form.append("skip_llm_narrative", "true");
       }
 
       const headers: Record<string, string> = { ...authHeaders() };

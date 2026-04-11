@@ -85,7 +85,7 @@ export default function ScanViewport({
   const cameraRef = useRef<HTMLInputElement>(null);
   const dicomViewportRef = useRef<DicomViewportHandle>(null);
 
-  const isScanning = !["idle", "complete", "error"].includes(stage);
+  const isScanning = !["idle", "complete", "error", "medgemma_questions"].includes(stage);
   const isComplete = stage === "complete";
   const isDicomMode = dicomFiles && dicomFiles.length > 0 && detectDicom(dicomFiles);
   const hasHeatmap = isComplete && (!!heatmapUrl || findings.length > 0);
@@ -337,6 +337,8 @@ export default function ScanViewport({
             {stage === "analyzing" && "ANALYSING PIXEL MATRIX…"}
             {stage === "heatmap" && "GENERATING ATTENTION MAP…"}
             {stage === "extracting" && "EXTRACTING FINDINGS…"}
+            {stage === "medgemma_questions" && "CLINICAL FOLLOW-UP (MEDGEMMA)…"}
+            {stage === "medgemma_finalizing" && "FINAL REPORT (KIMI)…"}
           </span>
         </div>
       )}

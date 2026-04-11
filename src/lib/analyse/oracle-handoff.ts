@@ -69,6 +69,18 @@ export function formatSingleLabsReportForOracle(
   lines.push("### Impression");
   lines.push(result.impression || "_None stated._");
   lines.push("");
+  const st = result.structures;
+  if (
+    typeof st === "object" &&
+    st !== null &&
+    !Array.isArray(st) &&
+    typeof (st as Record<string, unknown>).narrative_report === "string" &&
+    String((st as Record<string, unknown>).narrative_report).trim()
+  ) {
+    lines.push("### AI interpretation report (MedGemma + Kimi)");
+    lines.push(String((st as Record<string, unknown>).narrative_report).trim());
+    lines.push("");
+  }
   if (result.critical_values?.length) {
     lines.push("### Critical values / flags");
     lines.push(result.critical_values.map((x) => `- ${x}`).join("\n"));
@@ -132,6 +144,13 @@ export function formatUnifiedLabsReportForOracle(
   }
   return lines.join("\n");
 }
+
+/** Follow-up when the Labs handoff includes a MedGemma + Kimi chest narrative (do not re-write the full report). */
+export const MEDGEMMA_ORACLE_FOLLOWUP_FROM_LABS =
+  "The user already has a **structured chest X-ray report** above (TorchXRayVision scores + optional Q&A + Kimi narrative). " +
+  "Use it as the primary imaging context. **Do not reproduce the entire report** unless asked. " +
+  "Clarify uncertainties, discuss differentials and follow-up, and align with the domain selector (M5 vs single tradition). " +
+  "Note limitations of single-view AI and encourage in-person care when appropriate.";
 
 export const DEFAULT_ORACLE_FOLLOWUP_FROM_LABS =
   "Using the Manthana Labs report above as the primary imaging context, give structured interpretations aligned with how I have set the domain selector:\n\n" +

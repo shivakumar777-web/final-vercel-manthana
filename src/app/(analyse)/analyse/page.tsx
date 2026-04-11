@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import TopBar from "@/components/analyse/layout/TopBar";
 import ModalityBar from "@/components/analyse/layout/ModalityBar";
@@ -46,6 +46,7 @@ import {
   formatSingleLabsReportForOracle,
   formatUnifiedLabsReportForOracle,
   DEFAULT_ORACLE_FOLLOWUP_FROM_LABS,
+  MEDGEMMA_ORACLE_FOLLOWUP_FROM_LABS,
   ORACLE_LABS_HANDOFF_QUERY,
 } from "@/lib/analyse/oracle-handoff";
 import {
@@ -93,6 +94,9 @@ export default function ScannerPage() {
     reset,
     analysisElapsedMs,
     retryImage,
+    medgemmaChestEnabled,
+    setMedgemmaChestEnabled,
+    submitMedgemmaAnswers,
   } = useAnalysis();
 
   const {
@@ -142,8 +146,24 @@ export default function ScannerPage() {
   const [pacsTab, setPacsTab] = useState<"studies" | "worklist" | "settings">("studies");
   const { isMobile, isTablet, isDesktop } = useMediaQuery();
   const compact = isMobile || isTablet;
-  const isScanning = !["idle", "complete", "error"].includes(stage);
+  const isScanning = !["idle", "complete", "error", "medgemma_questions"].includes(stage);
   const activePatientId = modality === "ecg" ? ecgScannerContext.patientId : patientCtx.patientId;
+  const activeScan = images[activeIndex];
+
+  const medgemmaQaPanel = useMemo(() => {
+    if (stage !== "medgemma_questions" || !activeScan?.medgemmaQuestions?.length) return undefined;
+    const id = activeScan.id;
+    return {
+      questions: activeScan.medgemmaQuestions,
+      impressionDraft: activeScan.medgemmaDraft?.impression_draft,
+      onSubmit: (answers: Record<string, string>) => {
+        void submitMedgemmaAnswers(id, answers, false);
+      },
+      onSkipAll: () => {
+        void submitMedgemmaAnswers(id, {}, true);
+      },
+    };
+  }, [stage, activeScan, submitMedgemmaAnswers]);
 
   const [consentGiven, setConsentGiven] = useState(false);
   /** Active Pro (not Plus): file inputs omit video extensions for 2D-only policy. */
@@ -482,9 +502,17 @@ export default function ScannerPage() {
       uiModalityId: detectedModality ?? modality,
       patientId: activePatientId,
     });
+    const st = result.structures;
+    const isMedgemmaFlow =
+      typeof st === "object" &&
+      st !== null &&
+      !Array.isArray(st) &&
+      (st as Record<string, unknown>).medgemma_cxr_flow === true;
     storeOracleLabsHandoff({
       reportMarkdown,
-      suggestedFollowUp: DEFAULT_ORACLE_FOLLOWUP_FROM_LABS,
+      suggestedFollowUp: isMedgemmaFlow
+        ? MEDGEMMA_ORACLE_FOLLOWUP_FROM_LABS
+        : DEFAULT_ORACLE_FOLLOWUP_FROM_LABS,
       scanKind: "single",
       labsModalityLabel: modality,
       patientId: activePatientId,
@@ -646,6 +674,50 @@ export default function ScannerPage() {
               />
             )}
           </div>
+
+          {modality === "xray" && analysisMode === "single" && (
+            <div
+              className="glass-panel"
+              style={{
+                padding: "10px 16px 12px",
+                borderRadius: 0,
+                borderTop: "1px solid rgba(255,255,255,0.06)",
+                borderBottom: "none",
+              }}
+            >
+              <label
+                style={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: 10,
+                  cursor:
+                    isScanning || stage === "medgemma_questions" || stage === "medgemma_finalizing"
+                      ? "not-allowed"
+                      : "pointer",
+                  opacity:
+                    isScanning || stage === "medgemma_questions" || stage === "medgemma_finalizing"
+                      ? 0.55
+                      : 1,
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={medgemmaChestEnabled}
+                  disabled={
+                    isScanning || stage === "medgemma_questions" || stage === "medgemma_finalizing"
+                  }
+                  onChange={(e) => setMedgemmaChestEnabled(e.target.checked)}
+                  style={{ marginTop: 3 }}
+                />
+                <span className="font-body" style={{ fontSize: 12, color: "var(--text-70)", lineHeight: 1.5 }}>
+                  <strong style={{ color: "var(--text-90)" }}>MedGemma chest (production)</strong>
+                  — runs TorchXRayVision first, then MedGemma with your patient context, asks a few follow-up
+                  questions, then generates the final report with Kimi. Patient context above is sent with the
+                  image. Use &quot;Ask Manthana Oracle&quot; afterward for chat (Quick = concise model).
+                </span>
+              </label>
+            </div>
+          )}
 
           {modality === "premium_ct_unified" ? (
             <PremiumCTRegionSelector
@@ -910,6 +982,7 @@ export default function ScannerPage() {
                 onAskAI={handleOpenOracleFromLabs}
                 heatmapState={heatmapState}
                 onHeatmapStateChange={setHeatmapState}
+                medgemmaQa={medgemmaQaPanel}
               />
             )}
             {showMultiComplete && multiSession.unifiedResult && (
@@ -961,6 +1034,7 @@ export default function ScannerPage() {
                 onAskAI={handleOpenOracleFromLabs}
                 heatmapState={heatmapState}
                 onHeatmapStateChange={setHeatmapState}
+                medgemmaQa={medgemmaQaPanel}
               />
             )}
             {showMultiComplete && multiSession.unifiedResult && (

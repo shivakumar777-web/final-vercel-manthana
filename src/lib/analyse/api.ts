@@ -113,7 +113,8 @@ export async function analyzeImage(
   clinicalNotes?: string,
   patientContext?: Record<string, unknown>,
   subscriptionTier?: string,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  options?: { skipLlmNarrative?: boolean }
 ): Promise<AnalysisResponse> {
   const form = new FormData();
   form.append("file", file);
@@ -126,6 +127,9 @@ export async function analyzeImage(
   if (clinicalNotes) form.append("clinical_notes", clinicalNotes);
   if (patientContext && Object.keys(patientContext).length > 0) {
     form.append("patient_context_json", JSON.stringify(patientContext));
+  }
+  if (options?.skipLlmNarrative && backendModality === "xray") {
+    form.append("skip_llm_narrative", "true");
   }
 
   const token = getGatewayAuthToken();
@@ -429,4 +433,81 @@ export async function getPacsConfig(): Promise<PacsConfig | null> {
   } catch {
     return null;
   }
+}
+
+/** MedGemma CXR middle layer — after TXRV-only X-ray (`analyzeImage` with `skipLlmNarrative`). */
+export type CxrMedgemmaStartResponse = {
+  session_id: string;
+  follow_up_questions: unknown[];
+  impression_draft?: string;
+  key_observations?: unknown[];
+  uncertainties?: unknown[];
+  safety_flags?: unknown[];
+  models_used?: string[];
+};
+
+export async function cxrMedgemmaSessionStart(
+  file: File,
+  pathologyScores: Record<string, unknown>,
+  patientContext?: Record<string, unknown>,
+  signal?: AbortSignal
+): Promise<CxrMedgemmaStartResponse> {
+  const form = new FormData();
+  form.append("file", file);
+  form.append("pathology_scores_json", JSON.stringify(pathologyScores));
+  if (patientContext && Object.keys(patientContext).length > 0) {
+    form.append("patient_context_json", JSON.stringify(patientContext));
+  }
+  const token = getGatewayAuthToken();
+  const res = await fetch(`${GATEWAY_URL}/cxr-medgemma/session/start`, {
+    method: "POST",
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: form,
+    signal,
+  });
+  if (res.status === 401) {
+    throw new Error("Authentication required. Please log in.");
+  }
+  if (!res.ok) {
+    const err = await readGatewayError(res);
+    throw new Error(`CXR MedGemma start failed (${res.status}): ${err}`);
+  }
+  return res.json() as Promise<CxrMedgemmaStartResponse>;
+}
+
+export type CxrMedgemmaCompleteResponse = {
+  session_id: string;
+  narrative_report: string;
+  answers_recorded?: Record<string, string>;
+  models_used?: string[];
+};
+
+export async function cxrMedgemmaSessionComplete(
+  sessionId: string,
+  answers: Record<string, string> | undefined,
+  skipAll: boolean,
+  signal?: AbortSignal
+): Promise<CxrMedgemmaCompleteResponse> {
+  const token = getGatewayAuthToken();
+  const res = await fetch(`${GATEWAY_URL}/cxr-medgemma/session/complete`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify({
+      session_id: sessionId,
+      answers: answers ?? {},
+      skip_all: skipAll,
+    }),
+    signal,
+  });
+  if (res.status === 401) {
+    throw new Error("Authentication required. Please log in.");
+  }
+  if (!res.ok) {
+    const err = await readGatewayError(res);
+    throw new Error(`CXR MedGemma finalize failed (${res.status}): ${err}`);
+  }
+  return res.json() as Promise<CxrMedgemmaCompleteResponse>;
 }

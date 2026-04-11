@@ -1,7 +1,12 @@
 "use client";
 import { useState, useCallback, useRef, useEffect } from "react";
 import type { AnalysisResponse, ScanStage, ImageScan } from "@/lib/analyse/types";
-import { analyzeImage } from "@/lib/analyse/api";
+import {
+  analyzeImage,
+  cxrMedgemmaSessionComplete,
+  cxrMedgemmaSessionStart,
+} from "@/lib/analyse/api";
+import { mergeTxrvWithMedgemmaNarrative } from "@/lib/analyse/medgemma-merge";
 import { useProductAccess } from "@/components/ProductAccessProvider";
 import { normalizeSubscriptionPlan } from "@/lib/product-access";
 import { randomId } from "@/lib/analyse/random-id";
@@ -14,6 +19,8 @@ interface MultiScanState {
   activeIndex: number;
   modality: string;
   zoom: number;
+  /** When true, next X-ray uploads use TXRV-only + MedGemma Q&A + Kimi final report. */
+  medgemmaChestEnabled: boolean;
 }
 
 const INITIAL: MultiScanState = {
@@ -21,6 +28,7 @@ const INITIAL: MultiScanState = {
   activeIndex: 0,
   modality: "xray",
   zoom: 1,
+  medgemmaChestEnabled: false,
 };
 
 export function useAnalysis() {
@@ -35,6 +43,28 @@ export function useAnalysis() {
   useEffect(() => {
     stateRef.current = state;
   }, [state]);
+
+  type RunScanFn = (
+    scanImg: ImageScan,
+    modality: string,
+    clinicalNotes?: string,
+    patientContext?: Record<string, unknown>,
+    analyzeModalityForApi?: string
+  ) => Promise<void>;
+
+  const runScanRef = useRef<RunScanFn>(async () => {
+    throw new Error("runScan not initialized");
+  });
+
+  const startBatchInnerRef = useRef<
+    (
+      images: ImageScan[],
+      modality: string,
+      clinicalNotes?: string,
+      patientContext?: Record<string, unknown>,
+      analyzeModalityForApi?: string
+    ) => Promise<void>
+  >(async () => {});
 
   /* ── Derived state from active image ── */
   const active = state.images[state.activeIndex] ?? null;
@@ -53,33 +83,33 @@ export function useAnalysis() {
       /** When set, sent to the gateway as `modality` (e.g. chest_ct) while UI keeps `modality` (e.g. ct). */
       analyzeModalityForApi?: string
     ) => {
-      const newImages: ImageScan[] = files.map((file) => ({
-        id: randomId(),
-        file,
-        url: URL.createObjectURL(file),
-        stage: "idle" as ScanStage,
-        detectedModality: null,
-        result: null,
-        clinicalNotes,
-        patientContext,
-        analyzeModalityForApi,
-      }));
-
+      let created: ImageScan[] = [];
       setState((s) => {
-        const updated = {
+        const useMedgemmaChest = modality === "xray" && s.medgemmaChestEnabled;
+        created = files.map((file) => ({
+          id: randomId(),
+          file,
+          url: URL.createObjectURL(file),
+          stage: "idle" as ScanStage,
+          detectedModality: null,
+          result: null,
+          clinicalNotes,
+          patientContext,
+          analyzeModalityForApi,
+          useMedgemmaChest,
+        }));
+        return {
           ...s,
-          images: [...s.images, ...newImages],
-          activeIndex: s.images.length, // focus first new image
+          images: [...s.images, ...created],
+          activeIndex: s.images.length,
           modality,
         };
-        return updated;
       });
 
-      // Start batch scan after state updates
       setTimeout(
         () =>
-          startBatchScan(
-            newImages,
+          void startBatchInnerRef.current(
+            created,
             modality,
             clinicalNotes,
             patientContext,
@@ -105,40 +135,16 @@ export function useAnalysis() {
     [addFiles]
   );
 
-  /* ── Batch scan — analyze images sequentially ── */
-  const startBatchScan = async (
-    images: ImageScan[],
-    modality: string,
-    clinicalNotes?: string,
-    patientContext?: Record<string, unknown>,
-    analyzeModalityForApi?: string
-  ) => {
-    if (queueRef.current) return; // already scanning
-    queueRef.current = true;
-
-    for (const img of images) {
-      await scanSingleImage(
-        img.id,
-        img.file,
-        modality,
-        clinicalNotes,
-        patientContext,
-        analyzeModalityForApi
-      );
-    }
-
-    queueRef.current = false;
-  };
-
   /* ── Scan one image through the 7-stage cinematic sequence ── */
   const scanSingleImage = async (
-    imageId: string,
-    file: File,
+    scanImg: ImageScan,
     modality: string,
     clinicalNotes?: string,
     patientContext?: Record<string, unknown>,
     analyzeModalityForApi?: string
   ) => {
+    const imageId = scanImg.id;
+    const file = scanImg.file;
     const apiModality = analyzeModalityForApi ?? modality;
     const subscriptionTier =
       status === "active"
@@ -200,6 +206,7 @@ export function useAnalysis() {
 
     // Actually call the API
     try {
+      const skipLlm = Boolean(scanImg.useMedgemmaChest && apiModality === "xray");
       const initial = await analyzeImage(
         file,
         apiModality,
@@ -207,13 +214,65 @@ export function useAnalysis() {
         clinicalNotes,
         patientContext,
         subscriptionTier,
-        ctrl.signal
+        ctrl.signal,
+        skipLlm ? { skipLlmNarrative: true } : undefined
       );
       if (ctrl.signal.aborted) return;
 
-      const result: AnalysisResponse = initial;
+      const txrvResult: AnalysisResponse = initial;
+      const scores = txrvResult.pathology_scores || {};
+      const hasTxrv = Object.keys(scores).length > 0;
 
-      updateImage({ stage: "heatmap", detectedModality: result.modality });
+      if (skipLlm && hasTxrv) {
+        try {
+          const start = await cxrMedgemmaSessionStart(
+            file,
+            scores as Record<string, unknown>,
+            patientContext,
+            ctrl.signal
+          );
+          if (ctrl.signal.aborted) return;
+
+          updateImage({
+            stage: "medgemma_questions",
+            result: txrvResult,
+            detectedModality: txrvResult.modality,
+            medgemmaSessionId: start.session_id,
+            medgemmaQuestions: (start.follow_up_questions || []) as NonNullable<
+              ImageScan["medgemmaQuestions"]
+            >,
+            medgemmaDraft: {
+              impression_draft: start.impression_draft,
+              key_observations: start.key_observations,
+              uncertainties: start.uncertainties,
+              safety_flags: start.safety_flags,
+            },
+          });
+
+          void recordLabsScan(apiModality).then((rec) => {
+            if (!rec.ok && rec.error) {
+              addToast(rec.error, "warning", 7000);
+            }
+          });
+          return;
+        } catch (mgErr) {
+          addToast(
+            mgErr instanceof Error
+              ? mgErr.message
+              : "MedGemma session could not start. Showing TXRV-only results.",
+            "warning",
+            9000
+          );
+        }
+      } else if (skipLlm && !hasTxrv) {
+        addToast(
+          "MedGemma chest flow needs TorchXRay-style scores on this image. Finishing without Q&A.",
+          "info",
+          8000
+        );
+      }
+
+      updateImage({ stage: "heatmap", detectedModality: txrvResult.modality });
       await delay(600);
       if (ctrl.signal.aborted) return;
 
@@ -221,7 +280,7 @@ export function useAnalysis() {
       await delay(400);
       if (ctrl.signal.aborted) return;
 
-      updateImage({ stage: "complete", result, detectedModality: result.modality });
+      updateImage({ stage: "complete", result: txrvResult, detectedModality: txrvResult.modality });
 
       void recordLabsScan(apiModality).then((rec) => {
         if (!rec.ok && rec.error) {
@@ -235,6 +294,28 @@ export function useAnalysis() {
         error: error instanceof Error ? error.message : "Analysis failed. Please try again.",
       });
     }
+  };
+
+  runScanRef.current = scanSingleImage;
+  startBatchInnerRef.current = async (
+    images: ImageScan[],
+    modality: string,
+    clinicalNotes?: string,
+    patientContext?: Record<string, unknown>,
+    analyzeModalityForApi?: string
+  ) => {
+    if (queueRef.current) return;
+    queueRef.current = true;
+    for (const img of images) {
+      await runScanRef.current(
+        img,
+        modality,
+        clinicalNotes,
+        patientContext,
+        analyzeModalityForApi
+      );
+    }
+    queueRef.current = false;
   };
 
   /* ── Select image by index ── */
@@ -273,15 +354,17 @@ export function useAnalysis() {
                 error: undefined,
                 result: null,
                 detectedModality: null,
+                medgemmaSessionId: undefined,
+                medgemmaQuestions: undefined,
+                medgemmaDraft: undefined,
               }
             : i
         ),
       }));
 
       setTimeout(() => {
-        scanSingleImage(
-          imageId,
-          img.file,
+        void runScanRef.current(
+          img,
           current.modality,
           img.clinicalNotes,
           img.patientContext,
@@ -289,11 +372,75 @@ export function useAnalysis() {
         );
       }, 100);
     },
-    [scanSingleImage]
+    []
   );
 
+  const submitMedgemmaAnswers = useCallback(
+    async (imageId: string, answers: Record<string, string>, skipAll: boolean) => {
+      const snap = stateRef.current;
+      const img = snap.images.find((i) => i.id === imageId);
+      if (!img?.medgemmaSessionId || !img.result) {
+        addToast("Session expired or missing — please scan again.", "warning");
+        return;
+      }
+
+      const ctrl = new AbortController();
+      abortRef.current = ctrl;
+
+      const patch = (p: Partial<ImageScan>) => {
+        setState((s) => ({
+          ...s,
+          images: s.images.map((x) => (x.id === imageId ? { ...x, ...p } : x)),
+        }));
+      };
+
+      patch({ stage: "medgemma_finalizing" });
+
+      try {
+        const done = await cxrMedgemmaSessionComplete(
+          img.medgemmaSessionId,
+          answers,
+          skipAll,
+          ctrl.signal
+        );
+        if (ctrl.signal.aborted) return;
+
+        const merged = mergeTxrvWithMedgemmaNarrative(
+          img.result,
+          done.narrative_report,
+          (done.models_used || []).filter(Boolean) as string[]
+        );
+
+        patch({
+          stage: "complete",
+          result: merged,
+          detectedModality: merged.modality,
+          medgemmaSessionId: undefined,
+          medgemmaQuestions: undefined,
+          medgemmaDraft: undefined,
+        });
+      } catch (e) {
+        if (ctrl.signal.aborted) return;
+        patch({
+          stage: "error",
+          error:
+            e instanceof Error ? e.message : "Final report generation failed. Try again or use Retry.",
+        });
+      }
+    },
+    [addToast]
+  );
+
+  const setMedgemmaChestEnabled = useCallback((enabled: boolean) => {
+    setState((s) => ({ ...s, medgemmaChestEnabled: enabled }));
+  }, []);
+
   const setModality = useCallback((m: string) => {
-    setState((s) => ({ ...s, modality: m }));
+    setState((s) => ({
+      ...s,
+      modality: m,
+      medgemmaChestEnabled: m === "xray" ? s.medgemmaChestEnabled : false,
+    }));
   }, []);
 
   const setZoom = useCallback((z: number) => {
@@ -309,7 +456,7 @@ export function useAnalysis() {
 
   // Elapsed-time ticker for analyzing stage (for UX on long-running modalities)
   useEffect(() => {
-    if (stage !== "analyzing") {
+    if (stage !== "analyzing" && stage !== "medgemma_finalizing") {
       setElapsedMs(0);
       return;
     }
@@ -329,6 +476,9 @@ export function useAnalysis() {
     detectedModality,
     zoom: state.zoom,
     modality: state.modality,
+    medgemmaChestEnabled: state.medgemmaChestEnabled,
+    setMedgemmaChestEnabled,
+    submitMedgemmaAnswers,
     analysisElapsedMs: elapsedMs,
     // Multi-image
     images: state.images,
