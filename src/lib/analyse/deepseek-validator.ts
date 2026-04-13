@@ -34,6 +34,7 @@ export interface DiagnosticQuestion {
 export interface PreValidationResponse {
   fileType: string;
   detectedModality: string;
+  selectedModality: string;
   modalityMatch: boolean;
   imageQuality: "good" | "acceptable" | "poor";
   provisionalOpinion: string;
@@ -165,6 +166,7 @@ export async function validateWithDeepSeek(
     return {
       fileType: validationResult.file_type || "unknown",
       detectedModality: validationResult.detected_modality || "unknown",
+      selectedModality: request.selectedModality,
       modalityMatch: validationResult.modality_match ?? true,
       imageQuality: validationResult.image_quality || "acceptable",
       provisionalOpinion: validationResult.provisional_opinion || "",
