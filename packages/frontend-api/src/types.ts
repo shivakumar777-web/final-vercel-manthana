@@ -105,6 +105,10 @@ export type ScanStage =
   | "analyzing"
   | "heatmap"
   | "extracting"
+  /** DeepSeek pre-validation: analyzing image before GPU inference. */
+  | "pre_validating"
+  /** DeepSeek pre-validation: waiting for user confirmation to proceed. */
+  | "awaiting_ai_confirmation"
   /** Chest X-ray MedGemma flow: TXRV done; waiting for user answers / skip. */
   | "medgemma_questions"
   /** Final Kimi narrative generation after Q&A. */

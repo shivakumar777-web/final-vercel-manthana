@@ -28,6 +28,7 @@ import { useGatewayAuthBridge } from "@/hooks/analyse/useGatewayAuthBridge";
 import { useMultiModelAnalysis } from "@/hooks/analyse/useMultiModelAnalysis";
 import { useMediaQuery } from "@/hooks/analyse/useMediaQuery";
 import { useToast } from "@/hooks/useToast";
+import { useAIValidation } from "@/hooks/analyse/useAIValidation";
 import { saveEntry, patchEntry } from "@/lib/analyse/history";
 import type { HistoryEntry } from "@/lib/analyse/history";
 import type {
@@ -98,6 +99,25 @@ export default function ScannerPage() {
     setMedgemmaChestEnabled,
     submitMedgemmaAnswers,
   } = useAnalysis();
+
+  const {
+    state: aiValidationState,
+    startValidation,
+    submitAnswer,
+    askFollowUpQuestion,
+    confirmAndProceed,
+    forceProceedAnyway,
+    resetValidation,
+    cancelValidation,
+  } = useAIValidation();
+
+  const [pendingFiles, setPendingFiles] = useState<{
+    files: File[];
+    modality: string;
+    clinicalNotes?: string;
+    patientContext?: Record<string, unknown>;
+    analyzeModalityForApi?: string;
+  } | null>(null);
 
   const {
     session: multiSession,
@@ -322,7 +342,7 @@ export default function ScannerPage() {
           pro2dOnly: proLabs2dOnly,
         });
 
-  // Handle file drop/upload -> start analysis + save draft
+  // Handle file drop/upload -> AI validation first, then analysis
   const handleFile = useCallback(
     (files: File[]) => {
       if (!consentGiven) {
@@ -340,9 +360,28 @@ export default function ScannerPage() {
       const { notes, pctx } = resolveAnalysisParams(files);
       const analyzeModalityForApi =
         modality === "ct" && ctConfig ? gatewayModalityForCtRegion(ctConfig.region) : undefined;
-      const historyMod = analyzeModalityForApi ?? modality;
-      addFiles(files, modality, notes || undefined, pctx, analyzeModalityForApi);
-      saveHistoryDraft(files, historyMod, activePatientId);
+
+      // Store pending files for validation
+      setPendingFiles({
+        files,
+        modality,
+        clinicalNotes: notes,
+        patientContext: pctx,
+        analyzeModalityForApi,
+      });
+
+      // Trigger AI validation with first file
+      const patientContextForValidation = {
+        patientId: activePatientId,
+        age: patientCtx.age,
+        gender: patientCtx.gender,
+        location: patientCtx.location,
+        symptoms: patientCtx.symptoms,
+        clinicalHistory: patientCtx.clinicalHistory,
+        medications: patientCtx.medications,
+      };
+
+      startValidation(files[0], modality, patientContextForValidation);
     },
     [
       addFiles,
@@ -354,6 +393,8 @@ export default function ScannerPage() {
       consentGiven,
       ecgScannerContext.ecgForm,
       addToast,
+      startValidation,
+      patientCtx,
     ]
   );
 
@@ -478,6 +519,48 @@ export default function ScannerPage() {
   const handleActivateCopilot = useCallback(() => {
     activateCopilot(activePatientId);
   }, [activateCopilot, activePatientId]);
+
+  // AI validation handlers
+  const handleAIConfirm = useCallback(() => {
+    if (!pendingFiles) return;
+    const analyzeModalityForApi =
+      pendingFiles.analyzeModalityForApi ||
+      pendingFiles.modality;
+    addFiles(
+      pendingFiles.files,
+      pendingFiles.modality,
+      pendingFiles.clinicalNotes,
+      pendingFiles.patientContext,
+      pendingFiles.analyzeModalityForApi
+    );
+    const historyMod = analyzeModalityForApi ?? pendingFiles.modality;
+    saveHistoryDraft(pendingFiles.files, historyMod, activePatientId);
+    setPendingFiles(null);
+    confirmAndProceed();
+  }, [pendingFiles, addFiles, saveHistoryDraft, activePatientId, confirmAndProceed]);
+
+  const handleAICancel = useCallback(() => {
+    setPendingFiles(null);
+    cancelValidation();
+  }, [cancelValidation]);
+
+  const handleAIForceProceed = useCallback(() => {
+    if (!pendingFiles) return;
+    const analyzeModalityForApi =
+      pendingFiles.analyzeModalityForApi ||
+      pendingFiles.modality;
+    addFiles(
+      pendingFiles.files,
+      pendingFiles.modality,
+      pendingFiles.clinicalNotes,
+      pendingFiles.patientContext,
+      pendingFiles.analyzeModalityForApi
+    );
+    const historyMod = analyzeModalityForApi ?? pendingFiles.modality;
+    saveHistoryDraft(pendingFiles.files, historyMod, activePatientId);
+    setPendingFiles(null);
+    forceProceedAnyway();
+  }, [pendingFiles, addFiles, saveHistoryDraft, activePatientId, forceProceedAnyway]);
 
   const handleOpenOracleFromLabs = useCallback(() => {
     const unified = multiSession.unifiedResult;
@@ -939,6 +1022,23 @@ export default function ScannerPage() {
                 heatmapState={heatmapState}
                 onHeatmapStateChange={setHeatmapState}
                 medgemmaQa={medgemmaQaPanel}
+                aiValidation={
+                  aiValidationState.validationResult
+                    ? {
+                        validationResult: aiValidationState.validationResult,
+                        userAnswers: aiValidationState.userAnswers,
+                        chatHistory: aiValidationState.chatHistory,
+                        onAnswerQuestion: submitAnswer,
+                        onAskQuestion: askFollowUpQuestion,
+                        onConfirm: handleAIConfirm,
+                        onForceProceed: handleAIForceProceed,
+                        onCancel: handleAICancel,
+                        isProcessing:
+                          aiValidationState.stage === "validating" ||
+                          aiValidationState.stage === "proceeding",
+                      }
+                    : undefined
+                }
               />
             )}
             {showMultiComplete && multiSession.unifiedResult && (
@@ -991,6 +1091,23 @@ export default function ScannerPage() {
                 heatmapState={heatmapState}
                 onHeatmapStateChange={setHeatmapState}
                 medgemmaQa={medgemmaQaPanel}
+                aiValidation={
+                  aiValidationState.validationResult
+                    ? {
+                        validationResult: aiValidationState.validationResult,
+                        userAnswers: aiValidationState.userAnswers,
+                        chatHistory: aiValidationState.chatHistory,
+                        onAnswerQuestion: submitAnswer,
+                        onAskQuestion: askFollowUpQuestion,
+                        onConfirm: handleAIConfirm,
+                        onForceProceed: handleAIForceProceed,
+                        onCancel: handleAICancel,
+                        isProcessing:
+                          aiValidationState.stage === "validating" ||
+                          aiValidationState.stage === "proceeding",
+                      }
+                    : undefined
+                }
               />
             )}
             {showMultiComplete && multiSession.unifiedResult && (

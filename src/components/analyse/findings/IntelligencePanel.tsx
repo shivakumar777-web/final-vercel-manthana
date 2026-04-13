@@ -3,11 +3,13 @@ import React, { useMemo, useCallback, useEffect, useState } from "react";
 import type { AnalysisResponse, ScanStage, HeatmapState } from "@/lib/analyse/types";
 import FindingCard from "./FindingCard";
 import DualArcGauge from "./DualArcGauge";
+import AIValidationPanel from "./AIValidationPanel";
 import { MODALITIES } from "@/lib/analyse/constants";
 import { modalityBarIdFromBackendCt } from "@/lib/analyse/ct-upload-wizard";
 import { useMediaQuery } from "@/hooks/analyse/useMediaQuery";
 import { scoreFindings } from "@/lib/analyse/structured-reports";
 import { uniqueFormattedLabsModels } from "@/lib/analyse/display-models";
+import type { PreValidationResponse, ChatMessage } from "@/lib/analyse/deepseek-validator";
 
 interface Props {
   stage: ScanStage;
@@ -29,6 +31,18 @@ interface Props {
     onSubmit: (answers: Record<string, string>) => void;
     onSkipAll: () => void;
   };
+  /** DeepSeek AI pre-validation props */
+  aiValidation?: {
+    validationResult: PreValidationResponse;
+    userAnswers: Record<string, string>;
+    chatHistory: ChatMessage[];
+    onAnswerQuestion: (questionId: string, answer: string) => void;
+    onAskQuestion: (question: string) => void;
+    onConfirm: () => void;
+    onForceProceed: () => void;
+    onCancel: () => void;
+    isProcessing?: boolean;
+  };
 }
 
 export default function IntelligencePanel({
@@ -43,11 +57,16 @@ export default function IntelligencePanel({
   analysisElapsedMs,
   onRetry,
   medgemmaQa,
+  aiValidation,
 }: Props) {
   const { isMobile, isTablet } = useMediaQuery();
   const compact = isMobile || isTablet;
   const isIdle = stage === "idle";
-  const isScanning = !["idle", "complete", "error", "medgemma_questions"].includes(stage);
+  const isPreValidating =
+    stage === "pre_validating" || stage === "awaiting_ai_confirmation";
+  const isScanning =
+    !["idle", "complete", "error", "medgemma_questions"].includes(stage) &&
+    !isPreValidating;
   const isComplete = stage === "complete" && result;
 
   const [medgemmaAnswers, setMedgemmaAnswers] = useState<Record<string, string>>({});
@@ -186,6 +205,21 @@ export default function IntelligencePanel({
             13 services · 23+ models ready
           </p>
         </div>
+      )}
+
+      {/* ═══ AI VALIDATION STATE ═══ */}
+      {isPreValidating && aiValidation && (
+        <AIValidationPanel
+          validationResult={aiValidation.validationResult}
+          userAnswers={aiValidation.userAnswers}
+          chatHistory={aiValidation.chatHistory}
+          onAnswerQuestion={aiValidation.onAnswerQuestion}
+          onAskQuestion={aiValidation.onAskQuestion}
+          onConfirm={aiValidation.onConfirm}
+          onForceProceed={aiValidation.onForceProceed}
+          onCancel={aiValidation.onCancel}
+          isProcessing={aiValidation.isProcessing}
+        />
       )}
 
       {/* ═══ SCANNING STATE ═══ */}
