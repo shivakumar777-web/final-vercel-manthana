@@ -535,7 +535,7 @@
       "label": "ctBodyRegionForProductModality()",
       "file_type": "code",
       "source_file": "src\\app\\(analyse)\\analyse\\page.tsx",
-      "source_location": "L798",
+      "source_location": "L795",
       "id": "page_ctbodyregionforproductmodality",
       "community": 1
     },
@@ -6325,7 +6325,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src\\app\\(analyse)\\analyse\\page.tsx",
-      "source_location": "L798",
+      "source_location": "L795",
       "weight": 1.0,
       "_src": "src_app_analyse_analyse_page_tsx",
       "_tgt": "page_ctbodyregionforproductmodality",

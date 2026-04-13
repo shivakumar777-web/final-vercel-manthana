@@ -20,7 +20,7 @@ export const MODALITIES: Modality[] = [
   },
   {
     id: "xray",
-    label: "X-Ray",
+    label: "Chest X-Ray",
     icon: "XRAY",
     port: 8001,
     description:

@@ -675,47 +675,6 @@ export default function ScannerPage() {
             )}
           </div>
 
-          {modality === "xray" && analysisMode === "single" && (
-            <div
-              className="glass-panel"
-              style={{
-                padding: "10px 16px 12px",
-                borderRadius: 0,
-                borderTop: "1px solid rgba(255,255,255,0.06)",
-                borderBottom: "none",
-              }}
-            >
-              <label
-                style={{
-                  display: "flex",
-                  alignItems: "flex-start",
-                  gap: 10,
-                  cursor:
-                    isScanning || stage === "medgemma_questions" || stage === "medgemma_finalizing"
-                      ? "not-allowed"
-                      : "pointer",
-                  opacity:
-                    isScanning || stage === "medgemma_questions" || stage === "medgemma_finalizing"
-                      ? 0.55
-                      : 1,
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={medgemmaChestEnabled}
-                  disabled={
-                    isScanning || stage === "medgemma_questions" || stage === "medgemma_finalizing"
-                  }
-                  onChange={(e) => setMedgemmaChestEnabled(e.target.checked)}
-                  style={{ marginTop: 3 }}
-                />
-                <span className="font-body" style={{ fontSize: 12, color: "var(--text-70)", lineHeight: 1.5 }}>
-                  <strong style={{ color: "var(--text-90)" }}>MedGemma chest (production)</strong>
-                </span>
-              </label>
-            </div>
-          )}
-
           {modality === "premium_ct_unified" ? (
             <PremiumCTRegionSelector
               value={premiumCtRegion}
