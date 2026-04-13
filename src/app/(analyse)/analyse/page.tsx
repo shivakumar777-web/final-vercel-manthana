@@ -711,9 +711,6 @@ export default function ScannerPage() {
                 />
                 <span className="font-body" style={{ fontSize: 12, color: "var(--text-70)", lineHeight: 1.5 }}>
                   <strong style={{ color: "var(--text-90)" }}>MedGemma chest (production)</strong>
-                  — runs TorchXRayVision first, then MedGemma with your patient context, asks a few follow-up
-                  questions, then generates the final report with Kimi. Patient context above is sent with the
-                  image. Use &quot;Ask Manthana Oracle&quot; afterward for chat (Quick = concise model).
                 </span>
               </label>
             </div>
