@@ -121,7 +121,7 @@ export async function validateWithDeepSeek(
         "X-Title": "Manthana Radiologist Copilot",
       },
       body: JSON.stringify({
-        model: "deepseek/deepseek-v3",
+        model: "deepseek/deepseek-chat",
         messages: [
           {
             role: "user",
