@@ -39,7 +39,7 @@ export default function InterrogatorQA({
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex flex-col gap-4 rounded-xl border border-[var(--border)] bg-[var(--panel)] p-4 shadow-lg md:max-w-xl"
+      className="flex min-h-0 w-full max-w-full flex-col gap-4 rounded-xl border border-[var(--border)] bg-[var(--panel)] p-4 shadow-lg md:max-w-xl"
     >
       <h3 className="text-sm font-semibold uppercase tracking-wide text-[var(--muted)]">
         Clinical context
@@ -48,7 +48,7 @@ export default function InterrogatorQA({
         Each answer you add narrows clinical uncertainty and improves the structured report. Leave
         fields blank if unknown.
       </p>
-      <div className="flex max-h-[50vh] flex-col gap-3 overflow-y-auto">
+      <div className="flex min-h-0 max-h-[min(75dvh,720px)] flex-col gap-3 overflow-y-auto pr-1">
         {sorted.map((q) => (
           <div key={q.id} className="rounded-lg border border-[var(--border-subtle)] p-3">
             <label className="mb-1 block text-sm font-medium text-[var(--foreground)]">
@@ -93,7 +93,7 @@ export default function InterrogatorQA({
           </div>
         ))}
       </div>
-      <div className="flex flex-wrap gap-2">
+      <div className="flex shrink-0 flex-wrap gap-2 pt-1">
         {onCancel && (
           <button
             type="button"

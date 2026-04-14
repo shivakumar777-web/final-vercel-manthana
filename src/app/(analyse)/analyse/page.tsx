@@ -896,7 +896,8 @@ export default function ScannerPage() {
           flexDirection: "column",
           gap: 12,
           width: "100%",
-          minHeight: 120,
+          minHeight: 0,
+          flex: "1 1 auto",
         }}
       >
         {orchBusy ? (
@@ -1050,6 +1051,7 @@ export default function ScannerPage() {
         className="scanner-layout"
         style={{
           flex: 1,
+          minHeight: 0,
           display: "flex",
           flexDirection: isDesktop ? "row" : "column",
           gap: 0,
@@ -1062,6 +1064,7 @@ export default function ScannerPage() {
           style={{
             flex: isDesktop ? "1 1 auto" : 1,
             minWidth: isDesktop ? 0 : undefined,
+            minHeight: 0,
             display: "flex",
             flexDirection: "column",
             overflowY: "auto",
@@ -1418,11 +1421,19 @@ export default function ScannerPage() {
             className="intelligence-section"
             style={{
               flex: isDesktop ? "0 0 auto" : "0 0 35%",
+              alignSelf: "stretch",
+              minHeight: 0,
+              maxHeight: "100%",
               width: isDesktop ? findingsPanelWidthPx : undefined,
               maxWidth: isDesktop ? undefined : 380,
-              display: "flex",
-              padding: 16,
               minWidth: isDesktop ? MIN_FINDINGS_PANEL_W : 300,
+              display: "flex",
+              flexDirection: "column",
+              overflowY: "auto",
+              overflowX: "hidden",
+              WebkitOverflowScrolling: "touch",
+              padding: 16,
+              paddingBottom: "max(28px, env(safe-area-inset-bottom, 0px))",
             }}
           >
             {!isMultiMode && showOrchestrationFindings && orchestrationFindingsPanel}
