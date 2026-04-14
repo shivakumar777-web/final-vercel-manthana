@@ -436,6 +436,7 @@ let modalityLocked = false;
 /** Labs → engine session (includes oracleHandoff for Oracle button) */
 let oracleHandoffFromLabs = null;
 const MANTHANA_REPORT_ENGINE_STORAGE_KEY = 'manthana_report_engine_v1';
+const MANTHANA_REPORT_ENGINE_HANDOFF_PREFIX = 'manthana_report_engine_handoff_';
 const ORACLE_LABS_HANDOFF_STORAGE_KEY = 'manthana_oracle_labs_handoff_v1';
 
 /* ──────────────────────────────────────────────
@@ -1116,34 +1117,99 @@ function clearAll() {
   setOracleButtonEnabled(false);
 }
 
-function initFromLabsSession() {
+function stripHandoffQueryFromUrl() {
   try {
-    const raw = sessionStorage.getItem(MANTHANA_REPORT_ENGINE_STORAGE_KEY);
-    if (!raw) return;
-    const sess = JSON.parse(raw);
-    if (!sess || !sess.enginePayload) return;
-    modalityLocked = true;
-    oracleHandoffFromLabs = sess.oracleHandoff || null;
-    selectedModality = sess.modalityKey || null;
-    document.getElementById('jsonInput').value = JSON.stringify(sess.enginePayload, null, 2);
-    document.getElementById('jsonStatus').textContent = sess.modalityKey || 'Labs';
-    buildModalityPicker();
-    if (sess.modalityKey) {
-      const btn = document.querySelector('.mod-btn[data-key="' + sess.modalityKey + '"]');
-      if (btn) {
-        document.querySelectorAll('.mod-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
+    const u = new URL(window.location.href);
+    if (!u.searchParams.has('handoff') && !u.searchParams.has('pm')) return;
+    u.searchParams.delete('handoff');
+    u.searchParams.delete('pm');
+    const clean = u.pathname + (u.search || '') + u.hash;
+    history.replaceState(null, '', clean);
+  } catch (e) {
+    console.error('stripHandoffQueryFromUrl', e);
+  }
+}
+
+/** Labs writes sessionStorage in the opener tab; a new tab does NOT see it — prefer ?handoff= + localStorage. */
+function readLabsSessionPayload() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const handoff = params.get('handoff');
+    if (handoff) {
+      const key = MANTHANA_REPORT_ENGINE_HANDOFF_PREFIX + handoff;
+      const raw = localStorage.getItem(key);
+      if (raw) {
+        try {
+          localStorage.removeItem(key);
+        } catch (e) {
+          /* ignore */
+        }
+        return JSON.parse(raw);
       }
     }
-    generateReport();
+    const raw = sessionStorage.getItem(MANTHANA_REPORT_ENGINE_STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {
+    console.error('readLabsSessionPayload', e);
+  }
+  return null;
+}
+
+function applyLabsSession(sess) {
+  if (!sess || !sess.enginePayload) return false;
+  modalityLocked = true;
+  oracleHandoffFromLabs = sess.oracleHandoff || null;
+  const ep = sess.enginePayload || {};
+  const mk = sess.modalityKey || ep.modality_key || null;
+  selectedModality = mk;
+  document.getElementById('jsonInput').value = JSON.stringify(sess.enginePayload, null, 2);
+  document.getElementById('jsonStatus').textContent = sess.modalityLabel || mk || 'Labs';
+  buildModalityPicker();
+  if (mk) {
+    const sel = '.mod-btn[data-key="' + String(mk).replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"]';
+    const btn = document.querySelector(sel);
+    if (btn) {
+      document.querySelectorAll('.mod-btn').forEach(function (b) {
+        b.classList.remove('active');
+      });
+      btn.classList.add('active');
+    }
+  }
+  generateReport();
+  return true;
+}
+
+function initFromLabsSession() {
+  try {
+    const sess = readLabsSessionPayload();
+    if (!sess) return;
+    if (applyLabsSession(sess)) {
+      stripHandoffQueryFromUrl();
+    }
   } catch (e) {
     console.error('initFromLabsSession', e);
   }
 }
 
+/** When localStorage is blocked, the opener delivers the payload via postMessage (?pm=1). */
+function installPostMessageHandoff() {
+  const p = new URLSearchParams(window.location.search);
+  if (p.get('pm') !== '1') return;
+  function onMsg(ev) {
+    if (ev.origin !== window.location.origin) return;
+    if (!ev.data || ev.data.type !== 'manthana_report_engine_v1' || !ev.data.payload) return;
+    window.removeEventListener('message', onMsg);
+    if (applyLabsSession(ev.data.payload)) {
+      stripHandoffQueryFromUrl();
+    }
+  }
+  window.addEventListener('message', onMsg);
+}
+
 // Init
 buildModalityPicker();
 document.getElementById('btnOracle').addEventListener('click', openOracleFromEngine);
+installPostMessageHandoff();
 initFromLabsSession();
 </script>
 </body>

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   MAX_SOURCE_IMAGE_BYTES,
+  MANTHANA_REPORT_ENGINE_HANDOFF_PREFIX,
   MANTHANA_REPORT_ENGINE_STORAGE_KEY,
   type ReportEngineSessionPayload,
 } from "@/lib/analyse/report-engine-mapper";
@@ -76,23 +77,72 @@ export function useReportEngineLaunch(modalityLabel: string) {
       void (async () => {
         try {
           const payload = await buildPayload();
+          const handoffId =
+            typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+              ? crypto.randomUUID()
+              : `h_${Date.now()}_${Math.random().toString(36).slice(2, 12)}`;
+          const handoffStorageKey = `${MANTHANA_REPORT_ENGINE_HANDOFF_PREFIX}${handoffId}`;
+
+          const stripImage = (p: ReportEngineSessionPayload): ReportEngineSessionPayload => ({
+            ...p,
+            enginePayload: {
+              ...p.enginePayload,
+              source_media: undefined,
+            },
+          });
+
           const json = JSON.stringify(payload);
+          const jsonNoImage = JSON.stringify(stripImage(payload));
+
+          /** New tab does not inherit sessionStorage; use one-time localStorage + ?handoff= */
+          let handoffStored = false;
+          try {
+            localStorage.setItem(handoffStorageKey, json);
+            handoffStored = true;
+          } catch {
+            try {
+              localStorage.setItem(handoffStorageKey, jsonNoImage);
+              handoffStored = true;
+            } catch {
+              handoffStored = false;
+            }
+          }
+
           try {
             sessionStorage.setItem(MANTHANA_REPORT_ENGINE_STORAGE_KEY, json);
           } catch {
-            sessionStorage.setItem(
-              MANTHANA_REPORT_ENGINE_STORAGE_KEY,
-              JSON.stringify({
-                ...payload,
-                enginePayload: {
-                  ...payload.enginePayload,
-                  source_media: undefined,
-                },
-              })
-            );
+            try {
+              sessionStorage.setItem(MANTHANA_REPORT_ENGINE_STORAGE_KEY, jsonNoImage);
+            } catch {
+              /* ignore */
+            }
           }
+
           const path = "/manthana_report_engine.html";
-          window.open(`${window.location.origin}${path}`, "_blank", "noopener,noreferrer");
+          const base = new URL(path, window.location.origin);
+
+          if (handoffStored) {
+            base.searchParams.set("handoff", handoffId);
+            window.open(base.toString(), "_blank", "noopener,noreferrer");
+          } else {
+            /** Private mode / storage blocked: deliver payload via postMessage (no noopener). */
+            const child = window.open(`${base.origin}${base.pathname}?pm=1`, "_blank");
+            if (child) {
+              const deliver = () => {
+                try {
+                  child.postMessage(
+                    { type: "manthana_report_engine_v1", payload },
+                    window.location.origin
+                  );
+                } catch {
+                  /* ignore */
+                }
+              };
+              setTimeout(deliver, 0);
+              setTimeout(deliver, 400);
+              setTimeout(deliver, 1200);
+            }
+          }
         } finally {
           setPhase("idle");
           setStatusLine("");

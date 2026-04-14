@@ -11,6 +11,13 @@ import {
 
 export const MANTHANA_REPORT_ENGINE_STORAGE_KEY = "manthana_report_engine_v1";
 
+/**
+ * Cross-tab handoff: payload is stored under this prefix + id, and the report engine
+ * is opened with ?handoff=<id>. sessionStorage is not shared with a new tab from
+ * window.open(), so localStorage is required for that flow.
+ */
+export const MANTHANA_REPORT_ENGINE_HANDOFF_PREFIX = "manthana_report_engine_handoff_";
+
 /** Max embedded image size for data URLs (sessionStorage + standalone HTML). */
 export const MAX_SOURCE_IMAGE_BYTES = 2_500_000;
 
