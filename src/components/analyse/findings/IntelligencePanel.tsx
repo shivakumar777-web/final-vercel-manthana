@@ -31,6 +31,8 @@ interface Props {
     onSubmit: (answers: Record<string, string>) => void;
     onSkipAll: () => void;
   };
+  /** Desktop resizable column: stretch to parent width instead of capping at 380px */
+  fillContainer?: boolean;
   /** DeepSeek AI pre-validation props */
   aiValidation?: {
     validationResult: PreValidationResponse;
@@ -58,6 +60,7 @@ export default function IntelligencePanel({
   onRetry,
   medgemmaQa,
   aiValidation,
+  fillContainer,
 }: Props) {
   const { isMobile, isTablet } = useMediaQuery();
   const compact = isMobile || isTablet;
@@ -144,7 +147,7 @@ export default function IntelligencePanel({
       className={compact ? "intelligence-section" : "intelligence-section glass-panel"}
       style={{
         width: "100%",
-        maxWidth: compact ? "none" : 380,
+        maxWidth: compact ? "none" : fillContainer ? "none" : 380,
         flexShrink: 0,
         flex: compact ? 1 : undefined,
         minHeight: compact ? "calc(100dvh - 40px)" : undefined,

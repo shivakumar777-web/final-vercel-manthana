@@ -14,6 +14,8 @@ interface Props {
   onGenerateReport?: (language: string) => void;
   onNewScan?: () => void;
   onAskAI?: () => void;
+  /** Desktop resizable column: stretch to parent width instead of capping at 380px */
+  fillContainer?: boolean;
 }
 
 export default function UnifiedReportPanel({
@@ -22,6 +24,7 @@ export default function UnifiedReportPanel({
   onGenerateReport,
   onNewScan,
   onAskAI,
+  fillContainer,
 }: Props) {
   const [expandedModality, setExpandedModality] = useState<string | null>(null);
   const [reportLang, setReportLang] = useState<string>(() => getPersistedLanguage());
@@ -35,7 +38,7 @@ export default function UnifiedReportPanel({
       className="intelligence-section glass-panel"
       style={{
         width: "100%",
-        maxWidth: 380,
+        maxWidth: fillContainer ? "none" : 380,
         flexShrink: 0,
         display: "flex",
         flexDirection: "column",

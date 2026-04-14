@@ -67,6 +67,22 @@ import {
 import type { PremiumCtRegion } from "@/lib/analyse/premium-constants";
 import dynamic from "next/dynamic";
 
+const FINDINGS_PANEL_WIDTH_KEY = "manthana-labs-findings-panel-width";
+const FINDINGS_SPLIT_HANDLE_PX = 6;
+const MIN_FINDINGS_PANEL_W = 280;
+const MIN_VIEWPORT_W = 280;
+
+function clampFindingsPanelWidth(w: number, mainWidth: number): number {
+  const max = Math.max(
+    MIN_FINDINGS_PANEL_W,
+    Math.min(
+      Math.floor(mainWidth * 0.58),
+      mainWidth - MIN_VIEWPORT_W - FINDINGS_SPLIT_HANDLE_PX
+    )
+  );
+  return Math.max(MIN_FINDINGS_PANEL_W, Math.min(max, w));
+}
+
 const isCtUiModality = (m: string) => m === "ct" || isCtProductModality(m);
 
 const PacsBrowser = dynamic(() => import("@/components/analyse/pacs/PacsBrowser"), { ssr: false });
@@ -164,7 +180,7 @@ export default function ScannerPage() {
   const [ctConfig, setCtConfig] = useState<CtWizardState | null>(null);
   const [pacsOpen, setPacsOpen] = useState(false);
   const [pacsTab, setPacsTab] = useState<"studies" | "worklist" | "settings">("studies");
-  const { isMobile, isTablet, isDesktop } = useMediaQuery();
+  const { isMobile, isTablet, isDesktop, width: viewportWidth } = useMediaQuery();
   const compact = isMobile || isTablet;
   const isScanning = !["idle", "complete", "error", "medgemma_questions"].includes(stage);
   const activePatientId = modality === "ecg" ? ecgScannerContext.patientId : patientCtx.patientId;
@@ -190,6 +206,69 @@ export default function ScannerPage() {
   const [proLabs2dOnly, setProLabs2dOnly] = useState(false);
   /** Mobile: user scrolled consent — tuck Analysis Findings peek off-screen so CTAs aren’t covered. */
   const [mobileFindingsTuckedForConsent, setMobileFindingsTuckedForConsent] = useState(false);
+
+  /** Desktop: resizable width (px) for the Analysis Findings column; mobile/tablet unchanged */
+  const [findingsPanelWidthPx, setFindingsPanelWidthPx] = useState(320);
+  const mainLayoutRef = useRef<HTMLElement | null>(null);
+  const findingsPanelWidthRef = useRef(320);
+  findingsPanelWidthRef.current = findingsPanelWidthPx;
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(FINDINGS_PANEL_WIDTH_KEY);
+      const w = typeof window !== "undefined" ? window.innerWidth : 1280;
+      const fallback = Math.min(380, Math.round(w * 0.35));
+      let next = fallback;
+      if (raw) {
+        const n = parseInt(raw, 10);
+        if (!Number.isNaN(n)) next = n;
+      }
+      setFindingsPanelWidthPx(clampFindingsPanelWidth(next, w));
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isDesktop) return;
+    setFindingsPanelWidthPx((prev) => clampFindingsPanelWidth(prev, viewportWidth));
+  }, [isDesktop, viewportWidth]);
+
+  const handleFindingsSplitPointerDown = useCallback(
+    (e: React.PointerEvent) => {
+      if (!isDesktop) return;
+      e.preventDefault();
+      const mainEl = mainLayoutRef.current;
+      if (!mainEl) return;
+
+      const onMove = (ev: PointerEvent) => {
+        const rect = mainEl.getBoundingClientRect();
+        const rw = rect.right - ev.clientX;
+        const clamped = clampFindingsPanelWidth(rw, rect.width);
+        findingsPanelWidthRef.current = clamped;
+        setFindingsPanelWidthPx(clamped);
+      };
+      const onUp = () => {
+        document.removeEventListener("pointermove", onMove);
+        document.removeEventListener("pointerup", onUp);
+        document.body.style.cursor = "";
+        document.body.style.userSelect = "";
+        try {
+          localStorage.setItem(
+            FINDINGS_PANEL_WIDTH_KEY,
+            String(findingsPanelWidthRef.current)
+          );
+        } catch {
+          /* ignore */
+        }
+      };
+      document.body.style.cursor = "col-resize";
+      document.body.style.userSelect = "none";
+      document.addEventListener("pointermove", onMove);
+      document.addEventListener("pointerup", onUp);
+    },
+    [isDesktop]
+  );
 
   // Stable session id for this scan — reset with each new scan
   const sessionIdRef = useRef<string>(randomId());
@@ -712,6 +791,7 @@ export default function ScannerPage() {
 
       {/* ─── MAIN CONTENT ─── */}
       <main
+        ref={mainLayoutRef}
         className="scanner-layout"
         style={{
           flex: 1,
@@ -725,7 +805,8 @@ export default function ScannerPage() {
         <div
           className="viewport-section"
           style={{
-            flex: isDesktop ? "1 1 65%" : 1,
+            flex: isDesktop ? "1 1 auto" : 1,
+            minWidth: isDesktop ? 0 : undefined,
             display: "flex",
             flexDirection: "column",
             overflowY: "auto",
@@ -983,6 +1064,28 @@ export default function ScannerPage() {
           )}
         </div>
 
+        {/* Desktop: drag handle between upload and findings (not shown on mobile / tablet) */}
+        {isDesktop && (
+          <div
+            role="separator"
+            aria-orientation="vertical"
+            aria-label="Resize analysis findings panel"
+            onPointerDown={handleFindingsSplitPointerDown}
+            style={{
+              flex: `0 0 ${FINDINGS_SPLIT_HANDLE_PX}px`,
+              width: FINDINGS_SPLIT_HANDLE_PX,
+              alignSelf: "stretch",
+              cursor: "col-resize",
+              touchAction: "none",
+              flexShrink: 0,
+              background:
+                "linear-gradient(180deg, transparent 0%, rgba(212,175,55,0.2) 15%, rgba(212,175,55,0.45) 50%, rgba(212,175,55,0.2) 85%, transparent 100%)",
+              boxShadow: "inset 0 0 0 1px rgba(212,175,55,0.12)",
+              zIndex: 2,
+            }}
+          />
+        )}
+
         {/* RIGHT: Intelligence Panel — on mobile becomes BottomSheet (tucks off-screen while consent scrolls) */}
         {compact ? (
           /* ── MOBILE/TABLET: Bottom Sheet ── */
@@ -1068,11 +1171,12 @@ export default function ScannerPage() {
           <div
             className="intelligence-section"
             style={{
-              flex: "0 0 35%",
-              maxWidth: 380,
+              flex: isDesktop ? "0 0 auto" : "0 0 35%",
+              width: isDesktop ? findingsPanelWidthPx : undefined,
+              maxWidth: isDesktop ? undefined : 380,
               display: "flex",
               padding: 16,
-              minWidth: 300,
+              minWidth: isDesktop ? MIN_FINDINGS_PANEL_W : 300,
             }}
           >
             {!isMultiMode && (
@@ -1081,6 +1185,7 @@ export default function ScannerPage() {
                 result={result}
                 detectedModality={detectedModality ?? undefined}
                 analysisElapsedMs={analysisElapsedMs}
+                fillContainer={isDesktop}
                 onGenerateReport={() => {
                   patchEntry(sessionIdRef.current, { status: "report_generated" });
                   console.log("Generate report", result);
@@ -1114,6 +1219,7 @@ export default function ScannerPage() {
               <UnifiedReportPanel
                 unifiedResult={multiSession.unifiedResult}
                 individualResults={multiSession.individualResults}
+                fillContainer={isDesktop}
                 onGenerateReport={() => {
                   console.log("Generate unified report", multiSession.unifiedResult);
                 }}
@@ -1126,7 +1232,7 @@ export default function ScannerPage() {
                 className="intelligence-section glass-panel"
                 style={{
                   width: "100%",
-                  maxWidth: 380,
+                  maxWidth: isDesktop ? "none" : 380,
                   flexShrink: 0,
                   display: "flex",
                   flexDirection: "column",
