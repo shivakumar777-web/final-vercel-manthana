@@ -221,6 +221,8 @@ export default function ScannerPage() {
   const [ctConfig, setCtConfig] = useState<CtWizardState | null>(null);
   const [pacsOpen, setPacsOpen] = useState(false);
   const [pacsTab, setPacsTab] = useState<"studies" | "worklist" | "settings">("studies");
+  /** Desktop: modality bar + disclaimer tucked away for extra main viewport height. */
+  const [desktopFooterCollapsed, setDesktopFooterCollapsed] = useState(false);
   const { isMobile, isTablet, isDesktop, width: viewportWidth } = useMediaQuery();
   const compact = isMobile || isTablet;
   const legacyScanning = !["idle", "complete", "error", "medgemma_questions"].includes(stage);
@@ -1577,11 +1579,14 @@ export default function ScannerPage() {
         <ModalityBar
           activeModality={modality}
           onSelect={(m) => setModality(m)}
+          collapsible
+          collapsed={desktopFooterCollapsed}
+          onCollapsedChange={setDesktopFooterCollapsed}
         />
       )}
 
-      {/* ─── DISCLAIMER (hide on mobile — space taken by bottom sheet) ─── */}
-      {!compact && <DisclaimerBar />}
+      {/* ─── DISCLAIMER (hide on mobile — space taken by bottom sheet; hide when desktop footer collapsed) ─── */}
+      {!compact && !desktopFooterCollapsed && <DisclaimerBar />}
 
       {/* ─── COMMAND PALETTE ─── */}
       <CommandPalette

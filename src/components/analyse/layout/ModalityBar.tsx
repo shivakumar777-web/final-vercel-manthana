@@ -17,6 +17,10 @@ import { useProductAccess } from "@/components/ProductAccessProvider";
 interface Props {
   activeModality: string;
   onSelect: (id: string) => void;
+  /** Desktop: allow collapsing the bar to free vertical space (controlled by parent). */
+  collapsible?: boolean;
+  collapsed?: boolean;
+  onCollapsedChange?: (collapsed: boolean) => void;
 }
 
 /** Volumetric PRO / Premium CT — single “3D Premium” group in the UI. */
@@ -58,7 +62,13 @@ interface MenuLayout {
   maxHeight: number;
 }
 
-export default function ModalityBar({ activeModality, onSelect }: Props) {
+export default function ModalityBar({
+  activeModality,
+  onSelect,
+  collapsible,
+  collapsed,
+  onCollapsedChange,
+}: Props) {
   const barRef = useRef<HTMLDivElement>(null);
   const menuPanelRef = useRef<HTMLDivElement>(null);
   const trigger12dRef = useRef<HTMLButtonElement>(null);
@@ -72,6 +82,8 @@ export default function ModalityBar({ activeModality, onSelect }: Props) {
   const { isMobile, isTablet, isTouch, width: vw } = useMediaQuery();
   const { plan, status } = useProductAccess();
   const compact = isMobile || isTablet;
+  const footerCollapsible = Boolean(collapsible && onCollapsedChange);
+  const footerCollapsed = footerCollapsible && Boolean(collapsed);
   /** Comfortable tap targets on touch hardware or small breakpoints. */
   const cozyTouch = compact || isTouch;
   const normalizedPlan = (plan || "free").toLowerCase();
@@ -216,6 +228,19 @@ export default function ModalityBar({ activeModality, onSelect }: Props) {
       document.removeEventListener("keydown", onKey);
     };
   }, [openGroup]);
+
+  useEffect(() => {
+    if (footerCollapsed) setOpenGroup(null);
+  }, [footerCollapsed]);
+
+  const handleFooterCollapse = useCallback(() => {
+    setOpenGroup(null);
+    onCollapsedChange?.(true);
+  }, [onCollapsedChange]);
+
+  const handleFooterExpand = useCallback(() => {
+    onCollapsedChange?.(false);
+  }, [onCollapsedChange]);
 
   const toggleGroup = useCallback((g: "12d" | "3d") => {
     setOpenGroup((prev) => {
@@ -403,6 +428,60 @@ export default function ModalityBar({ activeModality, onSelect }: Props) {
     WebkitTapHighlightColor: "transparent",
   });
 
+  if (footerCollapsible && footerCollapsed) {
+    return (
+      <div
+        className="modality-bar no-print"
+        style={{
+          position: "relative",
+          padding: compact
+            ? "8px max(12px, env(safe-area-inset-left, 0px)) max(8px, env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-right, 0px))"
+            : "6px max(16px, env(safe-area-inset-left, 0px)) max(8px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-right, 0px))",
+          borderTop: "1px solid var(--glass-border)",
+          background: "var(--modality-bar-bg)",
+          backdropFilter: "blur(16px)",
+          WebkitBackdropFilter: "blur(16px)",
+        }}
+      >
+        <button
+          type="button"
+          onClick={handleFooterExpand}
+          aria-expanded={false}
+          aria-label="Expand modality selector"
+          title="Show 1D/2D and 3D modality bar"
+          style={{
+            width: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 10,
+            minHeight: cozyTouch ? 40 : 36,
+            padding: "6px 12px",
+            border: "none",
+            borderRadius: "var(--r-md)",
+            background: "rgba(255,255,255,0.04)",
+            cursor: "pointer",
+            fontFamily: "var(--font-display)",
+            fontSize: compact ? 10 : 11,
+            fontWeight: 500,
+            color: "var(--text-55)",
+            letterSpacing: compact ? "0.06em" : "0.08em",
+            textTransform: "uppercase" as const,
+            transition: "background 0.2s ease",
+            WebkitTapHighlightColor: "transparent",
+          }}
+        >
+          <span aria-hidden style={{ fontSize: 12, opacity: 0.85 }}>
+            ▲
+          </span>
+          <span style={{ whiteSpace: "nowrap" as const }}>
+            {AI_ORCHESTRATION_ENABLED ? "1D & 2D (95) · 3D Premium" : "1D & 2D · 3D Premium"}
+          </span>
+        </button>
+      </div>
+    );
+  }
+
   const menuPanel = openGroup && menuLayout && mounted && (
     <div
       ref={menuPanelRef}
@@ -489,6 +568,45 @@ export default function ModalityBar({ activeModality, onSelect }: Props) {
         WebkitBackdropFilter: "blur(16px)",
       }}
     >
+      {footerCollapsible ? (
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            marginBottom: compact ? 6 : 8,
+          }}
+        >
+          <button
+            type="button"
+            onClick={handleFooterCollapse}
+            aria-expanded={true}
+            aria-label="Collapse modality bar"
+            title="Hide modality bar for more workspace"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "4px 14px",
+              border: "1px solid var(--glass-border)",
+              borderRadius: "var(--r-full)",
+              background: "rgba(255,255,255,0.03)",
+              cursor: "pointer",
+              fontFamily: "var(--font-display)",
+              fontSize: 9,
+              fontWeight: 500,
+              color: "var(--text-40)",
+              letterSpacing: "0.1em",
+              textTransform: "uppercase" as const,
+              WebkitTapHighlightColor: "transparent",
+            }}
+          >
+            <span aria-hidden style={{ fontSize: 10, opacity: 0.9 }}>
+              ▼
+            </span>
+            Hide
+          </button>
+        </div>
+      ) : null}
       <div
         style={{
           display: "flex",
