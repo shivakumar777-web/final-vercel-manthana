@@ -65,6 +65,8 @@ interface SearchBarProps {
   onStop?: () => void;
   /** Free / non-PRO Oracle: quick-only intensity, Web locked; M5 is available on all tiers. */
   oracleLimited?: boolean;
+  /** Oracle home: set M5 mode + URL without full page reload (keeps domain pills in sync). */
+  onM5Select?: () => void;
 }
 
 export default function SearchBar({
@@ -84,6 +86,7 @@ export default function SearchBar({
   isThinking = false,
   onStop,
   oracleLimited = false,
+  onM5Select,
 }: SearchBarProps) {
   const [placeholderIdx, setPlaceholderIdx] = useState(0);
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -341,11 +344,15 @@ export default function SearchBar({
 
               {/* M5 Five Domain Mode — all tiers */}
               <div className="p-3 border-t border-white/[0.06]">
-                <a
-                  href="/?mode=m5"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    window.location.href = "/?mode=m5";
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowModePanel(false);
+                    if (onM5Select) {
+                      onM5Select();
+                    } else {
+                      window.location.href = "/?mode=m5&domain=m5";
+                    }
                   }}
                   className="w-full flex items-center gap-2 px-2 py-2 rounded-lg text-left transition-all
                     hover:bg-gold/[0.08] border border-gold/20 hover:border-gold/40 group"
@@ -360,7 +367,7 @@ export default function SearchBar({
                     </div>
                   </div>
                   <span className="text-xs text-gold/60 group-hover:text-gold">5×</span>
-                </a>
+                </button>
               </div>
               {oracleLimited && (
                 <div className="px-3 py-2 border-t border-white/[0.06] text-[9px] text-cream/45 font-ui tracking-wide">

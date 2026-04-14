@@ -212,13 +212,10 @@ export default function DomainPills({
           <button
             key={domain.id}
             onPointerUp={(event) => {
-              if (!isDraggingDomainsRef.current) {
-                stopDomainsAutoScroll();
-                onSelect(domain.id);
-              }
               event.stopPropagation();
             }}
             onClick={() => {
+              if (isDraggingDomainsRef.current) return;
               stopDomainsAutoScroll();
               onSelect(domain.id);
             }}

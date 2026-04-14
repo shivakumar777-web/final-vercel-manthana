@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import Logo from "@/components/Logo";
 import SearchBar from "@/components/SearchBar";
@@ -35,14 +35,13 @@ export default function OraclePage() {
     if (searchParams.get("domain") === "m5") return "m5";
     return "auto";
   });
-  const [activeDomain, setActiveDomain] = useState<string>(
-    () => {
-      const d = searchParams.get("domain");
-      if (d) return d;
-      if (searchParams.get("mode") === "m5") return "m5";
-      return "allopathy";
-    }
-  );
+  const [activeDomain, setActiveDomain] = useState<string>(() => {
+    // When mode is M5, domain selector must be M5 (ignore a stale ?domain= from bookmarks or bad links).
+    if (searchParams.get("mode") === "m5") return "m5";
+    const d = searchParams.get("domain");
+    if (d) return d;
+    return "allopathy";
+  });
   
   // Mode selector state for Oracle chat customization
   const [intensity, setIntensity] = useState<string>("auto");
@@ -184,14 +183,35 @@ export default function OraclePage() {
     return "Allopathy";
   };
 
-  const updateURL = (newMode: string, newDomain: string) => {
-    if (typeof window === "undefined") return;
-    const params = new URLSearchParams();
-    if (newMode !== "auto") params.set("mode", newMode);
-    if (newDomain !== "allopathy") params.set("domain", newDomain);
-    const qs = params.toString();
-    router.replace(qs ? `/?${qs}` : "/", { scroll: false });
-  };
+  const updateURL = useCallback(
+    (newMode: string, newDomain: string) => {
+      if (typeof window === "undefined") return;
+      const params = new URLSearchParams();
+      if (newMode !== "auto") params.set("mode", newMode);
+      if (newDomain !== "allopathy") params.set("domain", newDomain);
+      const qs = params.toString();
+      router.replace(qs ? `/?${qs}` : "/", { scroll: false });
+    },
+    [router]
+  );
+
+  /** M5 from mode panel — keeps React state and URL aligned (no full page reload). */
+  const activateM5 = useCallback(() => {
+    setMode("m5");
+    setActiveDomain("m5");
+    setSearchResults(null);
+    setSearchPage(1);
+    updateURL("m5", "m5");
+  }, [updateURL]);
+
+  const modeFromUrl = searchParams.get("mode");
+  // Client-side navigations to `/?mode=m5` (no full remount) must match pills + streamM5.
+  useEffect(() => {
+    if (modeFromUrl === "m5") {
+      setMode("m5");
+      setActiveDomain("m5");
+    }
+  }, [modeFromUrl]);
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {
@@ -632,35 +652,6 @@ export default function OraclePage() {
     return () => window.removeEventListener("keydown", handler);
   }, []);
 
-  const handleModeChange = (newMode: string) => {
-    if (newMode === "deep-research") {
-      if (oracleLimited) {
-        addToast("Med Deep Research requires PRO.", "info");
-        return;
-      }
-      router.push("/deep-research");
-      return;
-    }
-    if (newMode === "search" && webLocked) {
-      router.push("/search");
-      return;
-    }
-    if (newMode === "search" && oracleLimited) {
-      addToast("Manthana Web search requires PRO.", "info");
-      return;
-    }
-    if (newMode === "m5") {
-      setMode("m5");
-      updateURL("m5", activeDomain);
-      setSearchResults(null);
-      return;
-    }
-    setMode(newMode);
-    setSearchResults(null); // clear search results when switching modes
-    setSearchPage(1);
-    updateURL(newMode, activeDomain);
-  };
-
   const handleDomainChange = (newDomain: string) => {
     setActiveDomain(newDomain);
     setSearchResults(null); // clear search results when switching domain
@@ -929,6 +920,7 @@ export default function OraclePage() {
           onSubmit={handleSubmit}
           mode={mode}
           manthanaWebLocked={webLocked}
+          onM5Select={activateM5}
           domain={activeDomain}
           intensity={intensity}
           persona={persona}
