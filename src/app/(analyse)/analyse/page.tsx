@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from "react"
 import { useRouter } from "next/navigation";
 import TopBar from "@/components/analyse/layout/TopBar";
 import ModalityBar from "@/components/analyse/layout/ModalityBar";
+import SelectedModalityStrip from "@/components/analyse/layout/SelectedModalityStrip";
 import DisclaimerBar from "@/components/analyse/layout/DisclaimerBar";
 import CommandPalette from "@/components/analyse/layout/CommandPalette";
 import ScanViewport from "@/components/analyse/scanner/ScanViewport";
@@ -53,6 +54,7 @@ import {
   buildPatientContextJsonForApi,
 } from "@/lib/analyse/clinical-notes";
 import { AI_ORCHESTRATION_ENABLED, getUploadAcceptTypes, MODALITIES } from "@/lib/analyse/constants";
+import { formatModalityPeek } from "@/lib/analyse/modality-display";
 import { normalizeSubscriptionPlan } from "@/lib/product-access";
 import { preflightLabsScan, recordLabsScan } from "@/lib/labs/client";
 import {
@@ -1097,6 +1099,10 @@ export default function ScannerPage() {
             )}
           </div>
 
+          {!isMultiMode && (
+            <SelectedModalityStrip modalityId={modality} compact={compact} />
+          )}
+
           {modality === "premium_ct_unified" ? (
             <PremiumCTRegionSelector
               value={premiumCtRegion}
@@ -1351,13 +1357,50 @@ export default function ScannerPage() {
             peekHeight={72}
             tuckedOffScreen={!consentGiven && mobileFindingsTuckedForConsent}
             collapsedContent={
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <span className="font-display" style={{ fontSize: 10, color: "var(--text-55)", letterSpacing: "0.1em", textTransform: "uppercase" }}>
-                  {isMultiMode ? "✦ Multi-Model Analysis" : "Analysis Findings"}
-                </span>
-                <span className="font-mono" style={{ fontSize: 9, color: "var(--scan-400)" }}>
-                  {findingsPeekSubtitle}
-                </span>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 6,
+                  width: "100%",
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 8,
+                  }}
+                >
+                  <span
+                    className="font-display"
+                    style={{
+                      fontSize: 10,
+                      color: "var(--text-55)",
+                      letterSpacing: "0.1em",
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    {isMultiMode ? "✦ Multi-Model Analysis" : "Analysis Findings"}
+                  </span>
+                  <span className="font-mono" style={{ fontSize: 9, color: "var(--scan-400)", flexShrink: 0 }}>
+                    {findingsPeekSubtitle}
+                  </span>
+                </div>
+                {!isMultiMode ? (
+                  <span
+                    className="font-mono"
+                    style={{
+                      fontSize: 9,
+                      color: "var(--text-40)",
+                      letterSpacing: "0.04em",
+                      lineHeight: 1.3,
+                    }}
+                  >
+                    {formatModalityPeek(modality)}
+                  </span>
+                ) : null}
               </div>
             }
           >
@@ -1369,6 +1412,7 @@ export default function ScannerPage() {
                 result={result}
                 detectedModality={detectedModality ?? undefined}
                 analysisElapsedMs={analysisElapsedMs}
+                idleModalitySummary={formatModalityPeek(modality)}
                 onGenerateReport={() => {}}
                 onNewScan={handleNewScan}
                 onRetry={handleRetry}
@@ -1443,6 +1487,7 @@ export default function ScannerPage() {
                 result={result}
                 detectedModality={detectedModality ?? undefined}
                 analysisElapsedMs={analysisElapsedMs}
+                idleModalitySummary={formatModalityPeek(modality)}
                 fillContainer={isDesktop}
                 onGenerateReport={() => {}}
                 onNewScan={handleNewScan}

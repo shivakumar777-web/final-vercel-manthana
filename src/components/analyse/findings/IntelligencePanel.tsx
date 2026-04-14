@@ -32,6 +32,8 @@ interface Props {
   };
   /** Desktop resizable column: stretch to parent width instead of capping at 380px */
   fillContainer?: boolean;
+  /** Shown in the idle state so users see the modality picked in the bar (e.g. Auto-Detect). */
+  idleModalitySummary?: string;
   /** DeepSeek AI pre-validation props */
   aiValidation?: {
     validationResult: PreValidationResponse;
@@ -59,6 +61,7 @@ export default function IntelligencePanel({
   medgemmaQa,
   aiValidation,
   fillContainer,
+  idleModalitySummary,
 }: Props) {
   const { isMobile, isTablet } = useMediaQuery();
   const compact = isMobile || isTablet;
@@ -182,6 +185,21 @@ export default function IntelligencePanel({
           }}
         >
           <div style={{ opacity: 0.15, fontSize: 48 }}>◎</div>
+          {idleModalitySummary ? (
+            <p
+              className="font-mono"
+              style={{
+                fontSize: 10,
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+                color: "var(--scan-400)",
+                textAlign: "center",
+                marginBottom: -4,
+              }}
+            >
+              Modality · {idleModalitySummary}
+            </p>
+          ) : null}
           <p
             className="font-body"
             style={{
