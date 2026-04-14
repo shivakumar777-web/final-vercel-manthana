@@ -269,6 +269,16 @@ export function formatAIInterpretationReportForOracle(
     }
     lines.push("");
   }
+  if (report.dynamic_sections?.length) {
+    lines.push("### Clinical intelligence");
+    for (const s of report.dynamic_sections.slice(0, 5)) {
+      const raw = (s.body ?? "").trim();
+      const body = raw.length > 1500 ? `${raw.slice(0, 1500)}…` : raw;
+      lines.push(`#### ${s.title}`);
+      lines.push(body);
+      lines.push("");
+    }
+  }
   if (report.research_references?.length) {
     lines.push("### References");
     for (const r of report.research_references) {

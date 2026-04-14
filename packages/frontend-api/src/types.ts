@@ -403,6 +403,14 @@ export interface ClinicalCorrelationBlock {
   additional_context_needed: string;
 }
 
+/** Optional modality- or case-specific blocks from the interpreter (2–5 typical). */
+export interface DynamicReportSection {
+  id: string;
+  title: string;
+  body: string;
+  emphasis?: "info" | "clinical" | "technical";
+}
+
 export interface AIInterpretationReport {
   findings: {
     primary: StructuredReportFinding[];
@@ -424,6 +432,8 @@ export interface AIInterpretationReport {
   indian_clinical_notes: string;
   models_used: string[];
   disclaimer: string;
+  /** AI-generated extra sections (omit if gateway does not emit yet). */
+  dynamic_sections?: DynamicReportSection[];
 }
 
 export type AIOrchestrationStage =

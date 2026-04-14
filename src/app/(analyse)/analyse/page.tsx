@@ -12,6 +12,7 @@ import ViewportControls from "@/components/analyse/scanner/ViewportControls";
 import ThumbnailStrip from "@/components/analyse/scanner/ThumbnailStrip";
 import IntelligencePanel from "@/components/analyse/findings/IntelligencePanel";
 import AIReportPanel from "@/components/analyse/findings/AIReportPanel";
+import OrchestrationProgress from "@/components/analyse/findings/OrchestrationProgress";
 import UnifiedReportPanel from "@/components/analyse/findings/UnifiedReportPanel";
 import InterrogatorQA from "@/components/analyse/qa/InterrogatorQA";
 import PatientContextForm, {
@@ -905,14 +906,17 @@ export default function ScannerPage() {
         }}
       >
         {orchBusy ? (
-          <div
-            className="font-body"
-            style={{ padding: 16, textAlign: "center", fontSize: 12, color: "var(--text-40)" }}
-          >
-            {orch.stage === "detecting" && "Detecting modality…"}
-            {orch.stage === "interrogating" && "Generating clinical questions…"}
-            {orch.stage === "interpreting" && "Generating structured report…"}
-          </div>
+          orch.stage === "interpreting" ? (
+            <OrchestrationProgress />
+          ) : (
+            <div
+              className="font-body"
+              style={{ padding: 16, textAlign: "center", fontSize: 12, color: "var(--text-40)" }}
+            >
+              {orch.stage === "detecting" && "Detecting modality…"}
+              {orch.stage === "interrogating" && "Generating clinical questions…"}
+            </div>
+          )
         ) : null}
         {orch.stage === "error" && orch.error ? (
           <div
@@ -950,6 +954,9 @@ export default function ScannerPage() {
             questions={orch.questions}
             onSubmit={handleOrchestrationSubmit}
             disabled={orch.isLoading}
+            resolvedModalityLabel={orchModalityLabel}
+            wasAutoDetected={modality === "auto"}
+            detectionConfidence={orch.detectedConfidence ?? undefined}
           />
         ) : null}
         {orch.stage === "report_ready" && orch.report ? (
@@ -981,6 +988,9 @@ export default function ScannerPage() {
     reportLaunch.phase,
     reportLaunch.statusLine,
     handleReportEnginePrimary,
+    orchModalityLabel,
+    modality,
+    orch.detectedConfidence,
   ]);
 
   const findingsPeekSubtitle = (() => {

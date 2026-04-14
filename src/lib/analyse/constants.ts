@@ -17,6 +17,10 @@ export const API_BASE = "/api";
 export const AI_ORCHESTRATION_ENABLED =
   process.env.NEXT_PUBLIC_AI_ORCHESTRATION_ENABLED !== "false";
 
+/** Show `dynamic_sections` from interpreter JSON when present (disable until gateway ships). */
+export const AI_DYNAMIC_SECTIONS_ENABLED =
+  process.env.NEXT_PUBLIC_AI_DYNAMIC_SECTIONS_ENABLED !== "false";
+
 const AUTO_MODALITY: Modality = {
   id: "auto",
   label: "Auto-Detect",

@@ -776,7 +776,7 @@ export default function IntelligencePanel({
           {/* Action buttons */}
           <div style={{ marginTop: "auto", paddingTop: 20, display: "flex", flexDirection: "column", gap: 8 }}>
             <button className="btn-gold" onClick={onGenerateReport} style={{ width: "100%" }}>
-              ✦ Generate Report
+              ✦ Universal Report Engine
             </button>
             {onNewScan && (
               <button

@@ -576,6 +576,7 @@ export async function interpretOrchestration(
       session_id: sessionId,
       answers,
       patient_context_json: options?.patientContextJson ?? null,
+      report_detail_level: "detailed",
     }),
     signal: options?.signal,
   });

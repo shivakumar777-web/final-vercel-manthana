@@ -752,6 +752,33 @@ function renderReport(data) {
     </div>`;
   }
 
+  /* Dynamic AI sections (modality-specific) */
+  let dynamicSectionsHTML = '';
+  const dynList = (data.dynamic_sections || []).slice(0, 5);
+  if (dynList.length) {
+    function dynEmphasisBorder(e) {
+      if (e === 'clinical') return 'rgba(255,184,64,0.45)';
+      if (e === 'technical') return 'rgba(0,255,204,0.35)';
+      return 'rgba(0,212,255,0.35)';
+    }
+    const dynCards = dynList.map(function (s) {
+      var raw = String(s.body || '');
+      var body = raw.length > 1500 ? raw.slice(0, 1500) + '…' : raw;
+      var eb = dynEmphasisBorder(s.emphasis);
+      return (
+        '<div class="finding-card" style="border-left:3px solid ' + eb + ';margin-bottom:12px;">' +
+        '<div class="finding-title">' + esc(s.title || '') + '</div>' +
+        '<div class="finding-body" style="white-space:pre-wrap;margin-top:8px;">' + esc(body) + '</div>' +
+        '</div>'
+      );
+    }).join('');
+    dynamicSectionsHTML =
+      '<div class="section">' +
+      sectionHeader('Clinical intelligence') +
+      dynCards +
+      '</div>';
+  }
+
   /* Technique */
   const techItems = (data.technique || []).map(t => `
   <div class="tech-item">
@@ -994,6 +1021,9 @@ body::after{content:'';position:fixed;bottom:-20%;right:-10%;width:50%;height:50
 
   <!-- ══ §07 EDUCATIONAL NOTE ══ -->
   ${eduHTML}
+
+  <!-- ══ DYNAMIC AI SECTIONS ══ -->
+  ${dynamicSectionsHTML}
 
   <!-- ══ FOOTER ══ -->
   <div class="radiologist-footer">

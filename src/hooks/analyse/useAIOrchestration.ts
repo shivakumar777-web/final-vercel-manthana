@@ -37,6 +37,8 @@ export function useAIOrchestration(subscriptionTier?: string) {
   /** Final modality key used for Labs quota (auto-detect resolved key or user selection). */
   const [resolvedModalityKey, setResolvedModalityKey] = useState<string | null>(null);
   const [interrogatorMeta, setInterrogatorMeta] = useState<InterrogateResult | null>(null);
+  /** Confidence from auto-detect only (0–100); null if not applicable. */
+  const [detectedConfidence, setDetectedConfidence] = useState<number | null>(null);
 
   const reset = useCallback(() => {
     setStage("idle");
@@ -47,6 +49,7 @@ export function useAIOrchestration(subscriptionTier?: string) {
     setDetectedModality(null);
     setResolvedModalityKey(null);
     setInterrogatorMeta(null);
+    setDetectedConfidence(null);
   }, []);
 
   const start = useCallback(
@@ -68,6 +71,7 @@ export function useAIOrchestration(subscriptionTier?: string) {
       setSessionId(null);
       setInterrogatorMeta(null);
       setResolvedModalityKey(null);
+      setDetectedConfidence(null);
 
       let mk = opts.modalityKey;
       const mime = opts.imageMime || opts.file.type || "image/jpeg";
@@ -86,9 +90,15 @@ export function useAIOrchestration(subscriptionTier?: string) {
           mk = det.modality_key;
           setDetectedModality(mk);
           setResolvedModalityKey(mk);
+          setDetectedConfidence(
+            typeof det.confidence === "number" && !Number.isNaN(det.confidence)
+              ? Math.round(det.confidence)
+              : null
+          );
         } else {
           setDetectedModality(mk);
           setResolvedModalityKey(mk);
+          setDetectedConfidence(null);
         }
 
         setStage("interrogating");
@@ -159,6 +169,7 @@ export function useAIOrchestration(subscriptionTier?: string) {
     sessionId,
     report,
     detectedModality,
+    detectedConfidence,
     resolvedModalityKey,
     interrogatorMeta,
     start,

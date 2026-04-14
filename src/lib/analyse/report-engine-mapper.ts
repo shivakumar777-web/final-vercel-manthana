@@ -61,6 +61,13 @@ function escapeHtml(s: string): string {
     .replace(/"/g, "&quot;");
 }
 
+const DYNAMIC_SECTION_BODY_MAX = 1500;
+
+function truncateDynamicBody(s: string): string {
+  if (s.length <= DYNAMIC_SECTION_BODY_MAX) return s;
+  return `${s.slice(0, DYNAMIC_SECTION_BODY_MAX)}…`;
+}
+
 /**
  * Build engine JSON + Oracle handoff payload for sessionStorage → report engine page.
  */
@@ -256,6 +263,12 @@ export function interpretationReportToEnginePayload(
     },
     recommendations: [...triage, ...nextReco],
     educational_note: educational,
+    dynamic_sections: (report.dynamic_sections ?? []).slice(0, 5).map((s) => ({
+      id: escapeHtml(s.id ?? ""),
+      title: escapeHtml(s.title ?? ""),
+      body: escapeHtml(truncateDynamicBody(String(s.body ?? ""))),
+      emphasis: s.emphasis ?? "info",
+    })),
   };
 
   if (opts.sourceImageDataUrl) {
