@@ -1,11 +1,11 @@
 # Graph Report - .  (2026-04-15)
 
 ## Corpus Check
-- 249 files · ~154,085 words
+- 249 files · ~154,121 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 750 nodes · 641 edges · 235 communities detected
+- 748 nodes · 637 edges · 235 communities detected
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS
 - Token cost: 0 input · 0 output
 
@@ -281,8 +281,8 @@ Cohesion: 0.13
 Nodes (12): analyzeImage(), cxrMedgemmaSessionComplete(), cxrMedgemmaSessionStart(), detectModalityOrchestration(), getJobStatus(), interpretOrchestration(), interrogateOrchestration(), normalizeResult() (+4 more)
 
 ### Community 2 - "Community 2"
-Cohesion: 0.11
-Nodes (10): async(), coreSubmit(), detectDrugNames(), detectHerbs(), handleDomainChange(), handleModeChange(), handler(), handleSubmit() (+2 more)
+Cohesion: 0.12
+Nodes (7): async(), coreSubmit(), detectDrugNames(), detectHerbs(), handler(), handleSubmit(), reserveOracleSlot()
 
 ### Community 3 - "Community 3"
 Cohesion: 0.19
@@ -1510,6 +1510,6 @@ _Questions this graph is uniquely positioned to answer:_
 - **Should `Community 1` be split into smaller, more focused modules?**
   _Cohesion score 0.13 - nodes in this community are weakly interconnected._
 - **Should `Community 2` be split into smaller, more focused modules?**
-  _Cohesion score 0.11 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.12 - nodes in this community are weakly interconnected._
 - **Should `Community 4` be split into smaller, more focused modules?**
   _Cohesion score 0.14 - nodes in this community are weakly interconnected._
