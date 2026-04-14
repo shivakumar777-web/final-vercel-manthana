@@ -89,8 +89,19 @@ body::after {
   width: 40px; height: 40px; border-radius: 10px;
   border: 1px solid rgba(37, 211, 102, 0.35);
   background: rgba(37, 211, 102, 0.08);
-  color: #25d366; cursor: default;
+  color: #25d366; cursor: pointer;
   flex-shrink: 0;
+  padding: 0;
+  font: inherit;
+}
+.wa-icon-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+.wa-icon-btn:focus-visible {
+  outline: 2px solid rgba(37, 211, 102, 0.65);
+  outline-offset: 2px;
 }
 .modality-picker.modality-locked {
   pointer-events: none; opacity: 0.88;
@@ -223,6 +234,12 @@ textarea#jsonInput:focus { border-color: var(--border-accent); }
   font-family: 'DM Mono', monospace; font-size: 11px; color: var(--red);
   line-height: 1.6;
 }
+.info-toast {
+  display: none; background: rgba(0, 212, 255, 0.08); border: 1px solid rgba(0, 212, 255, 0.28);
+  border-radius: 8px; padding: 12px 16px; margin-top: 12px;
+  font-family: 'DM Mono', monospace; font-size: 11px; color: var(--cyan-dim);
+  line-height: 1.6;
+}
 
 .full-preview-area { grid-column: 1/-1; }
 
@@ -240,9 +257,9 @@ textarea#jsonInput:focus { border-color: var(--border-accent); }
       <div class="brand-sub">Universal AI Medical Report Renderer · 95 Modalities</div>
     </div>
     <div class="engine-header-actions">
-      <div class="wa-icon-btn" title="WhatsApp" aria-hidden="true">
+      <button type="button" class="wa-icon-btn" id="btnWhatsApp" disabled title="Save HTML report and share on WhatsApp" aria-label="Download report and share on WhatsApp">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.435 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-      </div>
+      </button>
       <button type="button" id="btnOracle" class="btn btn-secondary btn-oracle" disabled aria-disabled="true" title="Available after the report renders">Ask Manthana Oracle</button>
       <div class="engine-status">
         <div class="status-dot"></div>
@@ -273,6 +290,7 @@ textarea#jsonInput:focus { border-color: var(--border-accent); }
         <div class="panel-body">
           <textarea id="jsonInput" placeholder='Paste AI-generated JSON here or click a modality above to load a sample…'></textarea>
           <div class="error-toast" id="errorToast"></div>
+          <div class="info-toast" id="infoToast" role="status" aria-live="polite"></div>
           <div class="engine-controls">
             <button class="btn btn-primary" onclick="generateReport()">▶ Generate Report</button>
             <button class="btn btn-secondary" onclick="downloadReport()">⬇ Download HTML</button>
@@ -1048,6 +1066,105 @@ body::after{content:'';position:fixed;bottom:-20%;right:-10%;width:50%;height:50
    ────────────────────────────────────────────── */
 let lastReportHTML = '';
 
+function getReportDownloadFilename() {
+  try {
+    const raw = document.getElementById('jsonInput').value.trim();
+    if (!raw) return 'manthana_report_' + Date.now() + '.html';
+    const clean = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+    const data = JSON.parse(clean);
+    const meta = data.report_meta || {};
+    const id = meta.report_id || meta.report_type || data.modality_key;
+    if (id) {
+      const safe = String(id).replace(/[^a-zA-Z0-9._-]+/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '').slice(0, 72);
+      if (safe) return 'manthana_report_' + safe + '.html';
+    }
+  } catch (e) { /* ignore */ }
+  return 'manthana_report_' + Date.now() + '.html';
+}
+
+function setWhatsAppShareEnabled(on) {
+  const b = document.getElementById('btnWhatsApp');
+  if (!b) return;
+  b.disabled = !on;
+}
+
+function showInfo(msg) {
+  const el = document.getElementById('infoToast');
+  const err = document.getElementById('errorToast');
+  if (err) err.style.display = 'none';
+  if (!el) return;
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+function openWhatsAppWithText(text) {
+  const a = document.createElement('a');
+  a.href = 'https://wa.me/?text=' + encodeURIComponent(text);
+  a.target = '_blank';
+  a.rel = 'noopener noreferrer';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+/** Saves HTML, then shares via Web Share API (file → WhatsApp on supported devices) or opens wa.me with attach instructions. */
+function shareReportToWhatsApp() {
+  const infoEl = document.getElementById('infoToast');
+  if (infoEl) infoEl.style.display = 'none';
+
+  if (!lastReportHTML) {
+    showError('Generate a report first, then use WhatsApp share.');
+    return;
+  }
+
+  const filename = getReportDownloadFilename();
+  const blob = new Blob([lastReportHTML], { type: 'text/html;charset=utf-8' });
+  let file = new File([blob], filename, { type: 'text/html', lastModified: Date.now() });
+  if (typeof navigator.canShare === 'function' && !navigator.canShare({ files: [file] })) {
+    file = new File([blob], filename, { type: 'application/octet-stream', lastModified: Date.now() });
+  }
+
+  const objectUrl = URL.createObjectURL(blob);
+  const dl = document.createElement('a');
+  dl.href = objectUrl;
+  dl.download = filename;
+  dl.rel = 'noopener';
+  document.body.appendChild(dl);
+  dl.click();
+  dl.remove();
+  setTimeout(function () {
+    try {
+      URL.revokeObjectURL(objectUrl);
+    } catch (e) { /* ignore */ }
+  }, 5000);
+
+  const hint =
+    'Manthana Labs — HTML report saved: ' +
+    filename +
+    '\n\nIn WhatsApp, tap Attach (paperclip) and select this file from Downloads or Files.';
+
+  if (typeof navigator.share === 'function' && (!navigator.canShare || navigator.canShare({ files: [file] }))) {
+    navigator
+      .share({
+        files: [file],
+        title: 'Manthana report',
+        text: 'Manthana medical report (HTML)'
+      })
+      .then(function () {
+        showInfo('Report saved. If you chose WhatsApp, confirm send in the app.');
+      })
+      .catch(function (e) {
+        if (e && e.name === 'AbortError') return;
+        openWhatsAppWithText(hint);
+        showInfo('Report downloaded. WhatsApp opened — attach the saved HTML using the paperclip.');
+      });
+    return;
+  }
+
+  openWhatsAppWithText(hint);
+  showInfo('Report downloaded. WhatsApp opened — attach the saved HTML using the paperclip.');
+}
+
 function setOracleButtonEnabled(on) {
   const btn = document.getElementById('btnOracle');
   if (!btn) return;
@@ -1098,6 +1215,8 @@ function generateReport() {
   }
 
   toast.style.display = 'none';
+  const infoT = document.getElementById('infoToast');
+  if (infoT) infoT.style.display = 'none';
   lastReportHTML = renderReport(data);
 
   const placeholder = document.getElementById('previewPlaceholder');
@@ -1113,16 +1232,26 @@ function generateReport() {
 
   const canOracle = !!(oracleHandoffFromLabs && oracleHandoffFromLabs.reportMarkdown);
   setOracleButtonEnabled(canOracle);
+  setWhatsAppShareEnabled(true);
 }
 
 function downloadReport() {
   if (!lastReportHTML) { generateReport(); }
   if (!lastReportHTML) return;
-  const blob = new Blob([lastReportHTML], {type:'text/html'});
+  const blob = new Blob([lastReportHTML], { type: 'text/html;charset=utf-8' });
+  const objectUrl = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `manthana_report_${Date.now()}.html`;
+  a.href = objectUrl;
+  a.download = getReportDownloadFilename();
+  a.rel = 'noopener';
+  document.body.appendChild(a);
   a.click();
+  a.remove();
+  setTimeout(function () {
+    try {
+      URL.revokeObjectURL(objectUrl);
+    } catch (e) { /* ignore */ }
+  }, 5000);
 }
 
 function showError(msg) {
@@ -1135,6 +1264,8 @@ function clearAll() {
   document.getElementById('jsonInput').value = '';
   document.getElementById('jsonStatus').textContent = 'Awaiting Input';
   document.getElementById('errorToast').style.display = 'none';
+  const infoT = document.getElementById('infoToast');
+  if (infoT) infoT.style.display = 'none';
   document.getElementById('previewPlaceholder').style.display = 'flex';
   document.getElementById('previewFrame').style.display = 'none';
   document.getElementById('previewBadge').textContent = 'No Report';
@@ -1145,6 +1276,7 @@ function clearAll() {
   oracleHandoffFromLabs = null;
   buildModalityPicker();
   setOracleButtonEnabled(false);
+  setWhatsAppShareEnabled(false);
 }
 
 function stripHandoffQueryFromUrl() {
@@ -1239,6 +1371,8 @@ function installPostMessageHandoff() {
 // Init
 buildModalityPicker();
 document.getElementById('btnOracle').addEventListener('click', openOracleFromEngine);
+var _btnWa = document.getElementById('btnWhatsApp');
+if (_btnWa) _btnWa.addEventListener('click', shareReportToWhatsApp);
 installPostMessageHandoff();
 initFromLabsSession();
 </script>
