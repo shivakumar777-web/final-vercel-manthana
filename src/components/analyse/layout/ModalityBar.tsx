@@ -9,6 +9,7 @@ import React, {
 } from "react";
 import { createPortal } from "react-dom";
 import { AI_ORCHESTRATION_ENABLED, MODALITIES } from "@/lib/analyse/constants";
+import { ORCHESTRATION_MODALITIES } from "@/lib/analyse/modalityRegistry";
 import type { Modality } from "@/lib/analyse/types";
 import { useMediaQuery } from "@/hooks/analyse/useMediaQuery";
 import { useProductAccess } from "@/components/ProductAccessProvider";
@@ -81,6 +82,13 @@ export default function ModalityBar({ activeModality, onSelect }: Props) {
     setMounted(true);
   }, []);
 
+  /** Stable M-1 … M-95 for orchestration modalities (matches gateway registry order). */
+  const orchestrationSerialById = useMemo(() => {
+    const map = new Map<string, number>();
+    ORCHESTRATION_MODALITIES.forEach((m, i) => map.set(m.id, i + 1));
+    return map;
+  }, []);
+
   const modalities12d = useMemo(() => {
     const auto = MODALITIES.find((m) => m.id === "auto");
     const rest = MODALITIES.filter(
@@ -89,15 +97,26 @@ export default function ModalityBar({ activeModality, onSelect }: Props) {
     const q = search12d.trim().toLowerCase();
     let list = rest;
     if (AI_ORCHESTRATION_ENABLED && q) {
-      list = rest.filter(
-        (m) =>
+      list = rest.filter((m) => {
+        if (
           m.label.toLowerCase().includes(q) ||
           m.id.toLowerCase().includes(q) ||
           (m.group && m.group.toLowerCase().includes(q))
-      );
+        ) {
+          return true;
+        }
+        const n = orchestrationSerialById.get(m.id);
+        if (n === undefined) return false;
+        const serial = `m-${n}`;
+        return (
+          serial.includes(q) ||
+          q === String(n) ||
+          q.replace(/^m-?/, "") === String(n)
+        );
+      });
     }
     return auto ? [auto, ...list] : list;
-  }, [search12d]);
+  }, [search12d, orchestrationSerialById]);
   const modalities3d = useMemo(() => {
     const ordered: Modality[] = [];
     for (const id of ["ct_brain_vista", "premium_ct_unified"] as const) {
@@ -217,10 +236,14 @@ export default function ModalityBar({ activeModality, onSelect }: Props) {
 
   const rowMinHeight = cozyTouch ? 44 : 40;
 
-  const renderDropdownRow = (m: Modality) => {
+  const renderDropdownRow = (
+    m: Modality,
+    orchSerial?: number | "auto"
+  ) => {
     const isActive = activeModality === m.id;
     const rgb = MODALITY_COLORS[m.id] || DEFAULT_COLOR;
     const vistaLocked = m.id === "premium_ct_unified" && !hasPremiumCtAccess;
+    const showOrchSerial = AI_ORCHESTRATION_ENABLED && orchSerial !== undefined;
 
     return (
       <button
@@ -258,6 +281,23 @@ export default function ModalityBar({ activeModality, onSelect }: Props) {
             : { whiteSpace: "nowrap" as const }),
         }}
       >
+        {showOrchSerial ? (
+          <span
+            style={{
+              fontFamily: "var(--font-mono)",
+              fontSize: compact ? 10 : 10,
+              fontWeight: 600,
+              letterSpacing: "0.04em",
+              opacity: isActive ? 1 : 0.85,
+              flexShrink: 0,
+              width: compact ? 44 : 40,
+              textAlign: "right" as const,
+              color: isActive ? `rgb(${rgb})` : "var(--text-40)",
+            }}
+          >
+            {orchSerial === "auto" ? "—" : `M-${orchSerial}`}
+          </span>
+        ) : null}
         <span
           style={{
             fontFamily: "var(--font-mono)",
@@ -417,7 +457,13 @@ export default function ModalityBar({ activeModality, onSelect }: Props) {
               />
             </div>
           )}
-          {modalities12d.map((m) => renderDropdownRow(m))}
+          {modalities12d.map((m) => {
+            if (m.id === "auto") {
+              return renderDropdownRow(m, "auto");
+            }
+            const n = orchestrationSerialById.get(m.id);
+            return n !== undefined ? renderDropdownRow(m, n) : renderDropdownRow(m);
+          })}
         </>
       ) : (
         modalities3d.map((m) => renderDropdownRow(m))
