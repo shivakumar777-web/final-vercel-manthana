@@ -27,6 +27,13 @@ import CopilotActivation from "@/components/analyse/scanner/CopilotActivation";
 import BottomSheet from "@/components/analyse/shared/BottomSheet";
 import { useAnalysis } from "@/hooks/analyse/useAnalysis";
 import { useAIOrchestration } from "@/hooks/analyse/useAIOrchestration";
+import {
+  fileToDataUrl,
+  useReportEngineLaunch,
+} from "@/hooks/analyse/useReportEngineLaunch";
+import {
+  interpretationReportToEnginePayload,
+} from "@/lib/analyse/report-engine-mapper";
 import { useGatewayAuthBridge } from "@/hooks/analyse/useGatewayAuthBridge";
 import { useMultiModelAnalysis } from "@/hooks/analyse/useMultiModelAnalysis";
 import { useMediaQuery } from "@/hooks/analyse/useMediaQuery";
@@ -48,14 +55,6 @@ import {
 import { AI_ORCHESTRATION_ENABLED, getUploadAcceptTypes, MODALITIES } from "@/lib/analyse/constants";
 import { normalizeSubscriptionPlan } from "@/lib/product-access";
 import { preflightLabsScan, recordLabsScan } from "@/lib/labs/client";
-import {
-  storeOracleLabsHandoff,
-  formatSingleLabsReportForOracle,
-  formatUnifiedLabsReportForOracle,
-  DEFAULT_ORACLE_FOLLOWUP_FROM_LABS,
-  MEDGEMMA_ORACLE_FOLLOWUP_FROM_LABS,
-  ORACLE_LABS_HANDOFF_QUERY,
-} from "@/lib/analyse/oracle-handoff";
 import {
   buildCtPatientContextJson,
   gatewayModalityForCtRegion,
@@ -146,6 +145,7 @@ export default function ScannerPage() {
   const [orchestrationActive, setOrchestrationActive] = useState(false);
   const [orchestrationPreviewUrl, setOrchestrationPreviewUrl] = useState<string | null>(null);
   const orchPreviewRevokeRef = useRef<string | null>(null);
+  const orchestrationSourceFileRef = useRef<File | null>(null);
 
   const revokeOrchestrationPreview = useCallback(() => {
     if (orchPreviewRevokeRef.current) {
@@ -338,6 +338,14 @@ export default function ScannerPage() {
   // Stable session id for this scan — reset with each new scan
   const sessionIdRef = useRef<string>(randomId());
 
+  const orchModalityLabel = useMemo(() => {
+    const id = orch.resolvedModalityKey ?? modality;
+    const m = MODALITIES.find((x) => x.id === id);
+    return m?.label ?? id.replace(/_/g, " ");
+  }, [orch.resolvedModalityKey, modality]);
+
+  const reportLaunch = useReportEngineLaunch(orchModalityLabel);
+
   // Handle analysis mode change
   const handleModeChange = useCallback((mode: AnalysisMode) => {
     setAnalysisMode(mode);
@@ -352,6 +360,8 @@ export default function ScannerPage() {
   const handleNewScan = useCallback(() => {
     reset();
     orch.reset();
+    reportLaunch.reset();
+    orchestrationSourceFileRef.current = null;
     revokeOrchestrationPreview();
     setOrchestrationActive(false);
     resetMultiModel();
@@ -361,7 +371,7 @@ export default function ScannerPage() {
     setCtConfig(null);
     setScanNumber((n) => n + 1);
     sessionIdRef.current = randomId();
-  }, [reset, resetMultiModel, orch, revokeOrchestrationPreview]);
+  }, [reset, resetMultiModel, orch, revokeOrchestrationPreview, reportLaunch]);
 
   useEffect(() => {
     if (!isCtUiModality(modality)) {
@@ -521,6 +531,7 @@ export default function ScannerPage() {
           );
           if (hasDicom) setDicomFiles(files);
           revokeOrchestrationPreview();
+          orchestrationSourceFileRef.current = file0;
           const url = URL.createObjectURL(file0);
           orchPreviewRevokeRef.current = url;
           setOrchestrationPreviewUrl(url);
@@ -765,56 +776,6 @@ export default function ScannerPage() {
     forceProceedAnyway();
   }, [pendingFiles, addFiles, saveHistoryDraft, activePatientId, forceProceedAnyway]);
 
-  const handleOpenOracleFromLabs = useCallback(() => {
-    const unified = multiSession.unifiedResult;
-    const useUnified = analysisMode === "multi" && unified;
-
-    if (useUnified) {
-      const reportMarkdown = formatUnifiedLabsReportForOracle(unified, activePatientId);
-      storeOracleLabsHandoff({
-        reportMarkdown,
-        suggestedFollowUp: DEFAULT_ORACLE_FOLLOWUP_FROM_LABS,
-        scanKind: "multi",
-        labsModalityLabel: unified.modalities_analyzed?.join(", ") || "multi-modality",
-        patientId: activePatientId,
-        labsSessionId: sessionIdRef.current,
-      });
-      router.push(`/?mode=m5&domain=m5&${ORACLE_LABS_HANDOFF_QUERY}=1`);
-      return;
-    }
-
-    if (!result) return;
-    const reportMarkdown = formatSingleLabsReportForOracle(result, {
-      uiModalityId: detectedModality ?? modality,
-      patientId: activePatientId,
-    });
-    const st = result.structures;
-    const isMedgemmaFlow =
-      typeof st === "object" &&
-      st !== null &&
-      !Array.isArray(st) &&
-      (st as Record<string, unknown>).medgemma_cxr_flow === true;
-    storeOracleLabsHandoff({
-      reportMarkdown,
-      suggestedFollowUp: isMedgemmaFlow
-        ? MEDGEMMA_ORACLE_FOLLOWUP_FROM_LABS
-        : DEFAULT_ORACLE_FOLLOWUP_FROM_LABS,
-      scanKind: "single",
-      labsModalityLabel: modality,
-      patientId: activePatientId,
-      labsSessionId: sessionIdRef.current,
-    });
-    router.push(`/?mode=m5&domain=m5&${ORACLE_LABS_HANDOFF_QUERY}=1`);
-  }, [
-    analysisMode,
-    multiSession.unifiedResult,
-    result,
-    detectedModality,
-    modality,
-    activePatientId,
-    router,
-  ]);
-
   // Keyboard shortcuts
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -870,9 +831,44 @@ export default function ScannerPage() {
 
   const dismissOrchestration = useCallback(() => {
     orch.reset();
+    reportLaunch.reset();
+    orchestrationSourceFileRef.current = null;
     revokeOrchestrationPreview();
     setOrchestrationActive(false);
-  }, [orch, revokeOrchestrationPreview]);
+  }, [orch, revokeOrchestrationPreview, reportLaunch]);
+
+  const handleReportEnginePrimary = useCallback(() => {
+    if (reportLaunch.phase === "idle") {
+      reportLaunch.startGpuSequence();
+      return;
+    }
+    if (reportLaunch.phase === "ready") {
+      reportLaunch.openReportEngine(async () => {
+        const f = orchestrationSourceFileRef.current;
+        let sourceImageDataUrl: string | null = null;
+        if (f) {
+          sourceImageDataUrl = await fileToDataUrl(f);
+        }
+        const r = orch.report;
+        if (!r) {
+          throw new Error("No report");
+        }
+        return interpretationReportToEnginePayload(r, {
+          modalityKey: orch.resolvedModalityKey ?? modality,
+          modalityLabel: orchModalityLabel,
+          patientId: activePatientId,
+          sourceImageDataUrl,
+        });
+      });
+    }
+  }, [
+    reportLaunch,
+    orch.report,
+    orch.resolvedModalityKey,
+    modality,
+    orchModalityLabel,
+    activePatientId,
+  ]);
 
   // ── Determine multi-model UI state ──
   const handleRetry = useCallback(() => {
@@ -956,6 +952,11 @@ export default function ScannerPage() {
             report={orch.report}
             webSearchEnabled={webSearchEnabled}
             onNewScan={handleNewScan}
+            reportEngine={{
+              phase: reportLaunch.phase,
+              statusLine: reportLaunch.statusLine,
+              onPrimaryClick: handleReportEnginePrimary,
+            }}
           />
         ) : null}
       </div>
@@ -972,6 +973,9 @@ export default function ScannerPage() {
     dismissOrchestration,
     webSearchEnabled,
     handleNewScan,
+    reportLaunch.phase,
+    reportLaunch.statusLine,
+    handleReportEnginePrimary,
   ]);
 
   const findingsPeekSubtitle = (() => {
@@ -1362,12 +1366,9 @@ export default function ScannerPage() {
                 result={result}
                 detectedModality={detectedModality ?? undefined}
                 analysisElapsedMs={analysisElapsedMs}
-                onGenerateReport={() => {
-                  patchEntry(sessionIdRef.current, { status: "report_generated" });
-                }}
+                onGenerateReport={() => {}}
                 onNewScan={handleNewScan}
                 onRetry={handleRetry}
-                onAskAI={handleOpenOracleFromLabs}
                 heatmapState={heatmapState}
                 onHeatmapStateChange={setHeatmapState}
                 medgemmaQa={medgemmaQaPanel}
@@ -1396,7 +1397,6 @@ export default function ScannerPage() {
                 individualResults={multiSession.individualResults}
                 onGenerateReport={() => {}}
                 onNewScan={handleNewScan}
-                onAskAI={handleOpenOracleFromLabs}
               />
             )}
             {isMultiMode && !showMultiComplete && (
@@ -1433,13 +1433,9 @@ export default function ScannerPage() {
                 detectedModality={detectedModality ?? undefined}
                 analysisElapsedMs={analysisElapsedMs}
                 fillContainer={isDesktop}
-                onGenerateReport={() => {
-                  patchEntry(sessionIdRef.current, { status: "report_generated" });
-                  console.log("Generate report", result);
-                }}
+                onGenerateReport={() => {}}
                 onNewScan={handleNewScan}
                 onRetry={handleRetry}
-                onAskAI={handleOpenOracleFromLabs}
                 heatmapState={heatmapState}
                 onHeatmapStateChange={setHeatmapState}
                 medgemmaQa={medgemmaQaPanel}
@@ -1467,11 +1463,8 @@ export default function ScannerPage() {
                 unifiedResult={multiSession.unifiedResult}
                 individualResults={multiSession.individualResults}
                 fillContainer={isDesktop}
-                onGenerateReport={() => {
-                  console.log("Generate unified report", multiSession.unifiedResult);
-                }}
+                onGenerateReport={() => {}}
                 onNewScan={handleNewScan}
-                onAskAI={handleOpenOracleFromLabs}
               />
             )}
             {isMultiMode && !showMultiComplete && (

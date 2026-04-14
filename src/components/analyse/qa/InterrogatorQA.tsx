@@ -45,7 +45,8 @@ export default function InterrogatorQA({
         Clinical context
       </h3>
       <p className="text-xs text-[var(--muted)]">
-        Answer to improve report accuracy. You may leave fields blank if unknown.
+        Each answer you add narrows clinical uncertainty and improves the structured report. Leave
+        fields blank if unknown.
       </p>
       <div className="flex max-h-[50vh] flex-col gap-3 overflow-y-auto">
         {sorted.map((q) => (
@@ -108,7 +109,7 @@ export default function InterrogatorQA({
           disabled={disabled || sorted.length === 0}
           className="rounded-md bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-[var(--accent-fg)] disabled:opacity-50"
         >
-          Generate report
+          Continue to analysis
         </button>
       </div>
     </form>

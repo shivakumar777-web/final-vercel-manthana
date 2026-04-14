@@ -11,6 +11,7 @@ import type {
   UnifiedAnalysisResult,
 } from "./types";
 import { AnalysisCancelledError } from "./errors";
+import { buildLocalUnifiedFromResults } from "./unified-report-local";
 
 const FRONTEND_TO_BACKEND_MODALITY: Record<string, string> = {
   xray: "xray",
@@ -256,35 +257,19 @@ export async function getGatewayHealth(): Promise<boolean> {
   }
 }
 
-/** Generate narrative report (proxies to report_assembly via gateway POST /report). */
+/**
+ * Legacy “generate report” hook — no backend report_assembly; returns impression as narrative.
+ * UI may still expose a Generate Report button for future wiring.
+ */
 export async function generateReport(
   analysisResult: AnalysisResponse,
-  language: string = "en"
+  _language: string = "en"
 ): Promise<{ report: string; pdf_url?: string; impression?: string; narrative?: string }> {
-  const token = getGatewayAuthToken();
-  const res = await fetch(`${GATEWAY_URL}/report`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-    body: JSON.stringify({ ...analysisResult, language }),
-    signal: AbortSignal.timeout(120000),
-  });
-  if (res.status === 401) {
-    throw new Error("Authentication required. Please log in.");
-  }
-  if (!res.ok) throw new Error(`Report generation failed: ${res.status}`);
-  const data = (await res.json()) as {
-    narrative?: string;
-    impression?: string;
-    pdf_url?: string;
-  };
+  const imp = analysisResult.impression ?? "";
   return {
-    report: data.narrative ?? "",
-    pdf_url: data.pdf_url,
-    narrative: data.narrative,
-    impression: data.impression,
+    report: imp,
+    narrative: imp,
+    impression: imp,
   };
 }
 
@@ -308,30 +293,13 @@ export async function askCoPilot(
   return data.answer ?? data.response;
 }
 
-/** Request unified cross-modality report from report_assembly via gateway POST /unified-report */
+/** Client-side unified summary (no gateway /unified-report). */
 export async function requestUnifiedReport(
   individualResults: { modality: string; result: AnalysisResponse }[],
   patientId: string,
-  language: string = "en"
+  _language: string = "en"
 ): Promise<UnifiedAnalysisResult> {
-  const token = getGatewayAuthToken();
-  const res = await fetch(`${GATEWAY_URL}/unified-report`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-    body: JSON.stringify({ results: individualResults, patient_id: patientId, language }),
-    signal: AbortSignal.timeout(180000),
-  });
-  if (res.status === 401) {
-    throw new Error("Authentication required. Please log in.");
-  }
-  if (!res.ok) {
-    const err = await res.text().catch(() => "Unknown error");
-    throw new Error(`Unified report failed (${res.status}): ${err}`);
-  }
-  return res.json();
+  return buildLocalUnifiedFromResults(individualResults, patientId);
 }
 
 /* ═══ PACS API ═══ */

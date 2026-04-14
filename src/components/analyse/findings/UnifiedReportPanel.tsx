@@ -13,7 +13,6 @@ interface Props {
   individualResults: MultiModelResult[];
   onGenerateReport?: (language: string) => void;
   onNewScan?: () => void;
-  onAskAI?: () => void;
   /** Desktop resizable column: stretch to parent width instead of capping at 380px */
   fillContainer?: boolean;
 }
@@ -23,7 +22,6 @@ export default function UnifiedReportPanel({
   individualResults,
   onGenerateReport,
   onNewScan,
-  onAskAI,
   fillContainer,
 }: Props) {
   const [expandedModality, setExpandedModality] = useState<string | null>(null);
@@ -404,19 +402,12 @@ export default function UnifiedReportPanel({
           >
             ✦ Generate Unified Report ({reportLang.toUpperCase()})
           </button>
-          <div style={{ display: "flex", gap: 8 }}>
-            <button
-              className="btn-teal"
-              onClick={onAskAI}
-              style={{ flex: 1, fontSize: 10, padding: "8px 10px", lineHeight: 1.25 }}
-            >
-              Ask Manthana Oracle
-            </button>
+          {onNewScan && (
             <button
               className="btn-ghost"
               onClick={onNewScan}
               style={{
-                flex: 1,
+                width: "100%",
                 border: "1px solid var(--glass-border)",
                 borderRadius: "var(--r-sm)",
                 padding: "8px 12px",
@@ -425,7 +416,7 @@ export default function UnifiedReportPanel({
             >
               ↻ New Scan
             </button>
-          </div>
+          )}
         </div>
       </div>
     </div>

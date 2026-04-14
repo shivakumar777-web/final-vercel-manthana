@@ -2,11 +2,18 @@
 
 import React from "react";
 import type { AIInterpretationReport } from "@/lib/analyse/types";
+import type { ReportEnginePhase } from "@/hooks/analyse/useReportEngineLaunch";
 
 interface Props {
   report: AIInterpretationReport;
   webSearchEnabled?: boolean;
   onNewScan?: () => void;
+  /** Two-phase HTML report engine: idle → GPU wait → ready → open tab */
+  reportEngine?: {
+    phase: ReportEnginePhase;
+    statusLine: string;
+    onPrimaryClick: () => void;
+  };
 }
 
 function severityClass(level: string): string {
@@ -26,9 +33,13 @@ export default function AIReportPanel({
   report,
   webSearchEnabled,
   onNewScan,
+  reportEngine,
 }: Props) {
   const sev = report.severity?.level || "incidental";
   const imp = report.impressions;
+  const re = reportEngine;
+  const connecting = re?.phase === "connecting";
+  const ready = re?.phase === "ready";
 
   return (
     <div className="flex flex-col gap-4 overflow-y-auto rounded-xl border border-[var(--border)] bg-[var(--panel)] p-4 text-[var(--foreground)]">
@@ -177,6 +188,30 @@ export default function AIReportPanel({
           </div>
         )}
       </footer>
+
+      {re && (
+        <div className="flex flex-col gap-2 border-t border-[var(--border)] pt-3">
+          {(connecting || ready) && re.statusLine ? (
+            <p
+              className={`font-mono text-[10px] tracking-wide ${connecting ? "uppercase text-[var(--muted)]" : "text-[var(--accent)]"}`}
+            >
+              {re.statusLine}
+            </p>
+          ) : null}
+          <button
+            type="button"
+            disabled={connecting}
+            onClick={re.onPrimaryClick}
+            className="w-full rounded-md bg-[var(--accent)] px-3 py-2.5 text-sm font-semibold text-[var(--accent-fg)] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {connecting
+              ? "Preparing report engine…"
+              : ready
+                ? "Open HTML report engine"
+                : "✦ Generate Report"}
+          </button>
+        </div>
+      )}
 
       {onNewScan && (
         <button

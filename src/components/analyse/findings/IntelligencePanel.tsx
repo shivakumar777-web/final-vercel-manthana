@@ -17,7 +17,6 @@ interface Props {
   detectedModality?: string;
   onGenerateReport?: () => void;
   onNewScan?: () => void;
-  onAskAI?: () => void;
   heatmapState?: HeatmapState;
   onHeatmapStateChange?: (state: HeatmapState) => void;
   /** Optional elapsed analysis time in ms for the active image. */
@@ -53,7 +52,6 @@ export default function IntelligencePanel({
   detectedModality,
   onGenerateReport,
   onNewScan,
-  onAskAI,
   heatmapState,
   onHeatmapStateChange,
   analysisElapsedMs,
@@ -762,19 +760,12 @@ export default function IntelligencePanel({
             <button className="btn-gold" onClick={onGenerateReport} style={{ width: "100%" }}>
               ✦ Generate Report
             </button>
-            <div style={{ display: "flex", gap: 8 }}>
-              <button
-                className="btn-teal"
-                onClick={onAskAI}
-                style={{ flex: 1, fontSize: 10, padding: "8px 10px", lineHeight: 1.25 }}
-              >
-                Ask Manthana Oracle
-              </button>
+            {onNewScan && (
               <button
                 className="btn-ghost"
                 onClick={onNewScan}
                 style={{
-                  flex: 1,
+                  width: "100%",
                   border: "1px solid var(--glass-border)",
                   borderRadius: "var(--r-sm)",
                   padding: "8px 12px",
@@ -783,7 +774,7 @@ export default function IntelligencePanel({
               >
                 ↻ New Scan
               </button>
-            </div>
+            )}
           </div>
         </div>
       )}
