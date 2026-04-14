@@ -26,6 +26,9 @@ interface Props {
 /** Volumetric PRO / Premium CT — single “3D Premium” group in the UI. */
 const PREMIUM_3D_IDS = new Set(["ct_brain_vista", "premium_ct_unified"]);
 
+/** When true, the 3D Premium picker is closed (testing); set false when modalities go live. */
+const PREMIUM_3D_COMING_SOON = true;
+
 /* ── Per-modality accent colors for glow ── */
 const MODALITY_COLORS: Record<string, string> = {
   auto: "0,196,176", // teal
@@ -243,6 +246,7 @@ export default function ModalityBar({
   }, [onCollapsedChange]);
 
   const toggleGroup = useCallback((g: "12d" | "3d") => {
+    if (g === "3d" && PREMIUM_3D_COMING_SOON) return;
     setOpenGroup((prev) => {
       const next = prev === g ? null : g;
       if (next === "12d") setSearch12d("");
@@ -252,6 +256,7 @@ export default function ModalityBar({
 
   const pickModality = useCallback(
     (m: Modality) => {
+      if (PREMIUM_3D_COMING_SOON && PREMIUM_3D_IDS.has(m.id)) return;
       if (m.id === "premium_ct_unified" && !hasPremiumCtAccess) return;
       onSelect(m.id);
       setOpenGroup(null);
@@ -475,7 +480,9 @@ export default function ModalityBar({
             ▲
           </span>
           <span style={{ whiteSpace: "nowrap" as const }}>
-            {AI_ORCHESTRATION_ENABLED ? "1D & 2D (95) · 3D Premium" : "1D & 2D · 3D Premium"}
+            {AI_ORCHESTRATION_ENABLED
+              ? `1D & 2D (95) · 3D Premium${PREMIUM_3D_COMING_SOON ? " (soon)" : ""}`
+              : `1D & 2D · 3D Premium${PREMIUM_3D_COMING_SOON ? " (soon)" : ""}`}
           </span>
         </button>
       </div>
@@ -648,16 +655,79 @@ export default function ModalityBar({
           </button>
         </div>
 
-        <div style={{ position: "relative", flex: compact ? 1 : "0 1 auto", minWidth: 0 }}>
+        <div
+          style={{
+            position: "relative",
+            flex: compact ? 1 : "0 1 auto",
+            minWidth: 0,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: compact ? 3 : 4,
+          }}
+        >
           <button
             ref={trigger3dRef}
             type="button"
-            aria-haspopup="menu"
-            aria-expanded={openGroup === "3d"}
-            aria-label="3D Premium modalities"
+            aria-haspopup={PREMIUM_3D_COMING_SOON ? undefined : "menu"}
+            aria-expanded={PREMIUM_3D_COMING_SOON ? undefined : openGroup === "3d"}
+            aria-disabled={PREMIUM_3D_COMING_SOON ? true : undefined}
+            aria-label={
+              PREMIUM_3D_COMING_SOON
+                ? "3D Premium — locked, under testing"
+                : "3D Premium modalities"
+            }
+            title={
+              PREMIUM_3D_COMING_SOON
+                ? "Under testing — will be live soon"
+                : "Open 3D Premium modalities"
+            }
             onClick={() => toggleGroup("3d")}
-            style={groupTriggerStyle("255,180,90", openGroup === "3d", activeIn3d)}
+            style={{
+              ...groupTriggerStyle(
+                "255,180,90",
+                !PREMIUM_3D_COMING_SOON && openGroup === "3d",
+                !PREMIUM_3D_COMING_SOON && activeIn3d
+              ),
+              ...(PREMIUM_3D_COMING_SOON
+                ? {
+                    cursor: "not-allowed",
+                    opacity: 0.88,
+                  }
+                : {}),
+            }}
           >
+            {PREMIUM_3D_COMING_SOON ? (
+              <span
+                aria-hidden
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                  opacity: 0.9,
+                }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
+                  <path
+                    d="M7 11V8a5 5 0 0 1 10 0v3"
+                    stroke="currentColor"
+                    strokeWidth="1.75"
+                    strokeLinecap="round"
+                  />
+                  <rect
+                    x="5"
+                    y="11"
+                    width="14"
+                    height="10"
+                    rx="2"
+                    stroke="currentColor"
+                    strokeWidth="1.75"
+                  />
+                  <circle cx="12" cy="16" r="1.25" fill="currentColor" />
+                </svg>
+              </span>
+            ) : null}
             <span
               style={
                 compact
@@ -673,10 +743,30 @@ export default function ModalityBar({
             >
               3D Premium
             </span>
-            <span style={{ fontSize: 11, opacity: 0.75, flexShrink: 0 }} aria-hidden>
-              {openGroup === "3d" ? "▴" : "▾"}
-            </span>
+            {!PREMIUM_3D_COMING_SOON ? (
+              <span style={{ fontSize: 11, opacity: 0.75, flexShrink: 0 }} aria-hidden>
+                {openGroup === "3d" ? "▴" : "▾"}
+              </span>
+            ) : null}
           </button>
+          {PREMIUM_3D_COMING_SOON ? (
+            <p
+              style={{
+                margin: 0,
+                padding: 0,
+                fontSize: compact ? 8 : 9,
+                fontWeight: 500,
+                color: "var(--text-30)",
+                fontFamily: "var(--font-display)",
+                letterSpacing: "0.04em",
+                textAlign: "center",
+                lineHeight: 1.35,
+                maxWidth: compact ? "min(46vw, 220px)" : 240,
+              }}
+            >
+              Under testing — will be live soon
+            </p>
+          ) : null}
         </div>
       </div>
 
