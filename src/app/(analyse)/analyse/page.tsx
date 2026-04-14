@@ -10,7 +10,9 @@ import CtUploadWizard from "@/components/analyse/scanner/CtUploadWizard";
 import ViewportControls from "@/components/analyse/scanner/ViewportControls";
 import ThumbnailStrip from "@/components/analyse/scanner/ThumbnailStrip";
 import IntelligencePanel from "@/components/analyse/findings/IntelligencePanel";
+import AIReportPanel from "@/components/analyse/findings/AIReportPanel";
 import UnifiedReportPanel from "@/components/analyse/findings/UnifiedReportPanel";
+import InterrogatorQA from "@/components/analyse/qa/InterrogatorQA";
 import PatientContextForm, {
   type PatientContext,
 } from "@/components/analyse/shared/PatientContextForm";
@@ -24,6 +26,7 @@ import PremiumCTProgressPanel from "@/components/analyse/PremiumCTProgressPanel"
 import CopilotActivation from "@/components/analyse/scanner/CopilotActivation";
 import BottomSheet from "@/components/analyse/shared/BottomSheet";
 import { useAnalysis } from "@/hooks/analyse/useAnalysis";
+import { useAIOrchestration } from "@/hooks/analyse/useAIOrchestration";
 import { useGatewayAuthBridge } from "@/hooks/analyse/useGatewayAuthBridge";
 import { useMultiModelAnalysis } from "@/hooks/analyse/useMultiModelAnalysis";
 import { useMediaQuery } from "@/hooks/analyse/useMediaQuery";
@@ -36,12 +39,15 @@ import type {
   HeatmapState,
   DicomMetadataType,
   Finding,
+  ScanStage,
 } from "@/lib/analyse/types";
 import {
   buildClinicalNotesForApi,
   buildPatientContextJsonForApi,
 } from "@/lib/analyse/clinical-notes";
-import { getUploadAcceptTypes } from "@/lib/analyse/constants";
+import { AI_ORCHESTRATION_ENABLED, getUploadAcceptTypes, MODALITIES } from "@/lib/analyse/constants";
+import { normalizeSubscriptionPlan } from "@/lib/product-access";
+import { preflightLabsScan, recordLabsScan } from "@/lib/labs/client";
 import {
   storeOracleLabsHandoff,
   formatSingleLabsReportForOracle,
@@ -66,6 +72,7 @@ import {
 } from "@/lib/analyse/ecgPatientContext";
 import type { PremiumCtRegion } from "@/lib/analyse/premium-constants";
 import dynamic from "next/dynamic";
+import { useProductAccess } from "@/components/ProductAccessProvider";
 
 const FINDINGS_PANEL_WIDTH_KEY = "manthana-labs-findings-panel-width";
 const FINDINGS_SPLIT_HANDLE_PX = 6;
@@ -84,6 +91,19 @@ function clampFindingsPanelWidth(w: number, mainWidth: number): number {
 }
 
 const isCtUiModality = (m: string) => m === "ct" || isCtProductModality(m);
+
+/** Pure OpenRouter orchestration for 95 modalities + auto-detect (not Premium 3D / legacy CT wizard). */
+function shouldUseOrchestration(
+  modalityId: string,
+  ctWizardConfig: CtWizardState | null
+): boolean {
+  if (!AI_ORCHESTRATION_ENABLED) return false;
+  if (modalityId === "premium_ct_unified" || modalityId === "ct_brain_vista") return false;
+  if (modalityId === "ct" && ctWizardConfig) return false;
+  if (modalityId === "auto") return true;
+  const entry = MODALITIES.find((m) => m.id === modalityId);
+  return Boolean(entry?.orchestrationOnly);
+}
 
 const PacsBrowser = dynamic(() => import("@/components/analyse/pacs/PacsBrowser"), { ssr: false });
 const WorklistPanel = dynamic(() => import("@/components/analyse/pacs/WorklistPanel"), { ssr: false });
@@ -115,6 +135,25 @@ export default function ScannerPage() {
     setMedgemmaChestEnabled,
     submitMedgemmaAnswers,
   } = useAnalysis();
+
+  const { plan, status: productStatus } = useProductAccess();
+  const subscriptionTier = normalizeSubscriptionPlan(plan);
+  const webSearchEnabled =
+    AI_ORCHESTRATION_ENABLED &&
+    productStatus === "active" &&
+    subscriptionTier !== "free";
+  const orch = useAIOrchestration(subscriptionTier);
+  const [orchestrationActive, setOrchestrationActive] = useState(false);
+  const [orchestrationPreviewUrl, setOrchestrationPreviewUrl] = useState<string | null>(null);
+  const orchPreviewRevokeRef = useRef<string | null>(null);
+
+  const revokeOrchestrationPreview = useCallback(() => {
+    if (orchPreviewRevokeRef.current) {
+      URL.revokeObjectURL(orchPreviewRevokeRef.current);
+      orchPreviewRevokeRef.current = null;
+    }
+    setOrchestrationPreviewUrl(null);
+  }, []);
 
   const {
     state: aiValidationState,
@@ -182,7 +221,13 @@ export default function ScannerPage() {
   const [pacsTab, setPacsTab] = useState<"studies" | "worklist" | "settings">("studies");
   const { isMobile, isTablet, isDesktop, width: viewportWidth } = useMediaQuery();
   const compact = isMobile || isTablet;
-  const isScanning = !["idle", "complete", "error", "medgemma_questions"].includes(stage);
+  const legacyScanning = !["idle", "complete", "error", "medgemma_questions"].includes(stage);
+  const orchBusy =
+    orchestrationActive &&
+    (orch.stage === "detecting" ||
+      orch.stage === "interrogating" ||
+      orch.stage === "interpreting");
+  const isScanning = legacyScanning || orchBusy;
   const activePatientId = modality === "ecg" ? ecgScannerContext.patientId : patientCtx.patientId;
   const activeScan = images[activeIndex];
 
@@ -200,6 +245,26 @@ export default function ScannerPage() {
       },
     };
   }, [stage, activeScan, submitMedgemmaAnswers]);
+
+  const displayImageUrl = orchestrationPreviewUrl ?? imageUrl;
+  const viewportStage: ScanStage = useMemo(() => {
+    if (!orchestrationActive) return stage;
+    switch (orch.stage) {
+      case "detecting":
+        return "detecting";
+      case "interrogating":
+      case "interpreting":
+        return "analyzing";
+      case "answering_questions":
+        return "medgemma_questions";
+      case "report_ready":
+        return "complete";
+      case "error":
+        return "error";
+      default:
+        return "idle";
+    }
+  }, [orchestrationActive, stage, orch.stage]);
 
   const [consentGiven, setConsentGiven] = useState(false);
   /** Active Pro (not Plus): file inputs omit video extensions for 2D-only policy. */
@@ -286,6 +351,9 @@ export default function ScannerPage() {
   // New scan → increment scan number + new session id
   const handleNewScan = useCallback(() => {
     reset();
+    orch.reset();
+    revokeOrchestrationPreview();
+    setOrchestrationActive(false);
     resetMultiModel();
     setAnalysisMode("single");
     setHeatmapState({ visible: false, opacity: 0.6, activeFindingIndex: null, colorScheme: "jet" });
@@ -293,7 +361,7 @@ export default function ScannerPage() {
     setCtConfig(null);
     setScanNumber((n) => n + 1);
     sessionIdRef.current = randomId();
-  }, [reset, resetMultiModel]);
+  }, [reset, resetMultiModel, orch, revokeOrchestrationPreview]);
 
   useEffect(() => {
     if (!isCtUiModality(modality)) {
@@ -302,7 +370,7 @@ export default function ScannerPage() {
   }, [modality]);
 
   useEffect(() => {
-    if (modality === "auto") setModality("xray");
+    if (!AI_ORCHESTRATION_ENABLED && modality === "auto") setModality("xray");
   }, [modality, setModality]);
 
   useEffect(() => {
@@ -421,7 +489,7 @@ export default function ScannerPage() {
           pro2dOnly: proLabs2dOnly,
         });
 
-  // Handle file drop/upload -> AI validation first, then analysis
+  // Handle file drop/upload -> AI validation first, then analysis (or AI orchestration)
   const handleFile = useCallback(
     (files: File[]) => {
       if (!consentGiven) {
@@ -431,6 +499,44 @@ export default function ScannerPage() {
         addToast("ECG: enter age and sex in section 1 before uploading.", "warning");
         return;
       }
+      const file0 = files[0];
+      if (!file0) return;
+
+      if (
+        analysisMode === "single" &&
+        shouldUseOrchestration(modality, ctConfig)
+      ) {
+        void (async () => {
+          const pf = await preflightLabsScan(modality);
+          if (!pf.allowed) {
+            const msg =
+              ("message" in pf && typeof pf.message === "string" && pf.message) ||
+              "Labs quota does not allow this scan right now.";
+            addToast(msg, "warning", 8000);
+            return;
+          }
+          const hasDicom = files.some(
+            (f) =>
+              f.name.toLowerCase().endsWith(".dcm") || f.name.toLowerCase().endsWith(".nii")
+          );
+          if (hasDicom) setDicomFiles(files);
+          revokeOrchestrationPreview();
+          const url = URL.createObjectURL(file0);
+          orchPreviewRevokeRef.current = url;
+          setOrchestrationPreviewUrl(url);
+          setOrchestrationActive(true);
+          resetValidation();
+          setPendingFiles(null);
+          const res = await orch.start({ file: file0, modalityKey: modality });
+          if (!res.ok) {
+            addToast(res.error || "AI orchestration could not start.", "warning", 9000);
+          } else {
+            saveHistoryDraft(files, modality, activePatientId);
+          }
+        })();
+        return;
+      }
+
       // Check if DICOM — store separately for viewer
       const hasDicom = files.some(
         (f) => f.name.toLowerCase().endsWith(".dcm") || f.name.toLowerCase().endsWith(".nii")
@@ -467,13 +573,17 @@ export default function ScannerPage() {
       modality,
       ctConfig,
       resolveAnalysisParams,
-      saveHistoryDraft,
       activePatientId,
       consentGiven,
       ecgScannerContext.ecgForm,
       addToast,
       startValidation,
       patientCtx,
+      analysisMode,
+      orch,
+      revokeOrchestrationPreview,
+      resetValidation,
+      saveHistoryDraft,
     ]
   );
 
@@ -537,6 +647,11 @@ export default function ScannerPage() {
           e.target.value = "";
           return;
         }
+        if (analysisMode === "single" && shouldUseOrchestration(modality, ctConfig)) {
+          handleFile(files);
+          e.target.value = "";
+          return;
+        }
         const { notes, pctx } = resolveAnalysisParams(files);
         const analyzeModalityForApi =
           modality === "ct" && ctConfig ? gatewayModalityForCtRegion(ctConfig.region) : undefined;
@@ -556,6 +671,8 @@ export default function ScannerPage() {
       consentGiven,
       ecgScannerContext.ecgForm,
       addToast,
+      analysisMode,
+      handleFile,
     ]
   );
 
@@ -569,6 +686,11 @@ export default function ScannerPage() {
         }
         if (modality === "ecg" && !ecgFormHasRequiredDemographics(ecgScannerContext.ecgForm)) {
           addToast("ECG: enter age and sex in section 1 before uploading.", "warning");
+          e.target.value = "";
+          return;
+        }
+        if (analysisMode === "single" && shouldUseOrchestration(modality, ctConfig)) {
+          handleFile([file]);
           e.target.value = "";
           return;
         }
@@ -591,6 +713,8 @@ export default function ScannerPage() {
       consentGiven,
       ecgScannerContext.ecgForm,
       addToast,
+      analysisMode,
+      handleFile,
     ]
   );
 
@@ -731,6 +855,25 @@ export default function ScannerPage() {
     return () => window.removeEventListener("keydown", handler);
   }, [cmdOpen, zoom, setZoom]);
 
+  const handleOrchestrationSubmit = useCallback(
+    async (answers: Array<{ question_id: string; answer: string }>) => {
+      const out = await orch.submitAnswers(answers);
+      if (out.report) {
+        const modId = out.modalityIdForUsage ?? modality;
+        void recordLabsScan(modId).then((rec) => {
+          if (!rec.ok && rec.error) addToast(rec.error, "warning", 7000);
+        });
+      }
+    },
+    [orch, modality, addToast]
+  );
+
+  const dismissOrchestration = useCallback(() => {
+    orch.reset();
+    revokeOrchestrationPreview();
+    setOrchestrationActive(false);
+  }, [orch, revokeOrchestrationPreview]);
+
   // ── Determine multi-model UI state ──
   const handleRetry = useCallback(() => {
     const active = images[activeIndex];
@@ -745,6 +888,114 @@ export default function ScannerPage() {
   const showMultiProcessing = isMultiMode && (multiStage === "processing" || multiStage === "unifying");
   const showMultiComplete = isMultiMode && multiStage === "complete" && multiSession.unifiedResult;
   const showCopilotConfirm = isMultiMode && multiStage === "confirming";
+
+  const showOrchestrationFindings = orchestrationActive && analysisMode === "single";
+
+  const orchestrationFindingsPanel = useMemo(() => {
+    if (!showOrchestrationFindings) return null;
+    return (
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 12,
+          width: "100%",
+          minHeight: 120,
+        }}
+      >
+        {orchBusy ? (
+          <div
+            className="font-body"
+            style={{ padding: 16, textAlign: "center", fontSize: 12, color: "var(--text-40)" }}
+          >
+            {orch.stage === "detecting" && "Detecting modality…"}
+            {orch.stage === "interrogating" && "Generating clinical questions…"}
+            {orch.stage === "interpreting" && "Generating structured report…"}
+          </div>
+        ) : null}
+        {orch.stage === "error" && orch.error ? (
+          <div
+            style={{
+              borderRadius: 12,
+              border: "1px solid rgba(248,113,113,0.35)",
+              background: "rgba(248,113,113,0.08)",
+              padding: 12,
+              fontSize: 13,
+              color: "var(--text-80)",
+            }}
+          >
+            {orch.error}
+            <button
+              type="button"
+              className="font-body"
+              onClick={dismissOrchestration}
+              style={{
+                display: "block",
+                marginTop: 10,
+                padding: "6px 12px",
+                borderRadius: 8,
+                border: "1px solid var(--glass-border)",
+                background: "rgba(255,255,255,0.06)",
+                cursor: "pointer",
+                fontSize: 11,
+              }}
+            >
+              Dismiss
+            </button>
+          </div>
+        ) : null}
+        {orch.stage === "answering_questions" && orch.questions.length > 0 ? (
+          <InterrogatorQA
+            questions={orch.questions}
+            onSubmit={handleOrchestrationSubmit}
+            disabled={orch.isLoading}
+          />
+        ) : null}
+        {orch.stage === "report_ready" && orch.report ? (
+          <AIReportPanel
+            report={orch.report}
+            webSearchEnabled={webSearchEnabled}
+            onNewScan={handleNewScan}
+          />
+        ) : null}
+      </div>
+    );
+  }, [
+    showOrchestrationFindings,
+    orchBusy,
+    orch.stage,
+    orch.error,
+    orch.questions,
+    orch.report,
+    orch.isLoading,
+    handleOrchestrationSubmit,
+    dismissOrchestration,
+    webSearchEnabled,
+    handleNewScan,
+  ]);
+
+  const findingsPeekSubtitle = (() => {
+    if (!isMultiMode) {
+      if (showOrchestrationFindings) {
+        if (orch.stage === "report_ready" && orch.report) return "AI report ready";
+        if (orchBusy) return "AI orchestration…";
+        if (orch.stage === "answering_questions") return "Answer clinical questions";
+        if (orch.stage === "error") return "Orchestration error";
+        return "Swipe up to view";
+      }
+      if (stage === "complete" && result) {
+        return `${result.findings.length} findings · ${Math.round(
+          result.findings.reduce((s: number, f: Finding) => s + f.confidence, 0) /
+            (result.findings.length || 1)
+        )}%`;
+      }
+      if (isScanning) return "Analyzing…";
+      return "Swipe up to view";
+    }
+    if (showMultiComplete) return "Unified report ready";
+    if (showMultiProcessing) return "Processing…";
+    return "Swipe up to view";
+  })();
 
   return (
     <div
@@ -923,18 +1174,18 @@ export default function ScannerPage() {
               ) : (
                 <ScanViewport
                   onFileDrop={handleFile}
-                  imageUrl={imageUrl}
-                  stage={stage}
+                  imageUrl={displayImageUrl}
+                  stage={viewportStage}
                   zoom={zoom}
                   modality={modality}
                   acceptOverride={isCtUiModality(modality) ? ctFileAccept : undefined}
                   pro2dOnly={proLabs2dOnly}
                   dicomFiles={dicomFiles}
                   onMetadataExtracted={handleDicomMetadata}
-                  heatmapUrl={result?.heatmap_url}
+                  heatmapUrl={orchestrationActive ? undefined : result?.heatmap_url}
                   heatmapState={heatmapState}
                   onHeatmapStateChange={setHeatmapState}
-                  findings={result?.findings}
+                  findings={orchestrationActive ? undefined : result?.findings}
                 />
               )}
               {modality === "premium_ct_unified" && stage === "analyzing" ? (
@@ -945,7 +1196,7 @@ export default function ScannerPage() {
               <ViewportControls
                 zoom={zoom}
                 onZoomChange={setZoom}
-                hasImage={!!imageUrl}
+                hasImage={!!displayImageUrl}
               />
               <ThumbnailStrip
                 images={images}
@@ -1098,19 +1349,14 @@ export default function ScannerPage() {
                   {isMultiMode ? "✦ Multi-Model Analysis" : "Analysis Findings"}
                 </span>
                 <span className="font-mono" style={{ fontSize: 9, color: "var(--scan-400)" }}>
-                  {stage === "complete" && result
-                    ? `${result.findings.length} findings · ${Math.round(result.findings.reduce((s: number, f: Finding) => s + f.confidence, 0) / (result.findings.length || 1))}%`
-                    : showMultiComplete
-                    ? "Unified report ready"
-                    : isScanning
-                    ? "Analyzing…"
-                    : "Swipe up to view"}
+                  {findingsPeekSubtitle}
                 </span>
               </div>
             }
           >
             {/* Content inside bottom sheet */}
-            {!isMultiMode && (
+            {!isMultiMode && showOrchestrationFindings && orchestrationFindingsPanel}
+            {!isMultiMode && !showOrchestrationFindings && (
               <IntelligencePanel
                 stage={stage}
                 result={result}
@@ -1179,7 +1425,8 @@ export default function ScannerPage() {
               minWidth: isDesktop ? MIN_FINDINGS_PANEL_W : 300,
             }}
           >
-            {!isMultiMode && (
+            {!isMultiMode && showOrchestrationFindings && orchestrationFindingsPanel}
+            {!isMultiMode && !showOrchestrationFindings && (
               <IntelligencePanel
                 stage={stage}
                 result={result}

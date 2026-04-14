@@ -39,6 +39,18 @@ export type {
   WorklistItem,
   PacsModality,
   PacsConfig,
+  InterrogatorQuestion,
+  StructuredReportFinding,
+  DiagnosisWithConfidence,
+  NextStepItem,
+  ResearchReferenceLink,
+  ClinicalCorrelationBlock,
+  AIInterpretationReport,
+  AIOrchestrationStage,
+  DetectModalityResult,
+  InterrogateResult,
+  InterpretResult,
+  ModalityGroupDef,
 } from "./types";
 
 // API surface

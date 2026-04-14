@@ -8,7 +8,7 @@ import React, {
   useCallback,
 } from "react";
 import { createPortal } from "react-dom";
-import { MODALITIES } from "@/lib/analyse/constants";
+import { AI_ORCHESTRATION_ENABLED, MODALITIES } from "@/lib/analyse/constants";
 import type { Modality } from "@/lib/analyse/types";
 import { useMediaQuery } from "@/hooks/analyse/useMediaQuery";
 import { useProductAccess } from "@/components/ProductAccessProvider";
@@ -46,6 +46,8 @@ const MODALITY_COLORS: Record<string, string> = {
   dermatology: "200,120,200", // orchid
 };
 
+const DEFAULT_COLOR = "0,196,176";
+
 type OpenGroup = "12d" | "3d" | null;
 
 interface MenuLayout {
@@ -64,6 +66,7 @@ export default function ModalityBar({ activeModality, onSelect }: Props) {
   const [openGroup, setOpenGroup] = useState<OpenGroup>(null);
   const [menuLayout, setMenuLayout] = useState<MenuLayout | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [search12d, setSearch12d] = useState("");
 
   const { isMobile, isTablet, isTouch, width: vw } = useMediaQuery();
   const { plan, status } = useProductAccess();
@@ -78,10 +81,23 @@ export default function ModalityBar({ activeModality, onSelect }: Props) {
     setMounted(true);
   }, []);
 
-  const modalities12d = useMemo(
-    () => MODALITIES.filter((m) => m.id !== "auto" && !PREMIUM_3D_IDS.has(m.id)),
-    []
-  );
+  const modalities12d = useMemo(() => {
+    const auto = MODALITIES.find((m) => m.id === "auto");
+    const rest = MODALITIES.filter(
+      (m) => m.id !== "auto" && !PREMIUM_3D_IDS.has(m.id)
+    );
+    const q = search12d.trim().toLowerCase();
+    let list = rest;
+    if (AI_ORCHESTRATION_ENABLED && q) {
+      list = rest.filter(
+        (m) =>
+          m.label.toLowerCase().includes(q) ||
+          m.id.toLowerCase().includes(q) ||
+          (m.group && m.group.toLowerCase().includes(q))
+      );
+    }
+    return auto ? [auto, ...list] : list;
+  }, [search12d]);
   const modalities3d = useMemo(() => {
     const ordered: Modality[] = [];
     for (const id of ["ct_brain_vista", "premium_ct_unified"] as const) {
@@ -183,7 +199,11 @@ export default function ModalityBar({ activeModality, onSelect }: Props) {
   }, [openGroup]);
 
   const toggleGroup = useCallback((g: "12d" | "3d") => {
-    setOpenGroup((prev) => (prev === g ? null : g));
+    setOpenGroup((prev) => {
+      const next = prev === g ? null : g;
+      if (next === "12d") setSearch12d("");
+      return next;
+    });
   }, []);
 
   const pickModality = useCallback(
@@ -199,7 +219,7 @@ export default function ModalityBar({ activeModality, onSelect }: Props) {
 
   const renderDropdownRow = (m: Modality) => {
     const isActive = activeModality === m.id;
-    const rgb = MODALITY_COLORS[m.id] || "0,196,176";
+    const rgb = MODALITY_COLORS[m.id] || DEFAULT_COLOR;
     const vistaLocked = m.id === "premium_ct_unified" && !hasPremiumCtAccess;
 
     return (
@@ -366,9 +386,42 @@ export default function ModalityBar({ activeModality, onSelect }: Props) {
         paddingBottom: "env(safe-area-inset-bottom, 0px)",
       }}
     >
-      {openGroup === "12d"
-        ? modalities12d.map((m) => renderDropdownRow(m))
-        : modalities3d.map((m) => renderDropdownRow(m))}
+      {openGroup === "12d" ? (
+        <>
+          {AI_ORCHESTRATION_ENABLED && (
+            <div
+              style={{
+                padding: "8px 12px",
+                borderBottom: "1px solid rgba(255,255,255,0.08)",
+                position: "sticky",
+                top: 0,
+                background: "var(--modality-bar-bg)",
+                zIndex: 1,
+              }}
+            >
+              <input
+                type="search"
+                placeholder="Search modality…"
+                value={search12d}
+                onChange={(e) => setSearch12d(e.target.value)}
+                aria-label="Filter modalities"
+                style={{
+                  width: "100%",
+                  borderRadius: 8,
+                  border: "1px solid var(--glass-border)",
+                  background: "rgba(0,0,0,0.2)",
+                  color: "var(--foreground)",
+                  padding: "8px 10px",
+                  fontSize: 12,
+                }}
+              />
+            </div>
+          )}
+          {modalities12d.map((m) => renderDropdownRow(m))}
+        </>
+      ) : (
+        modalities3d.map((m) => renderDropdownRow(m))
+      )}
     </div>
   );
 
@@ -423,7 +476,7 @@ export default function ModalityBar({ activeModality, onSelect }: Props) {
                   : undefined
               }
             >
-              1D & 2D
+              {AI_ORCHESTRATION_ENABLED ? "1D & 2D (95)" : "1D & 2D"}
             </span>
             <span style={{ fontSize: 11, opacity: 0.75, flexShrink: 0 }} aria-hidden>
               {openGroup === "12d" ? "▴" : "▾"}

@@ -1,7 +1,15 @@
 /* ═══ API Client — Gateway Integration ═══ */
 import { GATEWAY_URL } from "./constants";
 import { getGatewayAuthToken } from "./auth-token";
-import type { AnalysisResponse, JobStatus, ServiceHealth, UnifiedAnalysisResult } from "./types";
+import type {
+  AnalysisResponse,
+  DetectModalityResult,
+  InterrogateResult,
+  InterpretResult,
+  JobStatus,
+  ServiceHealth,
+  UnifiedAnalysisResult,
+} from "./types";
 import { AnalysisCancelledError } from "./errors";
 
 const FRONTEND_TO_BACKEND_MODALITY: Record<string, string> = {
@@ -510,4 +518,105 @@ export async function cxrMedgemmaSessionComplete(
     throw new Error(`CXR MedGemma finalize failed (${res.status}): ${err}`);
   }
   return res.json() as Promise<CxrMedgemmaCompleteResponse>;
+}
+
+// ─── 95-modality AI orchestration (/ai/*) ───────────────────────────────────
+
+function orchHeaders(subscriptionTier?: string): Record<string, string> {
+  const token = getGatewayAuthToken();
+  const h: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+  if (subscriptionTier) {
+    h["X-Subscription-Tier"] = subscriptionTier.toLowerCase();
+  }
+  return h;
+}
+
+export async function detectModalityOrchestration(
+  payload: {
+    image_b64?: string | null;
+    image_mime?: string;
+    text_context?: string | null;
+  },
+  options?: { subscriptionTier?: string; signal?: AbortSignal }
+): Promise<DetectModalityResult> {
+  const res = await fetch(`${GATEWAY_URL}/ai/detect-modality`, {
+    method: "POST",
+    headers: orchHeaders(options?.subscriptionTier),
+    body: JSON.stringify({
+      image_b64: payload.image_b64 ?? null,
+      image_mime: payload.image_mime ?? "image/jpeg",
+      text_context: payload.text_context ?? null,
+    }),
+    signal: options?.signal,
+  });
+  if (res.status === 401) {
+    throw new Error("Authentication required. Please log in.");
+  }
+  if (!res.ok) {
+    const err = await readGatewayError(res);
+    throw new Error(`detect-modality failed (${res.status}): ${err}`);
+  }
+  return res.json() as Promise<DetectModalityResult>;
+}
+
+export async function interrogateOrchestration(
+  payload: {
+    image_b64?: string | null;
+    image_mime?: string;
+    modality_key: string;
+    patient_context_json?: string | null;
+  },
+  options?: { subscriptionTier?: string; signal?: AbortSignal }
+): Promise<InterrogateResult> {
+  const res = await fetch(`${GATEWAY_URL}/ai/interrogate`, {
+    method: "POST",
+    headers: orchHeaders(options?.subscriptionTier),
+    body: JSON.stringify({
+      image_b64: payload.image_b64 ?? null,
+      image_mime: payload.image_mime ?? "image/jpeg",
+      modality_key: payload.modality_key,
+      patient_context_json: payload.patient_context_json ?? null,
+    }),
+    signal: options?.signal,
+  });
+  if (res.status === 401) {
+    throw new Error("Authentication required. Please log in.");
+  }
+  if (!res.ok) {
+    const err = await readGatewayError(res);
+    throw new Error(`interrogate failed (${res.status}): ${err}`);
+  }
+  return res.json() as Promise<InterrogateResult>;
+}
+
+export async function interpretOrchestration(
+  sessionId: string,
+  answers: Array<{ question_id: string; answer: string }>,
+  options?: {
+    patientContextJson?: string | null;
+    subscriptionTier?: string;
+    signal?: AbortSignal;
+  }
+): Promise<InterpretResult> {
+  const res = await fetch(`${GATEWAY_URL}/ai/interpret`, {
+    method: "POST",
+    headers: orchHeaders(options?.subscriptionTier),
+    body: JSON.stringify({
+      session_id: sessionId,
+      answers,
+      patient_context_json: options?.patientContextJson ?? null,
+    }),
+    signal: options?.signal,
+  });
+  if (res.status === 401) {
+    throw new Error("Authentication required. Please log in.");
+  }
+  if (!res.ok) {
+    const err = await readGatewayError(res);
+    throw new Error(`interpret failed (${res.status}): ${err}`);
+  }
+  return res.json() as Promise<InterpretResult>;
 }
