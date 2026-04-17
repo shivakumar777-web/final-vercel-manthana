@@ -636,6 +636,12 @@
     max-width: 100% !important;
     flex: none !important;
   }
+  /* Scan + zoom + thumbnail strip: keep multi-image row visible above modality footer */
+  .labs-viewport-stack {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    max-height: min(72dvh, calc(100dvh - 220px));
+  }
   .intelligence-section {
     /* Stack layout: leave room for TopBar + ModalityBar + disclaimer; scroll inside panel */
     max-height: min(78vh, calc(100dvh - 200px));

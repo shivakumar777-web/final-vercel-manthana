@@ -1198,40 +1198,52 @@ export default function ScannerPage() {
                   onComplete={setCtConfig}
                 />
               ) : (
-                <ScanViewport
-                  onFileDrop={handleFile}
-                  imageUrl={displayImageUrl}
-                  stage={viewportStage}
-                  zoom={zoom}
-                  modality={modality}
-                  acceptOverride={isCtUiModality(modality) ? ctFileAccept : undefined}
-                  pro2dOnly={proLabs2dOnly}
-                  dicomFiles={dicomFiles}
-                  onMetadataExtracted={handleDicomMetadata}
-                  heatmapUrl={orchestrationActive ? undefined : result?.heatmap_url}
-                  heatmapState={heatmapState}
-                  onHeatmapStateChange={setHeatmapState}
-                  findings={orchestrationActive ? undefined : result?.findings}
-                />
-              )}
-              {modality === "premium_ct_unified" && stage === "analyzing" ? (
-                <div style={{ marginTop: 10 }}>
-                  <PremiumCTProgressPanel step="vista_segmentation" />
+                <div
+                  className="labs-viewport-stack"
+                  style={{
+                    flex: 1,
+                    minHeight: 0,
+                    display: "flex",
+                    flexDirection: "column",
+                    overflow: "hidden",
+                    width: "100%",
+                  }}
+                >
+                  <ScanViewport
+                    onFileDrop={handleFile}
+                    imageUrl={displayImageUrl}
+                    stage={viewportStage}
+                    zoom={zoom}
+                    modality={modality}
+                    acceptOverride={isCtUiModality(modality) ? ctFileAccept : undefined}
+                    pro2dOnly={proLabs2dOnly}
+                    dicomFiles={dicomFiles}
+                    onMetadataExtracted={handleDicomMetadata}
+                    heatmapUrl={orchestrationActive ? undefined : result?.heatmap_url}
+                    heatmapState={heatmapState}
+                    onHeatmapStateChange={setHeatmapState}
+                    findings={orchestrationActive ? undefined : result?.findings}
+                  />
+                  {modality === "premium_ct_unified" && stage === "analyzing" ? (
+                    <div style={{ marginTop: 10, flexShrink: 0 }}>
+                      <PremiumCTProgressPanel step="vista_segmentation" />
+                    </div>
+                  ) : null}
+                  <ViewportControls
+                    zoom={zoom}
+                    onZoomChange={setZoom}
+                    hasImage={!!displayImageUrl}
+                  />
+                  <ThumbnailStrip
+                    images={images}
+                    activeIndex={activeIndex}
+                    onSelect={setActiveIndex}
+                    onRemove={removeImage}
+                    onAddFiles={handleAddFiles}
+                    onAddCamera={handleAddCamera}
+                  />
                 </div>
-              ) : null}
-              <ViewportControls
-                zoom={zoom}
-                onZoomChange={setZoom}
-                hasImage={!!displayImageUrl}
-              />
-              <ThumbnailStrip
-                images={images}
-                activeIndex={activeIndex}
-                onSelect={setActiveIndex}
-                onRemove={removeImage}
-                onAddFiles={handleAddFiles}
-                onAddCamera={handleAddCamera}
-              />
+              )}
               <input
                 ref={addMoreRef}
                 type="file"

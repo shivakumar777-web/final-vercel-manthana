@@ -25,6 +25,7 @@ export default function ViewportControls({
         padding: "8px 16px",
         borderTop: "1px solid var(--glass-border)",
         background: "rgba(0,0,0,0.3)",
+        flexShrink: 0,
       }}
     >
       {/* Zoom controls */}

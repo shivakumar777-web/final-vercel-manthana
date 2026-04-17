@@ -148,6 +148,7 @@ export default function ScanViewport({
       onClick={() => fileRef.current?.click()}
       style={{
         flex: 1,
+        minHeight: 0,
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -156,7 +157,8 @@ export default function ScanViewport({
         margin: compact ? 8 : "4px 16px 16px 16px",
         paddingTop: compact ? 8 : 12,
         paddingBottom: compact ? 16 : 24,
-        minHeight: compact ? 180 : 320,
+        overflow: "auto",
+        WebkitOverflowScrolling: "touch",
       }}
     >
       {/* Concentric scan rings */}
@@ -287,8 +289,19 @@ export default function ScanViewport({
      STANDARD IMAGE VIEWER MODE
      ═══════════════════════════════════════════════════════════ */
   const imageViewer = !isDicomMode && imageUrl ? (
-    <div style={{ position: "relative", flex: 1, overflow: "hidden" }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", minHeight: compact ? 200 : 420, overflow: "hidden", position: "relative" }}>
+    <div style={{ position: "relative", flex: 1, minHeight: 0, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flex: 1,
+          minHeight: 0,
+          overflow: "auto",
+          WebkitOverflowScrolling: "touch",
+          position: "relative",
+        }}
+      >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={imageUrl}
@@ -296,7 +309,7 @@ export default function ScanViewport({
           onLoad={handleImageLoad}
           style={{
             maxWidth: "100%",
-            maxHeight: 500,
+            maxHeight: "min(500px, 58dvh)",
             objectFit: "contain",
             transform: `scale(${zoom})`,
             transformOrigin: "center",
@@ -373,10 +386,26 @@ export default function ScanViewport({
      RENDER
      ═══════════════════════════════════════════════════════════ */
   return (
-    <div className="viewport-section" style={{ flex: 1, minWidth: 0 }}>
+    <div
+      className="scan-viewport-root"
+      style={{
+        flex: "1 1 0%",
+        minWidth: 0,
+        minHeight: 0,
+        overflow: "hidden",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
       <div
         className="viewport-frame"
-        style={{ minHeight: compact ? 200 : 360, position: "relative", display: "flex", flexDirection: "column" }}
+        style={{
+          flex: 1,
+          minHeight: 0,
+          position: "relative",
+          display: "flex",
+          flexDirection: "column",
+        }}
         onDrop={handleDrop}
         onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
         onDragLeave={() => setDragOver(false)}
