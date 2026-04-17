@@ -40,8 +40,7 @@ export default function ECGPatientContextForm({
   analysisMode = "single",
   onAnalysisModeChange,
 }: Props) {
-  const { isMobile, isTablet } = useMediaQuery();
-  const compact = isMobile || isTablet;
+  const { isCompactLayout: compact } = useMediaQuery();
   const [collapsed, setCollapsed] = useState(false);
   const [openSections, setOpenSections] = useState<Set<string>>(() => new Set(["demographics"]));
   const [ctx, setCtx] = useState<EcgScannerContext>(() => createInitialEcgScannerContext(scanNumber));

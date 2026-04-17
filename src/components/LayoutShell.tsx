@@ -11,6 +11,7 @@ import { LangProvider, useLang } from "./LangProvider";
 import { ToastProvider } from "@/hooks/useToast";
 import ToastContainer from "./Toast";
 import { ProductAccessProvider } from "./ProductAccessProvider";
+import MobilePwaInstallBanner from "./MobilePwaInstallBanner";
 
 // Lazy-load heavy overlays
 const SettingsOverlay = dynamic(() => import("./SettingsOverlay"), { ssr: false });
@@ -146,6 +147,8 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
         <ToastProvider>
           <div className="relative min-h-dvh bg-[#020610] overflow-x-hidden">
             <CosmicBackground />
+            {/* Welcome is outside (auth) layout — same PWA nudge as sign-in */}
+            {pathname === "/welcome" && <MobilePwaInstallBanner />}
             <div className="relative z-10 min-h-dvh flex flex-col items-center justify-center p-4">
               <ErrorBoundary>{children}</ErrorBoundary>
             </div>
@@ -160,7 +163,8 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
     <LangProvider>
       <ToastProvider>
       <ProductAccessProvider>
-      <div className="relative min-h-dvh bg-[#020610] overflow-x-hidden">
+      <div className="relative min-h-dvh bg-[#020610] overflow-x-hidden manthana-main-shell">
+      <MobilePwaInstallBanner />
       {/* Cosmic background canvas */}
       <CosmicBackground />
 

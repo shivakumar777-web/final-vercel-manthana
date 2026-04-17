@@ -11,14 +11,25 @@ export function isStandalonePwa(): boolean {
   return nav.standalone === true;
 }
 
-/** Narrow viewport + touch-like interaction (reduces false positives on resized desktop windows). */
+/**
+ * Show install nudge only on real mobile / tablet contexts (not desktop Chrome resized narrow).
+ * Aligns with Labs `isCompactLayout` (≤1024px) + touch or mobile UA.
+ */
 export function isMobileForPwaNudge(): boolean {
   if (typeof window === "undefined") return false;
-  const narrow = window.matchMedia("(max-width: 768px)").matches;
+  if (isStandalonePwa()) return false;
+  const w = Math.round(window.visualViewport?.width ?? window.innerWidth);
+  const narrow = w <= 1024;
+  if (!narrow) return false;
   const touchLike =
     window.matchMedia("(pointer: coarse)").matches ||
     window.matchMedia("(hover: none)").matches;
-  return narrow && touchLike;
+  const uaMobile =
+    typeof navigator !== "undefined" &&
+    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+      navigator.userAgent
+    );
+  return touchLike || uaMobile;
 }
 
 export function isIosLike(): boolean {

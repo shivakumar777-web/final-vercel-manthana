@@ -82,9 +82,8 @@ export default function ModalityBar({
   const [mounted, setMounted] = useState(false);
   const [search12d, setSearch12d] = useState("");
 
-  const { isMobile, isTablet, isTouch, width: vw } = useMediaQuery();
+  const { isTouch, width: vw, isCompactLayout: compact } = useMediaQuery();
   const { plan, status } = useProductAccess();
-  const compact = isMobile || isTablet;
   const footerCollapsible = Boolean(collapsible && onCollapsedChange);
   const footerCollapsed = footerCollapsible && Boolean(collapsed);
   /** Comfortable tap targets on touch hardware or small breakpoints. */

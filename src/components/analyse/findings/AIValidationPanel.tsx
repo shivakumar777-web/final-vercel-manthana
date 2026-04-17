@@ -30,8 +30,7 @@ export default function AIValidationPanel({
   onCancel,
   isProcessing = false,
 }: Props) {
-  const { isMobile, isTablet } = useMediaQuery();
-  const compact = isMobile || isTablet;
+  const { isCompactLayout: compact } = useMediaQuery();
   const [chatInput, setChatInput] = useState("");
   const chatEndRef = useRef<HTMLDivElement>(null);
 

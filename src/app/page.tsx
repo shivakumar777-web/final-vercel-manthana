@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
+import { flushSync } from "react-dom";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import Logo from "@/components/Logo";
 import SearchBar from "@/components/SearchBar";
@@ -321,20 +322,27 @@ export default function OraclePage() {
       return;
     }
 
-    const reserved = await reserveOracleSlot();
-    if (!reserved) return;
-
     const userMsg: ChatMessageData = {
       id: newMessageId(),
       role: "user",
       content: trimmed,
     };
-    setMessages((prev) => [...prev, userMsg]);
+    // Paint user message immediately — do not await oracle-consume / network first (was 1–2s delay).
+    flushSync(() => {
+      setMessages((prev) => [...prev, userMsg]);
+    });
+
+    const reserved = await reserveOracleSlot();
+    if (!reserved) {
+      setMessages((prev) => prev.filter((m) => m.id !== userMsg.id));
+      return;
+    }
+
     // Mode-specific behavior
     if (mode === "search") {
       if (webLocked) {
         router.push("/search");
-        setMessages((prev) => prev.slice(0, -1));
+        setMessages((prev) => prev.filter((m) => m.id !== userMsg.id));
         return;
       }
       setIsThinking(true);

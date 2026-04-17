@@ -80,8 +80,7 @@ function bandColor(level: "bad" | "mid" | "good" | "best"): string {
 }
 
 export default function CtUploadWizard({ onComplete, lockRegion }: Props) {
-  const { isMobile, isTablet } = useMediaQuery();
-  const compact = isMobile || isTablet;
+  const { isCompactLayout: compact } = useMediaQuery();
   const regionLocked = lockRegion != null;
   const [step, setStep] = useState(regionLocked ? 2 : 1);
 

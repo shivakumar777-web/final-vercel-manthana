@@ -63,8 +63,7 @@ export default function IntelligencePanel({
   fillContainer,
   idleModalitySummary,
 }: Props) {
-  const { isMobile, isTablet } = useMediaQuery();
-  const compact = isMobile || isTablet;
+  const { isCompactLayout: compact } = useMediaQuery();
   const isIdle = stage === "idle";
   const isPreValidating =
     stage === "pre_validating" || stage === "awaiting_ai_confirmation";

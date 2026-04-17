@@ -21,8 +21,7 @@ export default function MultiModelUploadWizard({
 }: Props) {
   const [currentStep, setCurrentStep] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { isMobile, isTablet } = useMediaQuery();
-  const compact = isMobile || isTablet;
+  const { isCompactLayout: compact } = useMediaQuery();
   const current = uploads[currentStep];
   const modalityInfo = MODALITIES.find((m) => m.id === current?.modality);
   const isLast = currentStep === uploads.length - 1;

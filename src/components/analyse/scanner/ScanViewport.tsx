@@ -68,8 +68,7 @@ export default function ScanViewport({
   acceptOverride,
   pro2dOnly,
 }: Props) {
-  const { isMobile, isTablet } = useMediaQuery();
-  const compact = isMobile || isTablet;
+  const { isCompactLayout: compact } = useMediaQuery();
   const acceptTypes =
     acceptOverride ??
     getUploadAcceptTypes(modality ?? "xray", { pro2dOnly });

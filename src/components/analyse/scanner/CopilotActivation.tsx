@@ -11,8 +11,7 @@ interface Props {
 }
 
 export default function CopilotActivation({ uploads, onActivate, onBack }: Props) {
-  const { isMobile, isTablet } = useMediaQuery();
-  const compact = isMobile || isTablet;
+  const { isCompactLayout: compact } = useMediaQuery();
   const totalFiles = uploads.reduce((sum, u) => sum + u.files.length, 0);
 
   return (

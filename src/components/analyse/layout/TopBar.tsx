@@ -21,8 +21,7 @@ export default function TopBar({
   onOpenPacs,
 }: Props) {
   const router = useRouter();
-  const { isMobile, isTablet } = useMediaQuery();
-  const compact = isMobile || isTablet;
+  const { isCompactLayout: compact, isMobile } = useMediaQuery();
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (

@@ -224,8 +224,7 @@ export default function ScannerPage() {
   const [pacsTab, setPacsTab] = useState<"studies" | "worklist" | "settings">("studies");
   /** Desktop: modality bar + disclaimer tucked away for extra main viewport height. */
   const [desktopFooterCollapsed, setDesktopFooterCollapsed] = useState(false);
-  const { isMobile, isTablet, isDesktop, width: viewportWidth } = useMediaQuery();
-  const compact = isMobile || isTablet;
+  const { isDesktop, width: viewportWidth, isCompactLayout: compact } = useMediaQuery();
   const legacyScanning = !["idle", "complete", "error", "medgemma_questions"].includes(stage);
   const orchBusy =
     orchestrationActive &&

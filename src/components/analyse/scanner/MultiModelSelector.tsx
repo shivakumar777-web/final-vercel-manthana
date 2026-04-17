@@ -16,8 +16,7 @@ export default function MultiModelSelector({
   onConfirm,
   onCancel,
 }: Props) {
-  const { isMobile, isTablet } = useMediaQuery();
-  const compact = isMobile || isTablet;
+  const { isCompactLayout: compact } = useMediaQuery();
   const selectableModalities = MODALITIES.filter((m) => m.id !== "auto");
   const canConfirm = selectedModalities.length >= 2;
 

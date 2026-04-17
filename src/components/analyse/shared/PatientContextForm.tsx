@@ -35,8 +35,7 @@ export default function PatientContextForm({
   onAnalysisModeChange,
   modality,
 }: Props) {
-  const { isMobile, isTablet } = useMediaQuery();
-  const compact = isMobile || isTablet;
+  const { isCompactLayout: compact } = useMediaQuery();
   const patientId = `ANONYMOUS-${String(scanNumber).padStart(3, "0")}`;
 
   const [age, setAge] = useState("");
