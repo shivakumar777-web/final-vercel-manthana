@@ -1,89 +1,127 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 
-/* ─── Thought sequences per mode ─────────────────────────────────────── */
-
+/**
+ * Domain- and mode-specific “thinking” lines — tuned to feel like real retrieval + reasoning,
+ * not a generic stub. Keys must match DomainPills ids + mode + search + deep-research.
+ */
 const THOUGHT_SEQUENCES: Record<string, string[]> = {
-  auto: [
-    "Parsing clinical intent from your query…",
-    "Activating Allopathy knowledge graph…",
-    "Cross-referencing PubMed and clinical guidelines…",
-    "Scanning for contraindications and safety signals…",
-    "Evaluating evidence grade (RCT → meta-analysis)…",
-    "Distilling key mechanisms of action…",
-    "Checking for drug-food and herb-drug interactions…",
-    "Integrating WHO and FDA guideline markers…",
-    "Synthesising Western and integrative perspectives…",
-    "Composing Amrita — the distilled response…",
+  allopathy: [
+    "Parsing your question for clinical intent and urgency…",
+    "Aligning with evidence-based medicine (EBM) and safety-first review…",
+    "Pulling PubMed-indexed literature and guideline abstracts…",
+    "Cross-checking WHO, ICMR, and major society recommendations…",
+    "Grading evidence strength — RCT → systematic review → meta-analysis…",
+    "Scanning for contraindications, black-box warnings, and interactions…",
+    "Checking renal/hepatic adjustments, pregnancy, and lactation flags…",
+    "Weighing benefit vs. harm for the scenario you described…",
+    "Composing Amrita — the distilled evidence response…",
   ],
   ayurveda: [
-    "Consulting the Charaka Samhita and Sushruta Samhita…",
-    "Identifying Prakriti and Vikruti patterns…",
-    "Evaluating tridosha balance — Vata, Pitta, Kapha…",
-    "Cross-referencing Dravyaguna for herbs and rasas…",
-    "Mapping Ayurvedic formulations to modern pharmacology…",
-    "Scanning for documented herb-drug interactions…",
-    "Verifying classical preparation guidelines (Taila, Kwath)…",
-    "Integrating Panchakarma relevance…",
+    "Listening in a roga–rogi frame — disease and person together…",
+    "Considering Prakriti, Vikruti, Agni, and Srotas in context…",
+    "Consulting Brihat/Laghu Trayi lines and classical indications…",
+    "Cross-referencing AYUSH pharmacopoeia and Dravyaguna (Rasa–Virya–Vipaka)…",
+    "Balancing Shamana vs. Shodhana and Panchakarma relevance…",
+    "Flagging herb–drug interactions and documented contraindications…",
+    "Cross-checking classical use with modern pharmacology where it helps…",
     "Composing Amrita — the distilled Ayurvedic response…",
   ],
   homeopathy: [
-    "Identifying vital force disturbance pattern…",
-    "Scanning the Materia Medica repertories…",
-    "Evaluating proving symptoms and potency selection…",
-    "Cross-referencing Kent's Repertory…",
-    "Checking constitutional correlates…",
-    "Composing Amrita — the distilled response…",
+    "Identifying the characteristic symptom picture and modalities…",
+    "Consulting Materia Medica and repertory rubrics for the case…",
+    "Evaluating potency, repetition, and posology conventions…",
+    "Cross-checking provings and clinical materia for consistency…",
+    "Screening for red flags that need urgent conventional care…",
+    "Weighing chronic vs. acute prescribing and follow-up cues…",
+    "Composing Amrita — the distilled homeopathic response…",
   ],
   siddha: [
-    "Consulting Thirumoolar and Agastiyar texts…",
-    "Evaluating Mukkuttram — Vali, Azhal, Iyam…",
-    "Scanning Siddha Materia Medica for herbo-mineral drugs…",
-    "Cross-referencing classical Siddha formulations…",
-    "Composing Amrita — the distilled response…",
+    "Consulting Siddha classical sources and Siddha Materia Medica…",
+    "Evaluating Mukkuttram — Vali, Azhal, Iyam — and Naadi context…",
+    "Reviewing herbo-mineral (Rasa Ulgam) preparations and safety…",
+    "Cross-referencing Gunapadam and traditional Siddha formulations…",
+    "Flagging metal/mineral toxicity and dosage vigilance…",
+    "Integrating Siddha diet and lifestyle (Pathyam) cues…",
+    "Composing Amrita — the distilled Siddha response…",
   ],
   unani: [
-    "Consulting Ibn Sina's Canon of Medicine…",
-    "Evaluating Mizaj (temperament) classification…",
-    "Scanning Unani pharmacopoeia — simple and compound drugs…",
-    "Cross-referencing humoral theory with clinical data…",
-    "Composing Amrita — the distilled response…",
+    "Consulting Ilmul Advia and Unani pharmacopoeia traditions…",
+    "Evaluating Mizaj (temperament) and Tabiyat in context…",
+    "Cross-referencing Ibn Sina’s principles with modern safety data…",
+    "Reviewing compound formulations (Murakkabat) and single drugs…",
+    "Checking for herb–drug overlap and contraindicated combinations…",
+    "Aligning with CCRUM and recognised Unani references…",
+    "Composing Amrita — the distilled Unani response…",
+  ],
+  m5: [
+    "Opening the Manthana Samudra — five knowledge oceans in parallel…",
+    "Initialising Allopathy thread — PubMed, trials, and guideline mesh…",
+    "Initialising Ayurveda thread — classical texts and AYUSH lines…",
+    "Initialising Homeopathy thread — materia medica and repertory…",
+    "Initialising Siddha thread — herbo-mineral and classical formulations…",
+    "Initialising Unani thread — humoral theory and pharmacopoeia…",
+    "Awaiting domain streams — each system answers independently…",
+    "Cross-walking safety signals across all five traditions…",
+    "Spotting agreement, tension, and contraindications between systems…",
+    "Weaving integrative synthesis — not a mere concatenation…",
+    "Distilling Amrita — nectar from five churnings…",
   ],
   "deep-research": [
     "Initialising Med Deep Research protocol…",
-    "Spanning all five medical knowledge oceans…",
-    "Pulling systematic reviews and meta-analyses…",
+    "Spanning indexed literature, guidelines, and trial registries…",
+    "Pulling systematic reviews and meta-analyses where available…",
     "Fetching latest clinical trial data (ClinicalTrials.gov)…",
-    "Cross-referencing Cochrane, NICE, and WHO guidelines…",
-    "Synthesising Ayurvedic and modern pharmacological data…",
-    "Evaluating traditional use vs. evidence strength…",
-    "Running contradiction and bias analysis…",
+    "Cross-referencing Cochrane, NICE, WHO, and national bodies…",
+    "Contrasting traditional-system claims with evidence strength…",
+    "Running bias and contradiction passes across sources…",
     "Building multi-system synthesis matrix…",
     "Distilling final evidence-ranked response…",
   ],
-  m5: [
-    "Activating M5 — Five Oceans Protocol…",
-    "Spinning up Allopathy intelligence thread…",
-    "Spinning up Ayurveda intelligence thread…",
-    "Spinning up Homeopathy intelligence thread…",
-    "Spinning up Siddha intelligence thread…",
-    "Spinning up Unani intelligence thread…",
-    "Gathering domain-specific depth answers in parallel…",
-    "Resolving cross-domain agreements and contradictions…",
-    "Generating unified M5 synthesis…",
-    "Distilling Amrita — five-ocean nectar…",
-  ],
   search: [
-    "Formulating semantic medical search query…",
-    "Scanning indexed medical literature…",
-    "Ranking results by clinical relevance…",
-    "Filtering for domain-specific sources…",
-    "Composing search intelligence summary…",
+    "Formulating semantic medical search across indexed sources…",
+    "Ranking hits by relevance, domain fit, and authority…",
+    "De-duplicating and clustering near-duplicate results…",
+    "Extracting snippets and citations for transparency…",
+    "Composing Manthana Web search summary…",
   ],
 };
 
-/* ─── Micro icons for each thought (rotating set) ────────────────────── */
+const PANEL_LABELS: Record<string, string> = {
+  m5: "M5 · Five oceans in parallel",
+  "deep-research": "Deep research · multi-source synthesis",
+  search: "Manthana Web · literature scan",
+  allopathy: "Allopathy · evidence & safety",
+  ayurveda: "Ayurveda · classical & integrative",
+  homeopathy: "Homeopathy · materia medica",
+  siddha: "Siddha · classical & herbo-mineral",
+  unani: "Unani · humoral pharmacology",
+};
+
+function resolveThoughtKey(mode: string | undefined, domain: string | undefined): string {
+  const m = (mode || "auto").toLowerCase();
+  const d = (domain || "").toLowerCase();
+
+  if (m === "m5") return "m5";
+  if (m === "deep-research") return "deep-research";
+  if (m === "search") return "search";
+
+  if (d && THOUGHT_SEQUENCES[d]) return d;
+  if (m === "auto" || !d) return "allopathy";
+  return "allopathy";
+}
+
+function getThoughtSequence(mode: string | undefined, domain: string | undefined): string[] {
+  const key = resolveThoughtKey(mode, domain);
+  return THOUGHT_SEQUENCES[key] ?? THOUGHT_SEQUENCES.allopathy;
+}
+
+function getPanelLabel(mode: string | undefined, domain: string | undefined): string {
+  const key = resolveThoughtKey(mode, domain);
+  return PANEL_LABELS[key] ?? "Oracle · synthesising response";
+}
+
 const THOUGHT_ICONS = ["◈", "◉", "◎", "◇", "✦", "⬡", "◐", "⬢"];
 
 interface OracleThinkingProps {
@@ -105,25 +143,18 @@ export default function OracleThinking({
   const [charCount, setCharCount] = useState(0);
   const thoughtsEndRef = useRef<HTMLDivElement>(null);
 
-  /* determine the right thought list */
-  const getThoughts = (): string[] => {
-    if (mode === "m5") return THOUGHT_SEQUENCES["m5"];
-    if (mode === "deep-research") return THOUGHT_SEQUENCES["deep-research"];
-    if (mode === "search") return THOUGHT_SEQUENCES["search"];
-    // domain-specific thoughts
-    if (domain && THOUGHT_SEQUENCES[domain]) return THOUGHT_SEQUENCES[domain];
-    return THOUGHT_SEQUENCES["auto"];
-  };
+  const thoughts = useMemo(() => getThoughtSequence(mode, domain), [mode, domain]);
+  const thoughtSessionKey = `${mode ?? ""}|${domain ?? ""}|${thoughts.length}`;
 
-  const thoughts = getThoughts();
+  const panelLabel = useMemo(() => getPanelLabel(mode, domain), [mode, domain]);
 
-  /* Reset on new query */
+  /* Reset thought stream when domain/mode changes or panel reactivates */
   useEffect(() => {
     if (!isActive) return;
     setVisibleThoughts([]);
     setCurrentIdx(0);
     setCharCount(0);
-  }, [isActive]);
+  }, [isActive, thoughtSessionKey]);
 
   /* Typewriter effect for current thought */
   useEffect(() => {
@@ -133,13 +164,11 @@ export default function OracleThinking({
     if (charCount < currentText.length) {
       const t = setTimeout(
         () => setCharCount((c) => c + 1),
-        18 + Math.random() * 14 // 18-32 ms per char — human-speed
+        16 + Math.random() * 14
       );
       return () => clearTimeout(t);
     }
 
-    // Current thought fully typed — mark complete and move to next after delay
-    const icon = THOUGHT_ICONS[currentIdx % THOUGHT_ICONS.length];
     setVisibleThoughts((prev) => {
       const updated = [...prev];
       const existing = updated.findIndex((t) => t.id === currentIdx);
@@ -153,7 +182,7 @@ export default function OracleThinking({
     const advance = setTimeout(() => {
       setCurrentIdx((i) => i + 1);
       setCharCount(0);
-    }, 520);
+    }, 480);
     return () => clearTimeout(advance);
   }, [isActive, charCount, currentIdx, thoughts]);
 
@@ -163,10 +192,7 @@ export default function OracleThinking({
     const icon = THOUGHT_ICONS[currentIdx % THOUGHT_ICONS.length];
     setVisibleThoughts((prev) => {
       if (prev.find((t) => t.id === currentIdx)) return prev;
-      return [
-        ...prev,
-        { text: "", icon, id: currentIdx, completed: false },
-      ];
+      return [...prev, { text: "", icon, id: currentIdx, completed: false }];
     });
   }, [currentIdx, isActive, thoughts]);
 
@@ -182,7 +208,6 @@ export default function OracleThinking({
     );
   }, [charCount, currentIdx, isActive, thoughts]);
 
-  /* Auto-scroll to latest */
   useEffect(() => {
     thoughtsEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [visibleThoughts]);
@@ -207,7 +232,6 @@ export default function OracleThinking({
           "0 0 0 1px rgba(200,146,42,0.06), 0 8px 32px rgba(0,0,0,0.6), inset 0 1px 0 rgba(200,146,42,0.08)",
       }}
     >
-      {/* ── Header ── */}
       <button
         type="button"
         onClick={() => setIsExpanded((x) => !x)}
@@ -225,7 +249,6 @@ export default function OracleThinking({
             : "none",
         }}
       >
-        {/* Pulsing dot */}
         <span
           style={{
             display: "inline-block",
@@ -239,19 +262,39 @@ export default function OracleThinking({
         />
         <span
           style={{
-            fontFamily: "Optima, Candara, 'Century Gothic', Verdana, sans-serif",
-            fontSize: "10px",
-            letterSpacing: "0.22em",
-            textTransform: "uppercase",
-            color: "rgba(200,146,42,0.75)",
-            fontWeight: 500,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-start",
+            gap: "2px",
             flex: 1,
             textAlign: "left",
           }}
         >
-          Oracle is thinking
+          <span
+            style={{
+              fontFamily: "Optima, Candara, 'Century Gothic', Verdana, sans-serif",
+              fontSize: "10px",
+              letterSpacing: "0.22em",
+              textTransform: "uppercase",
+              color: "rgba(200,146,42,0.75)",
+              fontWeight: 500,
+            }}
+          >
+            Oracle is thinking
+          </span>
+          <span
+            style={{
+              fontFamily:
+                "'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, serif",
+              fontSize: "10px",
+              letterSpacing: "0.06em",
+              color: "rgba(245,240,232,0.38)",
+              fontWeight: 400,
+            }}
+          >
+            {panelLabel}
+          </span>
         </span>
-        {/* Expand / Collapse chevron */}
         <svg
           width="12"
           height="12"
@@ -273,7 +316,6 @@ export default function OracleThinking({
         </svg>
       </button>
 
-      {/* ── Thought stream ── */}
       {isExpanded && (
         <div
           style={{
@@ -298,7 +340,6 @@ export default function OracleThinking({
                 transition: "opacity 0.4s ease",
               }}
             >
-              {/* Icon */}
               <span
                 style={{
                   color: thought.completed
@@ -314,7 +355,6 @@ export default function OracleThinking({
                 {thought.completed ? "✓" : thought.icon}
               </span>
 
-              {/* Thought text */}
               <span
                 style={{
                   fontFamily:
@@ -329,7 +369,6 @@ export default function OracleThinking({
                 }}
               >
                 {thought.text}
-                {/* Cursor on active thought */}
                 {!thought.completed && (
                   <span
                     style={{

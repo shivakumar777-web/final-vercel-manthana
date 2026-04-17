@@ -20,6 +20,12 @@ import {
   ORACLE_LABS_HANDOFF_QUERY,
 } from "@/lib/analyse/oracle-handoff";
 
+function newMessageId(): string {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return crypto.randomUUID();
+  }
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
+}
 
 export default function OraclePage() {
   const router = useRouter();
@@ -319,7 +325,7 @@ export default function OraclePage() {
     if (!reserved) return;
 
     const userMsg: ChatMessageData = {
-      id: Date.now().toString(),
+      id: newMessageId(),
       role: "user",
       content: trimmed,
     };
@@ -352,7 +358,7 @@ export default function OraclePage() {
     if (mode === "m5") {
       setIsThinking(true);
       
-      const assistantId = (Date.now() + 1).toString();
+      const assistantId = newMessageId();
       const m5AnswersRef = { current: [] as M5DomainAnswer[] };
       const m5SummaryRef = { current: undefined as M5Summary | undefined };
       
@@ -439,7 +445,7 @@ export default function OraclePage() {
     // AUTO / DEEP-RESEARCH — streaming chat via /chat
     setIsThinking(true);
 
-    const assistantId = (Date.now() + 1).toString();
+    const assistantId = newMessageId();
     setIsEmergencyResponse(false);
     const assistantMsg: ChatMessageData = {
       id: assistantId,

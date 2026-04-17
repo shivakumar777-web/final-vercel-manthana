@@ -47,6 +47,7 @@ export async function streamChat(
     const timeout = ctrl ? setTimeout(() => ctrl!.abort(), 60_000) : null;
     const res = await fetchWithAuth(`${ORACLE_BASE}/chat`, {
       method: "POST",
+      cache: "no-store",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         message,
@@ -193,6 +194,7 @@ export async function streamM5(
     const timeout = ctrl ? setTimeout(() => ctrl!.abort(), 120_000) : null;
     const res = await fetchWithAuth(`${ORACLE_BASE}/chat/m5`, {
       method: "POST",
+      cache: "no-store",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         message,

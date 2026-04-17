@@ -18,13 +18,13 @@ const ENGINE = {
 } as const;
 
 const inputStyle: React.CSSProperties = {
-  marginTop: 8,
+  marginTop: 6,
   width: "100%",
   borderRadius: 8,
   border: `1px solid ${ENGINE.border}`,
   background: ENGINE.bgDeep,
   color: ENGINE.textPrimary,
-  padding: "10px 12px",
+  padding: "8px 10px",
   fontSize: 13,
   fontFamily: "'IBM Plex Sans', system-ui, sans-serif",
   outline: "none",
@@ -82,19 +82,21 @@ export default function InterrogatorQA({
       style={{
         display: "flex",
         flexDirection: "column",
-        gap: 16,
-        minHeight: 0,
+        gap: 0,
         width: "100%",
         maxWidth: "min(100%, 36rem)",
-        padding: 20,
+        padding: "12px 12px 0",
         borderRadius: 12,
         border: `1px solid ${ENGINE.border}`,
         background: ENGINE.bgCard,
         fontFamily: "'IBM Plex Sans', system-ui, sans-serif",
         boxShadow: "0 12px 40px rgba(0,0,0,0.35)",
+        minHeight: 0,
+        flex: "1 1 auto",
       }}
     >
-      <div>
+      {/* Intro — compact */}
+      <div style={{ flexShrink: 0, marginBottom: 10 }}>
         <h3
           style={{
             fontFamily: "'DM Mono', ui-monospace, monospace",
@@ -110,36 +112,37 @@ export default function InterrogatorQA({
         </h3>
         <p
           style={{
-            marginTop: 8,
-            fontSize: 12,
-            lineHeight: 1.5,
+            marginTop: 6,
+            fontSize: 11,
+            lineHeight: 1.45,
             color: ENGINE.textSecondary,
             marginBottom: 0,
           }}
         >
-          Each answer you add narrows clinical uncertainty and improves the structured report. Leave
-          fields blank if unknown.
+          Each answer narrows uncertainty and improves the report. Leave fields blank if unknown.
         </p>
       </div>
 
-      {/* Modality strip */}
+      {/* Modality — dense single row, minimal vertical footprint */}
       <div
         style={{
           position: "relative",
           display: "flex",
           alignItems: "center",
-          gap: 12,
-          padding: "12px 14px",
-          borderRadius: 10,
+          gap: 8,
+          padding: "6px 10px",
+          borderRadius: 8,
           border: `1px solid ${ENGINE.border}`,
-          background: "rgba(0,180,255,0.06)",
+          background: "rgba(0,180,255,0.05)",
           borderLeft: "3px solid var(--scan-500, #00c4b0)",
+          flexShrink: 0,
+          marginBottom: 10,
         }}
         aria-hidden={false}
       >
         <span
           style={{
-            fontSize: 22,
+            fontSize: 14,
             color: ENGINE.accentCyan,
             lineHeight: 1,
             flexShrink: 0,
@@ -152,11 +155,11 @@ export default function InterrogatorQA({
           <div
             style={{
               fontFamily: "'DM Mono', ui-monospace, monospace",
-              fontSize: 9,
-              letterSpacing: "0.14em",
+              fontSize: 8,
+              letterSpacing: "0.12em",
               textTransform: "uppercase",
               color: ENGINE.textMuted,
-              marginBottom: 4,
+              marginBottom: 2,
             }}
           >
             {wasAutoDetected ? "Modality detected" : "Analysis modality"}
@@ -164,10 +167,11 @@ export default function InterrogatorQA({
           <div
             style={{
               fontFamily: "'Syne', 'IBM Plex Sans', system-ui, sans-serif",
-              fontSize: 15,
+              fontSize: 13,
               fontWeight: 700,
               color: ENGINE.textPrimary,
               letterSpacing: "-0.02em",
+              lineHeight: 1.25,
             }}
           >
             {resolvedModalityLabel}
@@ -178,14 +182,15 @@ export default function InterrogatorQA({
             style={{
               flexShrink: 0,
               fontFamily: "'DM Mono', ui-monospace, monospace",
-              fontSize: 9,
-              letterSpacing: "0.06em",
+              fontSize: 8,
+              letterSpacing: "0.05em",
               textTransform: "uppercase",
-              padding: "6px 10px",
+              padding: "4px 8px",
               borderRadius: 20,
               border: "1px solid rgba(0,232,122,0.35)",
               background: "rgba(0,232,122,0.08)",
               color: ENGINE.scanGreen,
+              whiteSpace: "nowrap",
             }}
           >
             {detectionConfidence}% confident
@@ -193,15 +198,13 @@ export default function InterrogatorQA({
         ) : null}
       </div>
 
+      {/* Questions — no nested max-height; parent panel / sheet scrolls (better on mobile) */}
       <div
         style={{
           display: "flex",
           flexDirection: "column",
-          gap: 12,
-          minHeight: 0,
-          maxHeight: "min(75dvh, 720px)",
-          overflowY: "auto",
-          paddingRight: 4,
+          gap: 10,
+          paddingBottom: 8,
         }}
       >
         {sorted.map((q) => (
@@ -211,16 +214,17 @@ export default function InterrogatorQA({
               borderRadius: 8,
               border: `1px solid ${ENGINE.borderSubtle}`,
               background: ENGINE.bgDeep,
-              padding: 14,
+              padding: "10px 12px",
             }}
           >
             <label
               style={{
                 display: "block",
-                marginBottom: 4,
-                fontSize: 13,
+                marginBottom: 2,
+                fontSize: 12.5,
                 fontWeight: 500,
                 color: ENGINE.textPrimary,
+                lineHeight: 1.45,
               }}
             >
               {q.text}
@@ -256,7 +260,7 @@ export default function InterrogatorQA({
               <textarea
                 style={{
                   ...inputStyle,
-                  minHeight: 72,
+                  minHeight: 52,
                   resize: "vertical",
                 }}
                 value={values[q.id] ?? ""}
@@ -269,14 +273,34 @@ export default function InterrogatorQA({
         ))}
       </div>
 
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 10, paddingTop: 4, flexShrink: 0 }}>
+      {/* Sticky actions — stay reachable while scrolling long question lists */}
+      <div
+        style={{
+          position: "sticky",
+          bottom: 0,
+          zIndex: 2,
+          display: "flex",
+          flexWrap: "wrap",
+          gap: 8,
+          paddingTop: 10,
+          paddingBottom: "max(12px, env(safe-area-inset-bottom, 0px))",
+          marginTop: 4,
+          flexShrink: 0,
+          background: `linear-gradient(180deg, transparent 0%, ${ENGINE.bgCard} 14%, ${ENGINE.bgCard} 100%)`,
+          borderTop: `1px solid ${ENGINE.borderSubtle}`,
+          marginLeft: -12,
+          marginRight: -12,
+          paddingLeft: 12,
+          paddingRight: 12,
+        }}
+      >
         {onCancel && (
           <button
             type="button"
             onClick={onCancel}
             disabled={disabled}
             style={{
-              padding: "10px 18px",
+              padding: "9px 16px",
               borderRadius: 8,
               border: `1px solid ${ENGINE.border}`,
               background: "transparent",
@@ -294,7 +318,7 @@ export default function InterrogatorQA({
           type="submit"
           disabled={disabled || sorted.length === 0}
           style={{
-            padding: "10px 22px",
+            padding: "9px 20px",
             borderRadius: 8,
             border: "none",
             background: `linear-gradient(135deg, ${ENGINE.accentCyan}, ${ENGINE.accentTeal})`,

@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Logo from "./Logo";
+import OracleThinking from "./OracleThinking";
 import type { M5DomainAnswer, M5Summary } from "@/lib/api";
 
 interface M5MessageProps {
@@ -188,6 +189,16 @@ export default function M5Message({ query, answers, summary, isStreaming }: M5Me
   const [activeDomain, setActiveDomain] = useState<string | null>(
     answers.length > 0 ? answers[0].domain : null
   );
+  const [m5ThinkingActive, setM5ThinkingActive] = useState(false);
+
+  useEffect(() => {
+    if (!isStreaming || answers.length > 0) {
+      setM5ThinkingActive(false);
+      return;
+    }
+    const t = window.setTimeout(() => setM5ThinkingActive(true), 280);
+    return () => window.clearTimeout(t);
+  }, [isStreaming, answers.length]);
 
   // Sort answers: Allopathy first, then the rest in standard order
   const sortedAnswers = [...answers].sort((a, b) => {
@@ -220,6 +231,12 @@ export default function M5Message({ query, answers, summary, isStreaming }: M5Me
         <div className="text-[10px] uppercase tracking-wider text-cream/40 mb-1">Your Question</div>
         <div className="font-body text-sm text-cream/80">{query}</div>
       </div>
+
+      {isStreaming && sortedAnswers.length === 0 && m5ThinkingActive && (
+        <div className="mb-5 -mt-1">
+          <OracleThinking mode="m5" domain="m5" isActive={m5ThinkingActive} />
+        </div>
+      )}
 
       {/* Domain Tabs - Horizontal scroll on mobile */}
       <div className="flex gap-2 mb-4 overflow-x-auto no-scrollbar pb-1">

@@ -902,7 +902,8 @@ export default function ScannerPage() {
           gap: 12,
           width: "100%",
           minHeight: 0,
-          flex: "1 1 auto",
+          flex: "1 1 0%",
+          alignSelf: "stretch",
         }}
       >
         {orchBusy ? (

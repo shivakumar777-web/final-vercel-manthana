@@ -121,7 +121,10 @@ export default function ChatMessage({ message }: ChatMessageProps) {
           />
         ) : message.streaming ? (
           <div className="py-4">
-            <ChurningState mode={message.mode} />
+            <ChurningState
+              mode={message.mode}
+              domain={message.domains?.[0]}
+            />
           </div>
         ) : (
           <PerplexityResponse
