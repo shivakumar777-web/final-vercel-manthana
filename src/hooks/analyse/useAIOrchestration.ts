@@ -76,9 +76,12 @@ export function useAIOrchestration(subscriptionTier?: string) {
       let mk = opts.modalityKey;
       const mime = opts.imageMime || opts.file.type || "image/jpeg";
       const b64 = await fileToBase64(opts.file);
+      /** Which /ai/* step was running when a timeout occurred (for clearer copy). */
+      let orchTimeoutPhase: "detect" | "interrogate" = "interrogate";
 
       try {
         if (mk === "auto") {
+          orchTimeoutPhase = "detect";
           setStage("detecting");
           const det = await detectModalityOrchestration(
             { image_b64: b64, image_mime: mime },
@@ -101,6 +104,7 @@ export function useAIOrchestration(subscriptionTier?: string) {
           setDetectedConfidence(null);
         }
 
+        orchTimeoutPhase = "interrogate";
         setStage("interrogating");
         const iq = await interrogateOrchestration(
           {
@@ -116,7 +120,17 @@ export function useAIOrchestration(subscriptionTier?: string) {
         setStage("answering_questions");
         return { ok: true };
       } catch (e) {
-        const msg = e instanceof Error ? e.message : String(e);
+        let msg = e instanceof Error ? e.message : String(e);
+        if (e instanceof DOMException) {
+          if (e.name === "TimeoutError") {
+            msg =
+              orchTimeoutPhase === "detect"
+                ? "Modality detection timed out. Confirm NEXT_PUBLIC_GATEWAY_URL points at the Manthana gateway (with /ai/detect-modality), then retry — or pick a modality manually instead of Auto-Detect."
+                : "Clinical questions step timed out (/ai/interrogate). Check the gateway and OpenRouter keys, then retry.";
+          } else if (e.name === "AbortError") {
+            msg = "Modality pipeline was cancelled.";
+          }
+        }
         setError(msg);
         setStage("error");
         return { ok: false, error: msg };
@@ -153,7 +167,11 @@ export function useAIOrchestration(subscriptionTier?: string) {
           modalityIdForUsage: resolvedModalityKey,
         };
       } catch (e) {
-        const msg = e instanceof Error ? e.message : String(e);
+        let msg = e instanceof Error ? e.message : String(e);
+        if (e instanceof DOMException && e.name === "TimeoutError") {
+          msg =
+            "Interpretation timed out. The gateway or LLM took too long; try again or shorten answers.";
+        }
         setError(msg);
         setStage("error");
         return { report: null, modalityIdForUsage: resolvedModalityKey };

@@ -1,5 +1,11 @@
 /* ═══ API Client — Gateway Integration ═══ */
-import { GATEWAY_URL } from "./constants";
+import {
+  GATEWAY_URL,
+  ORCH_DETECT_TIMEOUT_MS,
+  ORCH_INTERPRET_TIMEOUT_MS,
+  ORCH_INTERROGATE_TIMEOUT_MS,
+  PACS_UI_ENABLED,
+} from "./constants";
 import { getGatewayAuthToken } from "./auth-token";
 import type {
   AnalysisResponse,
@@ -317,6 +323,7 @@ export async function fetchPacsStudies(filters?: {
   date_to?: string;
   limit?: number;
 }): Promise<PacsStudy[]> {
+  if (!PACS_UI_ENABLED) return [];
   const token = getGatewayAuthToken();
   const params = new URLSearchParams();
   if (filters?.patient_name) params.set("patient_name", filters.patient_name);
@@ -327,16 +334,21 @@ export async function fetchPacsStudies(filters?: {
   if (filters?.limit) params.set("limit", String(filters.limit));
 
   const url = `${PACS_BASE}/studies${params.toString() ? "?" + params : ""}`;
-  const res = await fetch(url, {
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-    signal: AbortSignal.timeout(15000),
-  });
-  if (!res.ok) return [];
-  return res.json();
+  try {
+    const res = await fetch(url, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      signal: AbortSignal.timeout(15000),
+    });
+    if (!res.ok) return [];
+    return res.json();
+  } catch {
+    return [];
+  }
 }
 
 /** Fetch worklist items */
 export async function fetchWorklist(): Promise<WorklistItem[]> {
+  if (!PACS_UI_ENABLED) return [];
   try {
     const token = getGatewayAuthToken();
     const res = await fetch(`${PACS_BASE}/worklist`, {
@@ -352,6 +364,9 @@ export async function fetchWorklist(): Promise<WorklistItem[]> {
 
 /** Create worklist item */
 export async function createWorklistItem(item: Omit<WorklistItem, "id">): Promise<WorklistItem> {
+  if (!PACS_UI_ENABLED) {
+    throw new Error("PACS is disabled. Set NEXT_PUBLIC_PACS_ENABLED=true when the gateway PACS API is available.");
+  }
   const token = getGatewayAuthToken();
   const res = await fetch(`${PACS_BASE}/worklist`, {
     method: "POST",
@@ -371,6 +386,9 @@ export async function sendStudyToAI(
   studyId: string,
   modalityOverride?: string
 ): Promise<{ status: string; job_id: string }> {
+  if (!PACS_UI_ENABLED) {
+    throw new Error("PACS is disabled. Set NEXT_PUBLIC_PACS_ENABLED=true when the gateway PACS API is available.");
+  }
   const token = getGatewayAuthToken();
   const res = await fetch(`${PACS_BASE}/send-to-ai`, {
     method: "POST",
@@ -387,6 +405,7 @@ export async function sendStudyToAI(
 
 /** Test PACS connectivity (C-ECHO) */
 export async function echoPacs(modalityName: string): Promise<{ status: string }> {
+  if (!PACS_UI_ENABLED) return { status: "skipped" };
   const token = getGatewayAuthToken();
   const res = await fetch(`${PACS_BASE}/modalities/${modalityName}/echo`, {
     method: "POST",
@@ -398,6 +417,7 @@ export async function echoPacs(modalityName: string): Promise<{ status: string }
 
 /** Get PACS config */
 export async function getPacsConfig(): Promise<PacsConfig | null> {
+  if (!PACS_UI_ENABLED) return null;
   try {
     const token = getGatewayAuthToken();
     const res = await fetch(`${PACS_BASE}/config`, {
@@ -502,6 +522,42 @@ function orchHeaders(subscriptionTier?: string): Record<string, string> {
   return h;
 }
 
+/**
+ * Combines an optional caller AbortSignal with a hard timeout so orchestration
+ * never leaves the UI stuck on “detecting” when the gateway or upstream LLM stalls.
+ */
+function orchestrationFetchSignal(
+  userSignal: AbortSignal | undefined,
+  timeoutMs: number
+): AbortSignal {
+  const deadline = AbortSignal.timeout(timeoutMs);
+  if (!userSignal) return deadline;
+  const ctrl = new AbortController();
+  let settled = false;
+  const settle = (reason: unknown) => {
+    if (settled) return;
+    settled = true;
+    try {
+      ctrl.abort(reason);
+    } catch {
+      /* ignore double-abort */
+    }
+  };
+  const onDeadline = () =>
+    settle(
+      new DOMException(
+        `Gateway request timed out after ${Math.round(timeoutMs / 1000)}s`,
+        "TimeoutError"
+      )
+    );
+  const onUser = () => settle(userSignal.reason);
+  deadline.addEventListener("abort", onDeadline, { once: true });
+  userSignal.addEventListener("abort", onUser, { once: true });
+  if (deadline.aborted) onDeadline();
+  else if (userSignal.aborted) onUser();
+  return ctrl.signal;
+}
+
 export async function detectModalityOrchestration(
   payload: {
     image_b64?: string | null;
@@ -518,7 +574,7 @@ export async function detectModalityOrchestration(
       image_mime: payload.image_mime ?? "image/jpeg",
       text_context: payload.text_context ?? null,
     }),
-    signal: options?.signal,
+    signal: orchestrationFetchSignal(options?.signal, ORCH_DETECT_TIMEOUT_MS),
   });
   if (res.status === 401) {
     throw new Error("Authentication required. Please log in.");
@@ -548,7 +604,7 @@ export async function interrogateOrchestration(
       modality_key: payload.modality_key,
       patient_context_json: payload.patient_context_json ?? null,
     }),
-    signal: options?.signal,
+    signal: orchestrationFetchSignal(options?.signal, ORCH_INTERROGATE_TIMEOUT_MS),
   });
   if (res.status === 401) {
     throw new Error("Authentication required. Please log in.");
@@ -578,7 +634,7 @@ export async function interpretOrchestration(
       patient_context_json: options?.patientContextJson ?? null,
       report_detail_level: "detailed",
     }),
-    signal: options?.signal,
+    signal: orchestrationFetchSignal(options?.signal, ORCH_INTERPRET_TIMEOUT_MS),
   });
   if (res.status === 401) {
     throw new Error("Authentication required. Please log in.");

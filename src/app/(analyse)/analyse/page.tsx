@@ -56,6 +56,7 @@ import {
 } from "@/lib/analyse/clinical-notes";
 import {
   AI_ORCHESTRATION_ENABLED,
+  PACS_UI_ENABLED,
   getUploadAcceptTypes,
   MODALITIES,
   orchDicomSeriesHintForModality,
@@ -550,6 +551,9 @@ export default function ScannerPage() {
           const res = await orch.start({ file: file0, modalityKey: modality });
           if (!res.ok) {
             addToast(res.error || "AI orchestration could not start.", "warning", 9000);
+            revokeOrchestrationPreview();
+            orchestrationSourceFileRef.current = null;
+            setOrchestrationActive(false);
           } else {
             saveHistoryDraft(files, modality, activePatientId);
           }
@@ -1053,7 +1057,7 @@ export default function ScannerPage() {
         scanning={isScanning || showMultiProcessing}
         onNewScan={handleNewScan}
         onCommandPalette={() => setCmdOpen(true)}
-        onOpenPacs={() => setPacsOpen(true)}
+        onOpenPacs={PACS_UI_ENABLED ? () => setPacsOpen(true) : undefined}
       />
 
       {/* ─── MODALITY BAR (on mobile: top position, under TopBar) ─── */}
@@ -1643,67 +1647,66 @@ export default function ScannerPage() {
           onBack={goBack}
         />
       )}
-      {/* ─── PACS DRAWER ─── */}
-      <div
-        className={`pacs-drawer-backdrop ${pacsOpen ? "open" : ""}`}
-        onClick={() => setPacsOpen(false)}
-      />
-      <div className={`pacs-drawer ${pacsOpen ? "open" : ""}`}>
-        {/* Header */}
-        <div className="pacs-drawer-header">
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ fontSize: 20 }}>🗄️</span>
-            <h2 className="font-display" style={{ fontSize: 14, margin: 0, color: "var(--text-100)", letterSpacing: "0.08em" }}>
-              PACS
-            </h2>
-          </div>
-          <button
+      {/* ─── PACS DRAWER (optional; off unless NEXT_PUBLIC_PACS_ENABLED=true) ─── */}
+      {PACS_UI_ENABLED && (
+        <>
+          <div
+            className={`pacs-drawer-backdrop ${pacsOpen ? "open" : ""}`}
             onClick={() => setPacsOpen(false)}
-            style={{ background: "none", border: "none", cursor: "pointer", fontSize: 18, color: "var(--text-55)" }}
-          >
-            ✕
-          </button>
-        </div>
-        {/* Tabs */}
-        <div className="pacs-drawer-tabs">
-          {(["studies", "worklist", "settings"] as const).map((tab) => (
-            <button
-              key={tab}
-              className={`pacs-drawer-tab ${pacsTab === tab ? "active" : ""}`}
-              onClick={() => setPacsTab(tab)}
-            >
-              {tab === "studies" ? "📋 Studies" : tab === "worklist" ? "📝 Worklist" : "⚙️ Settings"}
-            </button>
-          ))}
-        </div>
-        {/* Tab Content */}
-        <div className="pacs-drawer-content">
-          {pacsTab === "studies" && (
-            <PacsBrowser
-              onStudySelect={(study) => {
-                // Auto-fill patient context from PACS study
-                setPatientCtx((prev) => ({
-                  ...prev,
-                  patientId: study.patient_id || prev.patientId,
-                }));
-              }}
-            />
-          )}
-          {pacsTab === "worklist" && (
-            <WorklistPanel
-              onSelectItem={(item) => {
-                // Auto-fill scanner form from worklist
-                setPatientCtx((prev) => ({
-                  ...prev,
-                  patientId: item.patient_id || prev.patientId,
-                }));
-                setPacsOpen(false);
-              }}
-            />
-          )}
-          {pacsTab === "settings" && <PacsSettings />}
-        </div>
-      </div>
+          />
+          <div className={`pacs-drawer ${pacsOpen ? "open" : ""}`}>
+            <div className="pacs-drawer-header">
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 20 }}>🗄️</span>
+                <h2 className="font-display" style={{ fontSize: 14, margin: 0, color: "var(--text-100)", letterSpacing: "0.08em" }}>
+                  PACS
+                </h2>
+              </div>
+              <button
+                onClick={() => setPacsOpen(false)}
+                style={{ background: "none", border: "none", cursor: "pointer", fontSize: 18, color: "var(--text-55)" }}
+              >
+                ✕
+              </button>
+            </div>
+            <div className="pacs-drawer-tabs">
+              {(["studies", "worklist", "settings"] as const).map((tab) => (
+                <button
+                  key={tab}
+                  className={`pacs-drawer-tab ${pacsTab === tab ? "active" : ""}`}
+                  onClick={() => setPacsTab(tab)}
+                >
+                  {tab === "studies" ? "📋 Studies" : tab === "worklist" ? "📝 Worklist" : "⚙️ Settings"}
+                </button>
+              ))}
+            </div>
+            <div className="pacs-drawer-content">
+              {pacsTab === "studies" && (
+                <PacsBrowser
+                  onStudySelect={(study) => {
+                    setPatientCtx((prev) => ({
+                      ...prev,
+                      patientId: study.patient_id || prev.patientId,
+                    }));
+                  }}
+                />
+              )}
+              {pacsTab === "worklist" && (
+                <WorklistPanel
+                  onSelectItem={(item) => {
+                    setPatientCtx((prev) => ({
+                      ...prev,
+                      patientId: item.patient_id || prev.patientId,
+                    }));
+                    setPacsOpen(false);
+                  }}
+                />
+              )}
+              {pacsTab === "settings" && <PacsSettings />}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

@@ -50,5 +50,12 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  event.respondWith(fetch(req));
+  // Next.js /api/* (rewrites to gateway, etc.): do not intercept — avoids SW "Failed to fetch" masking real HTTP errors.
+  if (url.pathname.startsWith("/api/")) {
+    return;
+  }
+
+  event.respondWith(
+    fetch(req).catch(() => new Response(null, { status: 503, statusText: "Network Error" }))
+  );
 });

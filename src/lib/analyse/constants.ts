@@ -17,6 +17,34 @@ export const API_BASE = "/api";
 export const AI_ORCHESTRATION_ENABLED =
   process.env.NEXT_PUBLIC_AI_ORCHESTRATION_ENABLED !== "false";
 
+/**
+ * PACS drawer + Orthanc study list (calls `/pacs/*` on the gateway).
+ * Off by default so Labs/analyse works without PACS infrastructure or 503 noise.
+ * Set `NEXT_PUBLIC_PACS_ENABLED=true` when Orthanc + gateway PACS routes are deployed.
+ */
+export const PACS_UI_ENABLED = process.env.NEXT_PUBLIC_PACS_ENABLED === "true";
+
+function readPublicIntEnv(name: string, fallback: number): number {
+  const raw = process.env[name];
+  if (raw == null || raw === "") return fallback;
+  const n = parseInt(String(raw), 10);
+  return Number.isFinite(n) && n >= 5000 ? n : fallback;
+}
+
+/** Client wall-clock timeouts for `fetch` to `/ai/*` — prevents indefinite “Detecting modality…” if the gateway hangs. */
+export const ORCH_DETECT_TIMEOUT_MS = readPublicIntEnv(
+  "NEXT_PUBLIC_ORCH_DETECT_TIMEOUT_MS",
+  120_000
+);
+export const ORCH_INTERROGATE_TIMEOUT_MS = readPublicIntEnv(
+  "NEXT_PUBLIC_ORCH_INTERROGATE_TIMEOUT_MS",
+  180_000
+);
+export const ORCH_INTERPRET_TIMEOUT_MS = readPublicIntEnv(
+  "NEXT_PUBLIC_ORCH_INTERPRET_TIMEOUT_MS",
+  360_000
+);
+
 /** Show `dynamic_sections` from interpreter JSON when present (disable until gateway ships). */
 export const AI_DYNAMIC_SECTIONS_ENABLED =
   process.env.NEXT_PUBLIC_AI_DYNAMIC_SECTIONS_ENABLED !== "false";
