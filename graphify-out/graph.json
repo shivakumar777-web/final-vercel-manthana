@@ -487,7 +487,7 @@
       "label": "handler()",
       "file_type": "code",
       "source_file": "src\\app\\(analyse)\\analyse\\page.tsx",
-      "source_location": "L790",
+      "source_location": "L794",
       "id": "page_handler",
       "community": 2
     },
@@ -551,7 +551,7 @@
       "label": "clampFindingsPanelWidth()",
       "file_type": "code",
       "source_file": "src\\app\\(analyse)\\analyse\\page.tsx",
-      "source_location": "L89",
+      "source_location": "L90",
       "id": "page_clampfindingspanelwidth",
       "community": 2
     },
@@ -559,7 +559,7 @@
       "label": "isCtUiModality()",
       "file_type": "code",
       "source_file": "src\\app\\(analyse)\\analyse\\page.tsx",
-      "source_location": "L100",
+      "source_location": "L101",
       "id": "page_isctuimodality",
       "community": 2
     },
@@ -567,7 +567,7 @@
       "label": "shouldUseOrchestration()",
       "file_type": "code",
       "source_file": "src\\app\\(analyse)\\analyse\\page.tsx",
-      "source_location": "L103",
+      "source_location": "L104",
       "id": "page_shoulduseorchestration",
       "community": 2
     },
@@ -575,7 +575,7 @@
       "label": "ctBodyRegionForProductModality()",
       "file_type": "code",
       "source_file": "src\\app\\(analyse)\\analyse\\page.tsx",
-      "source_location": "L1199",
+      "source_location": "L1203",
       "id": "page_ctbodyregionforproductmodality",
       "community": 2
     },
@@ -1217,7 +1217,7 @@
       "source_file": "src\\components\\ChatHistory.tsx",
       "source_location": "L1",
       "id": "src_components_chathistory_tsx",
-      "community": 30
+      "community": 31
     },
     {
       "label": "toHistoryItem()",
@@ -1225,7 +1225,7 @@
       "source_file": "src\\components\\ChatHistory.tsx",
       "source_location": "L62",
       "id": "chathistory_tohistoryitem",
-      "community": 30
+      "community": 31
     },
     {
       "label": "filterItems()",
@@ -1233,7 +1233,7 @@
       "source_file": "src\\components\\ChatHistory.tsx",
       "source_location": "L117",
       "id": "chathistory_filteritems",
-      "community": 30
+      "community": 31
     },
     {
       "label": "handleClearAll()",
@@ -1241,7 +1241,7 @@
       "source_file": "src\\components\\ChatHistory.tsx",
       "source_location": "L131",
       "id": "chathistory_handleclearall",
-      "community": 30
+      "community": 31
     },
     {
       "label": "renderSection()",
@@ -1249,7 +1249,7 @@
       "source_file": "src\\components\\ChatHistory.tsx",
       "source_location": "L217",
       "id": "chathistory_rendersection",
-      "community": 30
+      "community": 31
     },
     {
       "label": "ChatMessage.tsx",
@@ -1593,7 +1593,7 @@
       "source_file": "src\\components\\Logo.tsx",
       "source_location": "L1",
       "id": "src_components_logo_tsx",
-      "community": 31
+      "community": 32
     },
     {
       "label": "outerTicks()",
@@ -1601,7 +1601,7 @@
       "source_file": "src\\components\\Logo.tsx",
       "source_location": "L17",
       "id": "logo_outerticks",
-      "community": 31
+      "community": 32
     },
     {
       "label": "innerTicks()",
@@ -1609,7 +1609,7 @@
       "source_file": "src\\components\\Logo.tsx",
       "source_location": "L39",
       "id": "logo_innerticks",
-      "community": 31
+      "community": 32
     },
     {
       "label": "armNodes()",
@@ -1617,7 +1617,7 @@
       "source_file": "src\\components\\Logo.tsx",
       "source_location": "L61",
       "id": "logo_armnodes",
-      "community": 31
+      "community": 32
     },
     {
       "label": "sunRays()",
@@ -1625,7 +1625,7 @@
       "source_file": "src\\components\\Logo.tsx",
       "source_location": "L86",
       "id": "logo_sunrays",
-      "community": 31
+      "community": 32
     },
     {
       "label": "M5Message.tsx",
@@ -1953,7 +1953,7 @@
       "source_file": "src\\components\\SubscriptionCard.tsx",
       "source_location": "L1",
       "id": "src_components_subscriptioncard_tsx",
-      "community": 32
+      "community": 33
     },
     {
       "label": "subscriptionPlanLabel()",
@@ -1961,7 +1961,7 @@
       "source_file": "src\\components\\SubscriptionCard.tsx",
       "source_location": "L99",
       "id": "subscriptioncard_subscriptionplanlabel",
-      "community": 32
+      "community": 33
     },
     {
       "label": "canonicalSubscriptionPlanId()",
@@ -1969,7 +1969,7 @@
       "source_file": "src\\components\\SubscriptionCard.tsx",
       "source_location": "L106",
       "id": "subscriptioncard_canonicalsubscriptionplanid",
-      "community": 32
+      "community": 33
     },
     {
       "label": "PriorityMatrix()",
@@ -1977,7 +1977,7 @@
       "source_file": "src\\components\\SubscriptionCard.tsx",
       "source_location": "L152",
       "id": "subscriptioncard_prioritymatrix",
-      "community": 32
+      "community": 33
     },
     {
       "label": "handleCancel()",
@@ -1985,7 +1985,7 @@
       "source_file": "src\\components\\SubscriptionCard.tsx",
       "source_location": "L355",
       "id": "subscriptioncard_handlecancel",
-      "community": 32
+      "community": 33
     },
     {
       "label": "Toast.tsx",
@@ -3825,7 +3825,7 @@
       "source_file": "src\\lib\\auth-client.ts",
       "source_location": "L1",
       "id": "src_lib_auth_client_ts",
-      "community": 33
+      "community": 34
     },
     {
       "label": "displayName()",
@@ -3833,7 +3833,7 @@
       "source_file": "src\\lib\\auth-client.ts",
       "source_location": "L18",
       "id": "auth_client_displayname",
-      "community": 33
+      "community": 34
     },
     {
       "label": "withDisplayName()",
@@ -3841,7 +3841,7 @@
       "source_file": "src\\lib\\auth-client.ts",
       "source_location": "L25",
       "id": "auth_client_withdisplayname",
-      "community": 33
+      "community": 34
     },
     {
       "label": "useSession()",
@@ -3849,7 +3849,7 @@
       "source_file": "src\\lib\\auth-client.ts",
       "source_location": "L35",
       "id": "auth_client_usesession",
-      "community": 33
+      "community": 34
     },
     {
       "label": "getSession()",
@@ -3857,7 +3857,7 @@
       "source_file": "src\\lib\\auth-client.ts",
       "source_location": "L75",
       "id": "auth_client_getsession",
-      "community": 33
+      "community": 34
     },
     {
       "label": "ayurveda-map.ts",
@@ -4247,7 +4247,7 @@
       "label": "normalizeResult()",
       "file_type": "code",
       "source_file": "src\\lib\\analyse\\api.ts",
-      "source_location": "L50",
+      "source_location": "L56",
       "id": "api_normalizeresult",
       "community": 1
     },
@@ -4255,7 +4255,7 @@
       "label": "sleep()",
       "file_type": "code",
       "source_file": "src\\lib\\analyse\\api.ts",
-      "source_location": "L84",
+      "source_location": "L90",
       "id": "api_sleep",
       "community": 1
     },
@@ -4263,7 +4263,7 @@
       "label": "readGatewayError()",
       "file_type": "code",
       "source_file": "src\\lib\\analyse\\api.ts",
-      "source_location": "L101",
+      "source_location": "L107",
       "id": "api_readgatewayerror",
       "community": 1
     },
@@ -4271,7 +4271,7 @@
       "label": "analyzeImage()",
       "file_type": "code",
       "source_file": "src\\lib\\analyse\\api.ts",
-      "source_location": "L118",
+      "source_location": "L124",
       "id": "api_analyzeimage",
       "community": 1
     },
@@ -4279,7 +4279,7 @@
       "label": "pollJobUntilComplete()",
       "file_type": "code",
       "source_file": "src\\lib\\analyse\\api.ts",
-      "source_location": "L180",
+      "source_location": "L186",
       "id": "api_polljobuntilcomplete",
       "community": 1
     },
@@ -4287,7 +4287,7 @@
       "label": "getJobStatus()",
       "file_type": "code",
       "source_file": "src\\lib\\analyse\\api.ts",
-      "source_location": "L219",
+      "source_location": "L225",
       "id": "api_getjobstatus",
       "community": 1
     },
@@ -4295,7 +4295,7 @@
       "label": "getServicesHealth()",
       "file_type": "code",
       "source_file": "src\\lib\\analyse\\api.ts",
-      "source_location": "L236",
+      "source_location": "L242",
       "id": "api_getserviceshealth",
       "community": 1
     },
@@ -4303,7 +4303,7 @@
       "label": "getGatewayHealth()",
       "file_type": "code",
       "source_file": "src\\lib\\analyse\\api.ts",
-      "source_location": "L249",
+      "source_location": "L255",
       "id": "api_getgatewayhealth",
       "community": 1
     },
@@ -4311,7 +4311,7 @@
       "label": "generateReport()",
       "file_type": "code",
       "source_file": "src\\lib\\analyse\\api.ts",
-      "source_location": "L264",
+      "source_location": "L270",
       "id": "api_generatereport",
       "community": 1
     },
@@ -4319,7 +4319,7 @@
       "label": "askCoPilot()",
       "file_type": "code",
       "source_file": "src\\lib\\analyse\\api.ts",
-      "source_location": "L277",
+      "source_location": "L283",
       "id": "api_askcopilot",
       "community": 1
     },
@@ -4327,7 +4327,7 @@
       "label": "requestUnifiedReport()",
       "file_type": "code",
       "source_file": "src\\lib\\analyse\\api.ts",
-      "source_location": "L297",
+      "source_location": "L303",
       "id": "api_requestunifiedreport",
       "community": 1
     },
@@ -4335,7 +4335,7 @@
       "label": "fetchPacsStudies()",
       "file_type": "code",
       "source_file": "src\\lib\\analyse\\api.ts",
-      "source_location": "L312",
+      "source_location": "L318",
       "id": "api_fetchpacsstudies",
       "community": 1
     },
@@ -4343,7 +4343,7 @@
       "label": "fetchWorklist()",
       "file_type": "code",
       "source_file": "src\\lib\\analyse\\api.ts",
-      "source_location": "L339",
+      "source_location": "L350",
       "id": "api_fetchworklist",
       "community": 1
     },
@@ -4351,7 +4351,7 @@
       "label": "createWorklistItem()",
       "file_type": "code",
       "source_file": "src\\lib\\analyse\\api.ts",
-      "source_location": "L354",
+      "source_location": "L366",
       "id": "api_createworklistitem",
       "community": 1
     },
@@ -4359,7 +4359,7 @@
       "label": "sendStudyToAI()",
       "file_type": "code",
       "source_file": "src\\lib\\analyse\\api.ts",
-      "source_location": "L370",
+      "source_location": "L385",
       "id": "api_sendstudytoai",
       "community": 1
     },
@@ -4367,7 +4367,7 @@
       "label": "echoPacs()",
       "file_type": "code",
       "source_file": "src\\lib\\analyse\\api.ts",
-      "source_location": "L389",
+      "source_location": "L407",
       "id": "api_echopacs",
       "community": 1
     },
@@ -4375,7 +4375,7 @@
       "label": "getPacsConfig()",
       "file_type": "code",
       "source_file": "src\\lib\\analyse\\api.ts",
-      "source_location": "L400",
+      "source_location": "L419",
       "id": "api_getpacsconfig",
       "community": 1
     },
@@ -4383,7 +4383,7 @@
       "label": "cxrMedgemmaSessionStart()",
       "file_type": "code",
       "source_file": "src\\lib\\analyse\\api.ts",
-      "source_location": "L425",
+      "source_location": "L445",
       "id": "api_cxrmedgemmasessionstart",
       "community": 1
     },
@@ -4391,7 +4391,7 @@
       "label": "cxrMedgemmaSessionComplete()",
       "file_type": "code",
       "source_file": "src\\lib\\analyse\\api.ts",
-      "source_location": "L461",
+      "source_location": "L481",
       "id": "api_cxrmedgemmasessioncomplete",
       "community": 1
     },
@@ -4399,15 +4399,23 @@
       "label": "orchHeaders()",
       "file_type": "code",
       "source_file": "src\\lib\\analyse\\api.ts",
-      "source_location": "L493",
+      "source_location": "L513",
       "id": "api_orchheaders",
+      "community": 1
+    },
+    {
+      "label": "orchestrationFetchSignal()",
+      "file_type": "code",
+      "source_file": "src\\lib\\analyse\\api.ts",
+      "source_location": "L529",
+      "id": "api_orchestrationfetchsignal",
       "community": 1
     },
     {
       "label": "detectModalityOrchestration()",
       "file_type": "code",
       "source_file": "src\\lib\\analyse\\api.ts",
-      "source_location": "L505",
+      "source_location": "L561",
       "id": "api_detectmodalityorchestration",
       "community": 1
     },
@@ -4415,7 +4423,7 @@
       "label": "interrogateOrchestration()",
       "file_type": "code",
       "source_file": "src\\lib\\analyse\\api.ts",
-      "source_location": "L533",
+      "source_location": "L589",
       "id": "api_interrogateorchestration",
       "community": 1
     },
@@ -4423,7 +4431,7 @@
       "label": "interpretOrchestration()",
       "file_type": "code",
       "source_file": "src\\lib\\analyse\\api.ts",
-      "source_location": "L563",
+      "source_location": "L619",
       "id": "api_interpretorchestration",
       "community": 1
     },
@@ -4505,39 +4513,47 @@
       "source_file": "src\\lib\\analyse\\constants.ts",
       "source_location": "L1",
       "id": "src_lib_analyse_constants_ts",
-      "community": 34
+      "community": 27
+    },
+    {
+      "label": "readPublicIntEnv()",
+      "file_type": "code",
+      "source_file": "src\\lib\\analyse\\constants.ts",
+      "source_location": "L27",
+      "id": "constants_readpublicintenv",
+      "community": 27
     },
     {
       "label": "orchDicomSeriesHintForModality()",
       "file_type": "code",
       "source_file": "src\\lib\\analyse\\constants.ts",
-      "source_location": "L37",
+      "source_location": "L65",
       "id": "constants_orchdicomserieshintformodality",
-      "community": 34
+      "community": 27
     },
     {
       "label": "isGroupAllowedInPhase()",
       "file_type": "code",
       "source_file": "src\\lib\\analyse\\constants.ts",
-      "source_location": "L69",
+      "source_location": "L97",
       "id": "constants_isgroupallowedinphase",
-      "community": 34
+      "community": 27
     },
     {
       "label": "stripVideoFromAccept()",
       "file_type": "code",
       "source_file": "src\\lib\\analyse\\constants.ts",
-      "source_location": "L107",
+      "source_location": "L135",
       "id": "constants_stripvideofromaccept",
-      "community": 34
+      "community": 27
     },
     {
       "label": "getUploadAcceptTypes()",
       "file_type": "code",
       "source_file": "src\\lib\\analyse\\constants.ts",
-      "source_location": "L122",
+      "source_location": "L150",
       "id": "constants_getuploadaccepttypes",
-      "community": 34
+      "community": 27
     },
     {
       "label": "cornerstoneInit.ts",
@@ -4545,7 +4561,7 @@
       "source_file": "src\\lib\\analyse\\cornerstoneInit.ts",
       "source_location": "L1",
       "id": "src_lib_analyse_cornerstoneinit_ts",
-      "community": 27
+      "community": 28
     },
     {
       "label": "initCornerstone()",
@@ -4553,7 +4569,7 @@
       "source_file": "src\\lib\\analyse\\cornerstoneInit.ts",
       "source_location": "L10",
       "id": "cornerstoneinit_initcornerstone",
-      "community": 27
+      "community": 28
     },
     {
       "label": "isCornerstoneInitialized()",
@@ -4561,7 +4577,7 @@
       "source_file": "src\\lib\\analyse\\cornerstoneInit.ts",
       "source_location": "L71",
       "id": "cornerstoneinit_iscornerstoneinitialized",
-      "community": 27
+      "community": 28
     },
     {
       "label": "makeRenderingEngineId()",
@@ -4569,7 +4585,7 @@
       "source_file": "src\\lib\\analyse\\cornerstoneInit.ts",
       "source_location": "L78",
       "id": "cornerstoneinit_makerenderingengineid",
-      "community": 27
+      "community": 28
     },
     {
       "label": "fileToImageId()",
@@ -4577,7 +4593,7 @@
       "source_file": "src\\lib\\analyse\\cornerstoneInit.ts",
       "source_location": "L86",
       "id": "cornerstoneinit_filetoimageid",
-      "community": 27
+      "community": 28
     },
     {
       "label": "sortDicomFiles()",
@@ -4585,7 +4601,7 @@
       "source_file": "src\\lib\\analyse\\cornerstoneInit.ts",
       "source_location": "L95",
       "id": "cornerstoneinit_sortdicomfiles",
-      "community": 27
+      "community": 28
     },
     {
       "label": "ct-upload-wizard.ts",
@@ -5105,7 +5121,7 @@
       "source_file": "src\\lib\\analyse\\structured-reports.ts",
       "source_location": "L1",
       "id": "src_lib_analyse_structured_reports_ts",
-      "community": 28
+      "community": 29
     },
     {
       "label": "scoreFindings()",
@@ -5113,7 +5129,7 @@
       "source_file": "src\\lib\\analyse\\structured-reports.ts",
       "source_location": "L322",
       "id": "structured_reports_scorefindings",
-      "community": 28
+      "community": 29
     },
     {
       "label": "buildReportSections()",
@@ -5121,7 +5137,7 @@
       "source_file": "src\\lib\\analyse\\structured-reports.ts",
       "source_location": "L392",
       "id": "structured_reports_buildreportsections",
-      "community": 28
+      "community": 29
     },
     {
       "label": "getModalityLabel()",
@@ -5129,7 +5145,7 @@
       "source_file": "src\\lib\\analyse\\structured-reports.ts",
       "source_location": "L429",
       "id": "structured_reports_getmodalitylabel",
-      "community": 28
+      "community": 29
     },
     {
       "label": "getModalityTechnique()",
@@ -5137,7 +5153,7 @@
       "source_file": "src\\lib\\analyse\\structured-reports.ts",
       "source_location": "L453",
       "id": "structured_reports_getmodalitytechnique",
-      "community": 28
+      "community": 29
     },
     {
       "label": "getRADSDefinition()",
@@ -5145,7 +5161,7 @@
       "source_file": "src\\lib\\analyse\\structured-reports.ts",
       "source_location": "L491",
       "id": "structured_reports_getradsdefinition",
-      "community": 28
+      "community": 29
     },
     {
       "label": "types.ts",
@@ -5777,7 +5793,7 @@
       "source_file": "src\\lib\\email\\ses.ts",
       "source_location": "L1",
       "id": "src_lib_email_ses_ts",
-      "community": 29
+      "community": 30
     },
     {
       "label": "validateSESConfig()",
@@ -5785,7 +5801,7 @@
       "source_file": "src\\lib\\email\\ses.ts",
       "source_location": "L16",
       "id": "ses_validatesesconfig",
-      "community": 29
+      "community": 30
     },
     {
       "label": "sendEmail()",
@@ -5793,7 +5809,7 @@
       "source_file": "src\\lib\\email\\ses.ts",
       "source_location": "L56",
       "id": "ses_sendemail",
-      "community": 29
+      "community": 30
     },
     {
       "label": "sendVerificationEmail()",
@@ -5801,7 +5817,7 @@
       "source_file": "src\\lib\\email\\ses.ts",
       "source_location": "L120",
       "id": "ses_sendverificationemail",
-      "community": 29
+      "community": 30
     },
     {
       "label": "sendPaymentReceipt()",
@@ -5809,7 +5825,7 @@
       "source_file": "src\\lib\\email\\ses.ts",
       "source_location": "L145",
       "id": "ses_sendpaymentreceipt",
-      "community": 29
+      "community": 30
     },
     {
       "label": "sendSubscriptionExpiringEmail()",
@@ -5817,7 +5833,7 @@
       "source_file": "src\\lib\\email\\ses.ts",
       "source_location": "L177",
       "id": "ses_sendsubscriptionexpiringemail",
-      "community": 29
+      "community": 30
     },
     {
       "label": "client.ts",
@@ -6781,7 +6797,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src\\app\\(analyse)\\analyse\\page.tsx",
-      "source_location": "L790",
+      "source_location": "L794",
       "weight": 1.0,
       "_src": "src_app_analyse_analyse_page_tsx",
       "_tgt": "page_handler",
@@ -6817,7 +6833,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src\\app\\(analyse)\\analyse\\page.tsx",
-      "source_location": "L89",
+      "source_location": "L90",
       "weight": 1.0,
       "_src": "src_app_analyse_analyse_page_tsx",
       "_tgt": "page_clampfindingspanelwidth",
@@ -6829,7 +6845,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src\\app\\(analyse)\\analyse\\page.tsx",
-      "source_location": "L100",
+      "source_location": "L101",
       "weight": 1.0,
       "_src": "src_app_analyse_analyse_page_tsx",
       "_tgt": "page_isctuimodality",
@@ -6841,7 +6857,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src\\app\\(analyse)\\analyse\\page.tsx",
-      "source_location": "L103",
+      "source_location": "L104",
       "weight": 1.0,
       "_src": "src_app_analyse_analyse_page_tsx",
       "_tgt": "page_shoulduseorchestration",
@@ -6853,7 +6869,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src\\app\\(analyse)\\analyse\\page.tsx",
-      "source_location": "L1199",
+      "source_location": "L1203",
       "weight": 1.0,
       "_src": "src_app_analyse_analyse_page_tsx",
       "_tgt": "page_ctbodyregionforproductmodality",
@@ -10957,7 +10973,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src\\lib\\analyse\\api.ts",
-      "source_location": "L50",
+      "source_location": "L56",
       "weight": 1.0,
       "_src": "src_lib_analyse_api_ts",
       "_tgt": "api_normalizeresult",
@@ -10969,7 +10985,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src\\lib\\analyse\\api.ts",
-      "source_location": "L84",
+      "source_location": "L90",
       "weight": 1.0,
       "_src": "src_lib_analyse_api_ts",
       "_tgt": "api_sleep",
@@ -10981,7 +10997,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src\\lib\\analyse\\api.ts",
-      "source_location": "L101",
+      "source_location": "L107",
       "weight": 1.0,
       "_src": "src_lib_analyse_api_ts",
       "_tgt": "api_readgatewayerror",
@@ -10993,7 +11009,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src\\lib\\analyse\\api.ts",
-      "source_location": "L118",
+      "source_location": "L124",
       "weight": 1.0,
       "_src": "src_lib_analyse_api_ts",
       "_tgt": "api_analyzeimage",
@@ -11005,7 +11021,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src\\lib\\analyse\\api.ts",
-      "source_location": "L180",
+      "source_location": "L186",
       "weight": 1.0,
       "_src": "src_lib_analyse_api_ts",
       "_tgt": "api_polljobuntilcomplete",
@@ -11017,7 +11033,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src\\lib\\analyse\\api.ts",
-      "source_location": "L219",
+      "source_location": "L225",
       "weight": 1.0,
       "_src": "src_lib_analyse_api_ts",
       "_tgt": "api_getjobstatus",
@@ -11029,7 +11045,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src\\lib\\analyse\\api.ts",
-      "source_location": "L236",
+      "source_location": "L242",
       "weight": 1.0,
       "_src": "src_lib_analyse_api_ts",
       "_tgt": "api_getserviceshealth",
@@ -11041,7 +11057,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src\\lib\\analyse\\api.ts",
-      "source_location": "L249",
+      "source_location": "L255",
       "weight": 1.0,
       "_src": "src_lib_analyse_api_ts",
       "_tgt": "api_getgatewayhealth",
@@ -11053,7 +11069,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src\\lib\\analyse\\api.ts",
-      "source_location": "L264",
+      "source_location": "L270",
       "weight": 1.0,
       "_src": "src_lib_analyse_api_ts",
       "_tgt": "api_generatereport",
@@ -11065,7 +11081,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src\\lib\\analyse\\api.ts",
-      "source_location": "L277",
+      "source_location": "L283",
       "weight": 1.0,
       "_src": "src_lib_analyse_api_ts",
       "_tgt": "api_askcopilot",
@@ -11077,7 +11093,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src\\lib\\analyse\\api.ts",
-      "source_location": "L297",
+      "source_location": "L303",
       "weight": 1.0,
       "_src": "src_lib_analyse_api_ts",
       "_tgt": "api_requestunifiedreport",
@@ -11089,7 +11105,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src\\lib\\analyse\\api.ts",
-      "source_location": "L312",
+      "source_location": "L318",
       "weight": 1.0,
       "_src": "src_lib_analyse_api_ts",
       "_tgt": "api_fetchpacsstudies",
@@ -11101,7 +11117,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src\\lib\\analyse\\api.ts",
-      "source_location": "L339",
+      "source_location": "L350",
       "weight": 1.0,
       "_src": "src_lib_analyse_api_ts",
       "_tgt": "api_fetchworklist",
@@ -11113,7 +11129,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src\\lib\\analyse\\api.ts",
-      "source_location": "L354",
+      "source_location": "L366",
       "weight": 1.0,
       "_src": "src_lib_analyse_api_ts",
       "_tgt": "api_createworklistitem",
@@ -11125,7 +11141,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src\\lib\\analyse\\api.ts",
-      "source_location": "L370",
+      "source_location": "L385",
       "weight": 1.0,
       "_src": "src_lib_analyse_api_ts",
       "_tgt": "api_sendstudytoai",
@@ -11137,7 +11153,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src\\lib\\analyse\\api.ts",
-      "source_location": "L389",
+      "source_location": "L407",
       "weight": 1.0,
       "_src": "src_lib_analyse_api_ts",
       "_tgt": "api_echopacs",
@@ -11149,7 +11165,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src\\lib\\analyse\\api.ts",
-      "source_location": "L400",
+      "source_location": "L419",
       "weight": 1.0,
       "_src": "src_lib_analyse_api_ts",
       "_tgt": "api_getpacsconfig",
@@ -11161,7 +11177,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src\\lib\\analyse\\api.ts",
-      "source_location": "L425",
+      "source_location": "L445",
       "weight": 1.0,
       "_src": "src_lib_analyse_api_ts",
       "_tgt": "api_cxrmedgemmasessionstart",
@@ -11173,7 +11189,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src\\lib\\analyse\\api.ts",
-      "source_location": "L461",
+      "source_location": "L481",
       "weight": 1.0,
       "_src": "src_lib_analyse_api_ts",
       "_tgt": "api_cxrmedgemmasessioncomplete",
@@ -11185,7 +11201,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src\\lib\\analyse\\api.ts",
-      "source_location": "L493",
+      "source_location": "L513",
       "weight": 1.0,
       "_src": "src_lib_analyse_api_ts",
       "_tgt": "api_orchheaders",
@@ -11197,7 +11213,19 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src\\lib\\analyse\\api.ts",
-      "source_location": "L505",
+      "source_location": "L529",
+      "weight": 1.0,
+      "_src": "src_lib_analyse_api_ts",
+      "_tgt": "api_orchestrationfetchsignal",
+      "source": "src_lib_analyse_api_ts",
+      "target": "api_orchestrationfetchsignal",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\lib\\analyse\\api.ts",
+      "source_location": "L561",
       "weight": 1.0,
       "_src": "src_lib_analyse_api_ts",
       "_tgt": "api_detectmodalityorchestration",
@@ -11209,7 +11237,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src\\lib\\analyse\\api.ts",
-      "source_location": "L533",
+      "source_location": "L589",
       "weight": 1.0,
       "_src": "src_lib_analyse_api_ts",
       "_tgt": "api_interrogateorchestration",
@@ -11221,7 +11249,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src\\lib\\analyse\\api.ts",
-      "source_location": "L563",
+      "source_location": "L619",
       "weight": 1.0,
       "_src": "src_lib_analyse_api_ts",
       "_tgt": "api_interpretorchestration",
@@ -11233,7 +11261,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "src\\lib\\analyse\\api.ts",
-      "source_location": "L172",
+      "source_location": "L178",
       "weight": 1.0,
       "_src": "api_analyzeimage",
       "_tgt": "api_normalizeresult",
@@ -11245,7 +11273,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "src\\lib\\analyse\\api.ts",
-      "source_location": "L203",
+      "source_location": "L209",
       "weight": 1.0,
       "_src": "api_polljobuntilcomplete",
       "_tgt": "api_normalizeresult",
@@ -11257,7 +11285,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "src\\lib\\analyse\\api.ts",
-      "source_location": "L195",
+      "source_location": "L201",
       "weight": 1.0,
       "_src": "api_polljobuntilcomplete",
       "_tgt": "api_sleep",
@@ -11269,7 +11297,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "src\\lib\\analyse\\api.ts",
-      "source_location": "L162",
+      "source_location": "L168",
       "weight": 1.0,
       "_src": "api_analyzeimage",
       "_tgt": "api_readgatewayerror",
@@ -11281,7 +11309,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "src\\lib\\analyse\\api.ts",
-      "source_location": "L448",
+      "source_location": "L468",
       "weight": 1.0,
       "_src": "api_cxrmedgemmasessionstart",
       "_tgt": "api_readgatewayerror",
@@ -11293,7 +11321,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "src\\lib\\analyse\\api.ts",
-      "source_location": "L485",
+      "source_location": "L505",
       "weight": 1.0,
       "_src": "api_cxrmedgemmasessioncomplete",
       "_tgt": "api_readgatewayerror",
@@ -11305,7 +11333,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "src\\lib\\analyse\\api.ts",
-      "source_location": "L527",
+      "source_location": "L583",
       "weight": 1.0,
       "_src": "api_detectmodalityorchestration",
       "_tgt": "api_readgatewayerror",
@@ -11317,7 +11345,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "src\\lib\\analyse\\api.ts",
-      "source_location": "L557",
+      "source_location": "L613",
       "weight": 1.0,
       "_src": "api_interrogateorchestration",
       "_tgt": "api_readgatewayerror",
@@ -11329,7 +11357,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "src\\lib\\analyse\\api.ts",
-      "source_location": "L587",
+      "source_location": "L643",
       "weight": 1.0,
       "_src": "api_interpretorchestration",
       "_tgt": "api_readgatewayerror",
@@ -11341,7 +11369,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "src\\lib\\analyse\\api.ts",
-      "source_location": "L168",
+      "source_location": "L174",
       "weight": 1.0,
       "_src": "api_analyzeimage",
       "_tgt": "api_polljobuntilcomplete",
@@ -11353,7 +11381,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "src\\lib\\analyse\\api.ts",
-      "source_location": "L192",
+      "source_location": "L198",
       "weight": 1.0,
       "_src": "api_polljobuntilcomplete",
       "_tgt": "api_getjobstatus",
@@ -11365,7 +11393,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "src\\lib\\analyse\\api.ts",
-      "source_location": "L515",
+      "source_location": "L571",
       "weight": 1.0,
       "_src": "api_detectmodalityorchestration",
       "_tgt": "api_orchheaders",
@@ -11377,7 +11405,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "src\\lib\\analyse\\api.ts",
-      "source_location": "L544",
+      "source_location": "L600",
       "weight": 1.0,
       "_src": "api_interrogateorchestration",
       "_tgt": "api_orchheaders",
@@ -11389,11 +11417,47 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "src\\lib\\analyse\\api.ts",
-      "source_location": "L574",
+      "source_location": "L630",
       "weight": 1.0,
       "_src": "api_interpretorchestration",
       "_tgt": "api_orchheaders",
       "source": "api_orchheaders",
+      "target": "api_interpretorchestration",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\lib\\analyse\\api.ts",
+      "source_location": "L577",
+      "weight": 1.0,
+      "_src": "api_detectmodalityorchestration",
+      "_tgt": "api_orchestrationfetchsignal",
+      "source": "api_orchestrationfetchsignal",
+      "target": "api_detectmodalityorchestration",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\lib\\analyse\\api.ts",
+      "source_location": "L607",
+      "weight": 1.0,
+      "_src": "api_interrogateorchestration",
+      "_tgt": "api_orchestrationfetchsignal",
+      "source": "api_orchestrationfetchsignal",
+      "target": "api_interrogateorchestration",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\lib\\analyse\\api.ts",
+      "source_location": "L637",
+      "weight": 1.0,
+      "_src": "api_interpretorchestration",
+      "_tgt": "api_orchestrationfetchsignal",
+      "source": "api_orchestrationfetchsignal",
       "target": "api_interpretorchestration",
       "confidence_score": 1.0
     },
@@ -11485,7 +11549,19 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src\\lib\\analyse\\constants.ts",
-      "source_location": "L37",
+      "source_location": "L27",
+      "weight": 1.0,
+      "_src": "src_lib_analyse_constants_ts",
+      "_tgt": "constants_readpublicintenv",
+      "source": "src_lib_analyse_constants_ts",
+      "target": "constants_readpublicintenv",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src\\lib\\analyse\\constants.ts",
+      "source_location": "L65",
       "weight": 1.0,
       "_src": "src_lib_analyse_constants_ts",
       "_tgt": "constants_orchdicomserieshintformodality",
@@ -11497,7 +11573,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src\\lib\\analyse\\constants.ts",
-      "source_location": "L69",
+      "source_location": "L97",
       "weight": 1.0,
       "_src": "src_lib_analyse_constants_ts",
       "_tgt": "constants_isgroupallowedinphase",
@@ -11509,7 +11585,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src\\lib\\analyse\\constants.ts",
-      "source_location": "L107",
+      "source_location": "L135",
       "weight": 1.0,
       "_src": "src_lib_analyse_constants_ts",
       "_tgt": "constants_stripvideofromaccept",
@@ -11521,7 +11597,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src\\lib\\analyse\\constants.ts",
-      "source_location": "L122",
+      "source_location": "L150",
       "weight": 1.0,
       "_src": "src_lib_analyse_constants_ts",
       "_tgt": "constants_getuploadaccepttypes",
@@ -11533,7 +11609,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "src\\lib\\analyse\\constants.ts",
-      "source_location": "L159",
+      "source_location": "L187",
       "weight": 1.0,
       "_src": "constants_getuploadaccepttypes",
       "_tgt": "constants_stripvideofromaccept",

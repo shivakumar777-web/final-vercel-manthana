@@ -1,11 +1,11 @@
 # Graph Report - .  (2026-04-19)
 
 ## Corpus Check
-- 250 files · ~155,834 words
+- 250 files · ~156,315 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 761 nodes · 655 edges · 237 communities detected
+- 763 nodes · 660 edges · 237 communities detected
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS
 - Token cost: 0 input · 0 output
 
@@ -279,8 +279,8 @@ Cohesion: 0.11
 Nodes (20): buildTarget(), buildVerifyLink(), buttonHtml(), DELETE(), dispatchEmails(), ensureProfile(), forwardRequestHeaders(), forwardResponseHeaders() (+12 more)
 
 ### Community 1 - "Community 1"
-Cohesion: 0.13
-Nodes (12): analyzeImage(), cxrMedgemmaSessionComplete(), cxrMedgemmaSessionStart(), detectModalityOrchestration(), getJobStatus(), interpretOrchestration(), interrogateOrchestration(), normalizeResult() (+4 more)
+Cohesion: 0.14
+Nodes (13): analyzeImage(), cxrMedgemmaSessionComplete(), cxrMedgemmaSessionStart(), detectModalityOrchestration(), getJobStatus(), interpretOrchestration(), interrogateOrchestration(), normalizeResult() (+5 more)
 
 ### Community 2 - "Community 2"
 Cohesion: 0.12
@@ -383,36 +383,36 @@ Cohesion: 0.33
 Nodes (0): 
 
 ### Community 27 - "Community 27"
+Cohesion: 0.4
+Nodes (2): getUploadAcceptTypes(), stripVideoFromAccept()
+
+### Community 28 - "Community 28"
 Cohesion: 0.33
 Nodes (0): 
 
-### Community 28 - "Community 28"
+### Community 29 - "Community 29"
 Cohesion: 0.53
 Nodes (4): buildReportSections(), getModalityLabel(), getModalityTechnique(), scoreFindings()
 
-### Community 29 - "Community 29"
+### Community 30 - "Community 30"
 Cohesion: 0.53
 Nodes (4): sendEmail(), sendPaymentReceipt(), sendSubscriptionExpiringEmail(), sendVerificationEmail()
-
-### Community 30 - "Community 30"
-Cohesion: 0.4
-Nodes (0): 
 
 ### Community 31 - "Community 31"
 Cohesion: 0.4
 Nodes (0): 
 
 ### Community 32 - "Community 32"
+Cohesion: 0.4
+Nodes (0): 
+
+### Community 33 - "Community 33"
 Cohesion: 0.5
 Nodes (2): canonicalSubscriptionPlanId(), PriorityMatrix()
 
-### Community 33 - "Community 33"
+### Community 34 - "Community 34"
 Cohesion: 0.6
 Nodes (3): displayName(), getSession(), withDisplayName()
-
-### Community 34 - "Community 34"
-Cohesion: 0.5
-Nodes (2): getUploadAcceptTypes(), stripVideoFromAccept()
 
 ### Community 35 - "Community 35"
 Cohesion: 0.6
@@ -1516,7 +1516,7 @@ _Questions this graph is uniquely positioned to answer:_
 - **Should `Community 0` be split into smaller, more focused modules?**
   _Cohesion score 0.11 - nodes in this community are weakly interconnected._
 - **Should `Community 1` be split into smaller, more focused modules?**
-  _Cohesion score 0.13 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.14 - nodes in this community are weakly interconnected._
 - **Should `Community 2` be split into smaller, more focused modules?**
   _Cohesion score 0.12 - nodes in this community are weakly interconnected._
 - **Should `Community 4` be split into smaller, more focused modules?**
