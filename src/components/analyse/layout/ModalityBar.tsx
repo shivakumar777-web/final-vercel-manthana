@@ -8,7 +8,13 @@ import React, {
   useCallback,
 } from "react";
 import { createPortal } from "react-dom";
-import { AI_ORCHESTRATION_ENABLED, MODALITIES } from "@/lib/analyse/constants";
+import {
+  AI_ORCHESTRATION_ENABLED,
+  isGroupAllowedInPhase,
+  MODALITIES,
+  NIM_FEATURES_UI_ENABLED,
+  ORCH_PHASE,
+} from "@/lib/analyse/constants";
 import { ORCHESTRATION_MODALITIES } from "@/lib/analyse/modalityRegistry";
 import type { Modality } from "@/lib/analyse/types";
 import { useMediaQuery } from "@/hooks/analyse/useMediaQuery";
@@ -26,8 +32,8 @@ interface Props {
 /** Volumetric PRO / Premium CT — single “3D Premium” group in the UI. */
 const PREMIUM_3D_IDS = new Set(["ct_brain_vista", "premium_ct_unified"]);
 
-/** When true, the 3D Premium picker is closed (testing); set false when modalities go live. */
-const PREMIUM_3D_COMING_SOON = true;
+/** 3D Premium (VISTA-3D via NVIDIA NIM primary on gateway); set true only to disable the picker during incidents. */
+const PREMIUM_3D_COMING_SOON = false;
 
 /* ── Per-modality accent colors for glow ── */
 const MODALITY_COLORS: Record<string, string> = {
@@ -91,6 +97,8 @@ export default function ModalityBar({
   const normalizedPlan = (plan || "free").toLowerCase();
   const hasPremiumCtAccess =
     status === "active" && (normalizedPlan === "premium" || normalizedPlan === "enterprise");
+  /** Optional product label when backend uses NVIDIA NIM (no API key in the client). */
+  const premium3dUiSuffix = NIM_FEATURES_UI_ENABLED ? " · NIM" : "";
 
   useEffect(() => {
     setMounted(true);
@@ -272,6 +280,12 @@ export default function ModalityBar({
     const isActive = activeModality === m.id;
     const rgb = MODALITY_COLORS[m.id] || DEFAULT_COLOR;
     const vistaLocked = m.id === "premium_ct_unified" && !hasPremiumCtAccess;
+    const phasedOut =
+      AI_ORCHESTRATION_ENABLED &&
+      Boolean(m.orchestrationOnly) &&
+      Boolean(m.group) &&
+      !isGroupAllowedInPhase(m.group);
+    const rowDisabled = vistaLocked || phasedOut;
     const showOrchSerial = AI_ORCHESTRATION_ENABLED && orchSerial !== undefined;
 
     return (
@@ -280,8 +294,14 @@ export default function ModalityBar({
         type="button"
         role="menuitem"
         onClick={() => pickModality(m)}
-        disabled={vistaLocked}
-        title={vistaLocked ? "Premium (₹3999) or enterprise subscription required." : m.description}
+        disabled={rowDisabled}
+        title={
+          vistaLocked
+            ? "Premium (₹3999) or enterprise subscription required."
+            : phasedOut
+              ? `Coming soon — not in release phase ${ORCH_PHASE} yet.`
+              : m.description
+        }
         style={{
           display: "flex",
           alignItems: "center",
@@ -293,14 +313,20 @@ export default function ModalityBar({
           border: "none",
           borderBottom: "1px solid rgba(255,255,255,0.06)",
           background: isActive ? `rgba(${rgb},0.12)` : "transparent",
-          cursor: vistaLocked ? "not-allowed" : "pointer",
+          cursor: rowDisabled ? "not-allowed" : "pointer",
           fontFamily: "var(--font-display)",
           fontSize: compact ? 10 : 11,
           fontWeight: isActive ? 600 : 400,
-          color: vistaLocked ? "rgba(255,200,120,0.45)" : isActive ? `rgb(${rgb})` : "var(--text-55)",
+          color: phasedOut
+            ? "var(--text-35)"
+            : vistaLocked
+              ? "rgba(255,200,120,0.45)"
+              : isActive
+                ? `rgb(${rgb})`
+                : "var(--text-55)",
           letterSpacing: "0.06em",
           textTransform: "uppercase" as const,
-          opacity: vistaLocked ? 0.75 : 1,
+          opacity: rowDisabled ? 0.75 : 1,
           WebkitTapHighlightColor: "transparent",
           ...(compact
             ? {
@@ -385,6 +411,23 @@ export default function ModalityBar({
                 }}
               >
                 PRO
+              </span>
+            ) : phasedOut ? (
+              <span
+                style={{
+                  marginLeft: 4,
+                  padding: "2px 6px",
+                  borderRadius: 4,
+                  fontSize: 7,
+                  fontWeight: 700,
+                  letterSpacing: "0.06em",
+                  background: "rgba(160,160,180,0.2)",
+                  color: "var(--text-45)",
+                  border: "1px solid rgba(160,160,180,0.35)",
+                  flexShrink: 0,
+                }}
+              >
+                SOON
               </span>
             ) : null}
           </>
@@ -480,8 +523,8 @@ export default function ModalityBar({
           </span>
           <span style={{ whiteSpace: "nowrap" as const }}>
             {AI_ORCHESTRATION_ENABLED
-              ? `1D & 2D (95) · 3D Premium${PREMIUM_3D_COMING_SOON ? " (soon)" : ""}`
-              : `1D & 2D · 3D Premium${PREMIUM_3D_COMING_SOON ? " (soon)" : ""}`}
+              ? `1D & 2D (95) · 3D Premium${premium3dUiSuffix}${PREMIUM_3D_COMING_SOON ? " (soon)" : ""}`
+              : `1D & 2D · 3D Premium${premium3dUiSuffix}${PREMIUM_3D_COMING_SOON ? " (soon)" : ""}`}
           </span>
         </button>
       </div>
@@ -740,7 +783,7 @@ export default function ModalityBar({
                   : undefined
               }
             >
-              3D Premium
+              {`3D Premium${premium3dUiSuffix}`}
             </span>
             {!PREMIUM_3D_COMING_SOON ? (
               <span style={{ fontSize: 11, opacity: 0.75, flexShrink: 0 }} aria-hidden>

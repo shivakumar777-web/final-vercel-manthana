@@ -25,7 +25,7 @@ export interface AIValidationState {
   error: string | null;
 }
 
-export function useAIValidation() {
+export function useAIValidation(subscriptionTier?: string) {
   const { addToast } = useToast();
   const [state, setState] = useState<AIValidationState>({
     stage: "idle",
@@ -69,7 +69,8 @@ export function useAIValidation() {
           file,
           selectedModality,
           patientContext,
-          controller.signal
+          controller.signal,
+          subscriptionTier
         );
 
         setState((prev) => ({
@@ -92,14 +93,17 @@ export function useAIValidation() {
           error: errorMessage,
         }));
 
-        if (errorMessage.includes("API key")) {
-          addToast("OpenRouter API key not configured", "error");
+        if (
+          errorMessage.toLowerCase().includes("not authenticated") ||
+          errorMessage.toLowerCase().includes("sign in")
+        ) {
+          addToast("Sign in to run pre-validation.", "error");
         } else {
           addToast(`Validation error: ${errorMessage}`, "error");
         }
       }
     },
-    [addToast]
+    [addToast, subscriptionTier]
   );
 
   /**
@@ -123,21 +127,30 @@ export function useAIValidation() {
       return;
     }
 
+    const historyWithUser: ChatMessage[] = [
+      ...state.chatHistory,
+      { role: "user", content: question },
+    ];
     setState((prev) => ({
       ...prev,
-      chatHistory: [...prev.chatHistory, { role: "user", content: question }],
+      chatHistory: historyWithUser,
     }));
 
     try {
       const response = await chatWithDeepSeek(
         question,
-        state.chatHistory,
-        state.validationResult
+        historyWithUser,
+        state.validationResult,
+        undefined,
+        subscriptionTier
       );
 
       setState((prev) => ({
         ...prev,
-        chatHistory: [...prev.chatHistory, { role: "ai", content: response }],
+        chatHistory: [
+          ...historyWithUser,
+          { role: "ai", content: response },
+        ],
       }));
     } catch (error) {
       const errorMessage =
@@ -151,7 +164,7 @@ export function useAIValidation() {
         ],
       }));
     }
-  }, [state.validationResult, state.chatHistory, addToast]);
+  }, [state.validationResult, state.chatHistory, addToast, subscriptionTier]);
 
   /**
    * Confirm and proceed to GPU inference

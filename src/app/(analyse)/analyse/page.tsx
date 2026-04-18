@@ -167,7 +167,7 @@ export default function ScannerPage() {
     forceProceedAnyway,
     resetValidation,
     cancelValidation,
-  } = useAIValidation();
+  } = useAIValidation(subscriptionTier);
 
   const [pendingFiles, setPendingFiles] = useState<{
     files: File[];

@@ -1,8 +1,6 @@
-/* ═══ DEEPSEEK V3 PRE-VALIDATION LAYER ═══ */
-import { DEEPSEEK_VALIDATION_PROMPT } from "./prompts/validation-prompt";
-
-const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
-const OPENROUTER_API_KEY = process.env.NEXT_PUBLIC_OPENROUTER_API_KEY || "";
+/* ═══ LABS PRE-VALIDATION (gateway /ai/pre-validate) ═══ */
+import { GATEWAY_URL } from "./constants";
+import { getGatewayAuthToken } from "./auth-token";
 
 export interface PreValidationRequest {
   imageBase64: string;
@@ -52,8 +50,54 @@ export interface ChatMessage {
   content: string;
 }
 
+async function readGatewayError(res: Response): Promise<string> {
+  const ct = res.headers.get("content-type") ?? "";
+  if (ct.includes("application/json")) {
+    try {
+      const data = (await res.json()) as { detail?: unknown };
+      const d = data?.detail;
+      if (typeof d === "string") return d;
+      if (d != null) return JSON.stringify(d);
+    } catch {
+      /* fall through */
+    }
+  }
+  return res.text().catch(() => `HTTP ${res.status}`);
+}
+
+function mapGatewayPreValidateToResponse(
+  raw: Record<string, unknown>,
+  selectedModality: string
+): PreValidationResponse {
+  const dq = (raw.diagnostic_questions as unknown[]) || [];
+  const pdc = (raw.patient_data_completeness as Record<string, unknown>) || {};
+  return {
+    fileType: String(raw.file_type ?? "unknown"),
+    detectedModality: String(raw.detected_modality ?? "unknown"),
+    selectedModality,
+    modalityMatch: Boolean(raw.modality_match ?? true),
+    imageQuality: (raw.image_quality as PreValidationResponse["imageQuality"]) || "acceptable",
+    provisionalOpinion: String(raw.provisional_opinion ?? ""),
+    questions: dq.map((q: unknown, idx: number) => {
+      const o = q as Record<string, unknown>;
+      return {
+        id: String(o.id ?? `q_${idx}`),
+        question: String(o.question ?? ""),
+        whyItHelps: String(o.why_it_helps ?? ""),
+        answered: false,
+      };
+    }),
+    patientDataCompleteness: {
+      missingFields: (pdc.missing_fields as string[]) || [],
+      suggestions: (pdc.suggestions as string[]) || [],
+    },
+    readyForInference: Boolean(raw.ready_for_inference ?? true),
+    concerns: (raw.concerns as string[]) || [],
+  };
+}
+
 /**
- * Compress and convert image to base64 for DeepSeek API
+ * Compress and convert image to base64 for vision pre-validate
  */
 async function prepareImageForDeepSeek(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -62,7 +106,6 @@ async function prepareImageForDeepSeek(file: File): Promise<string> {
     const ctx = canvas.getContext("2d");
 
     img.onload = () => {
-      // Max dimensions for vision models
       const MAX_SIZE = 1024;
       let width = img.width;
       let height = img.height;
@@ -82,9 +125,8 @@ async function prepareImageForDeepSeek(file: File): Promise<string> {
 
       ctx?.drawImage(img, 0, 0, width, height);
 
-      // Compress to JPEG with quality 0.8
       const dataUrl = canvas.toDataURL("image/jpeg", 0.8);
-      resolve(dataUrl.split(",")[1]); // Return base64 without prefix
+      resolve(dataUrl.split(",")[1]);
     };
 
     img.onerror = reject;
@@ -93,174 +135,107 @@ async function prepareImageForDeepSeek(file: File): Promise<string> {
 }
 
 /**
- * Call DeepSeek v3 via OpenRouter for pre-validation
+ * Pre-validate via gateway (JWT); no browser OpenRouter key.
  */
 export async function validateWithDeepSeek(
   request: PreValidationRequest,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  subscriptionTier?: string
 ): Promise<PreValidationResponse> {
-  if (!OPENROUTER_API_KEY) {
-    throw new Error("OpenRouter API key not configured");
+  const token = getGatewayAuthToken();
+  if (!token) {
+    throw new Error("Not authenticated — sign in to run pre-validation.");
   }
 
-  try {
-    const prompt = DEEPSEEK_VALIDATION_PROMPT.replace(
-      "{{selectedModality}}",
-      request.selectedModality
-    ).replace(
-      "{{patientContext}}",
-      JSON.stringify(request.patientContext, null, 2)
-    );
+  const tier = subscriptionTier ?? "free";
 
-    const response = await fetch(OPENROUTER_API_URL, {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
-        "Content-Type": "application/json",
-        "HTTP-Referer": typeof window !== "undefined" ? window.location.origin : "",
-        "X-Title": "Manthana Radiologist Copilot",
-      },
-      body: JSON.stringify({
-        model: "moonshotai/kimi-k2-5",
-        messages: [
-          {
-            role: "user",
-            content: [
-              {
-                type: "text",
-                text: prompt,
-              },
-              {
-                type: "image_url",
-                image_url: {
-                  url: `data:image/jpeg;base64,${request.imageBase64}`,
-                },
-              },
-            ],
-          },
-        ],
-        max_tokens: 4000,
-        temperature: 0.3,
-        top_p: 0.9,
-        response_format: { type: "json_object" },
-      }),
-      signal,
-    });
+  const res = await fetch(`${GATEWAY_URL}/ai/pre-validate`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+      "X-Subscription-Tier": tier,
+    },
+    body: JSON.stringify({
+      image_b64: request.imageBase64,
+      image_mime: "image/jpeg",
+      selected_modality: request.selectedModality,
+      patient_context: request.patientContext,
+    }),
+    signal,
+  });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`OpenRouter API error: ${response.status} - ${errorText}`);
-    }
-
-    const data = await response.json();
-    const content = data.choices[0]?.message?.content;
-
-    if (!content) {
-      throw new Error("No content in DeepSeek response");
-    }
-
-    // Parse JSON response
-    const validationResult = JSON.parse(content);
-
-    // Ensure all required fields exist
-    return {
-      fileType: validationResult.file_type || "unknown",
-      detectedModality: validationResult.detected_modality || "unknown",
-      selectedModality: request.selectedModality,
-      modalityMatch: validationResult.modality_match ?? true,
-      imageQuality: validationResult.image_quality || "acceptable",
-      provisionalOpinion: validationResult.provisional_opinion || "",
-      questions: (validationResult.diagnostic_questions || []).map(
-        (q: any, idx: number) => ({
-          id: q.id || `q_${idx}`,
-          question: q.question || "",
-          whyItHelps: q.why_it_helps || "",
-          answered: false,
-        })
-      ),
-      patientDataCompleteness: {
-        missingFields: validationResult.patient_data_completeness?.missing_fields || [],
-        suggestions: validationResult.patient_data_completeness?.suggestions || [],
-      },
-      readyForInference: validationResult.ready_for_inference ?? true,
-      concerns: validationResult.concerns || [],
-    };
-  } catch (error) {
-    if (error instanceof SyntaxError) {
-      throw new Error("Invalid JSON response from DeepSeek");
-    }
-    throw error;
+  if (!res.ok) {
+    throw new Error(await readGatewayError(res));
   }
+
+  const data = (await res.json()) as {
+    raw?: Record<string, unknown>;
+    model_used?: string;
+  };
+  const raw = data.raw;
+  if (!raw || typeof raw !== "object") {
+    throw new Error("Invalid pre-validate response from gateway");
+  }
+  return mapGatewayPreValidateToResponse(raw, request.selectedModality);
 }
 
 /**
- * Chat with DeepSeek about the current validation context
+ * Follow-up chat about validation context (gateway).
  */
 export async function chatWithDeepSeek(
   message: string,
   chatHistory: ChatMessage[],
   validationContext: PreValidationResponse,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  subscriptionTier?: string
 ): Promise<string> {
-  if (!OPENROUTER_API_KEY) {
-    throw new Error("OpenRouter API key not configured");
+  const token = getGatewayAuthToken();
+  if (!token) {
+    throw new Error("Not authenticated — sign in to continue.");
   }
 
-  const systemPrompt = `You are an expert radiology AI assistant helping a user analyze a medical image.
+  const tier = subscriptionTier ?? "free";
+  const history = chatHistory.map((m) => ({
+    role: m.role,
+    content: m.content,
+  }));
 
-Current Context:
-- File Type: ${validationContext.fileType}
-- Detected Modality: ${validationContext.detectedModality}
-- Selected Modality: ${validationContext.selectedModality}
-- Image Quality: ${validationContext.imageQuality}
-- Provisional Opinion: ${validationContext.provisionalOpinion}
-
-Help the user with any questions they have about the image, the validation process, or their selected modality. Be concise and clinical.`;
-
-  const messages: Array<{ role: string; content: string }> = [
-    { role: "system", content: systemPrompt },
-    ...chatHistory.map((msg) => ({
-      role: msg.role === "ai" ? "assistant" : "user",
-      content: msg.content,
-    })),
-    { role: "user", content: message },
-  ];
-
-  const response = await fetch(OPENROUTER_API_URL, {
+  const res = await fetch(`${GATEWAY_URL}/ai/pre-validate-chat`, {
     method: "POST",
     headers: {
-      "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
       "Content-Type": "application/json",
-      "HTTP-Referer": typeof window !== "undefined" ? window.location.origin : "",
-      "X-Title": "Manthana Radiologist Copilot",
+      Authorization: `Bearer ${token}`,
+      "X-Subscription-Tier": tier,
     },
     body: JSON.stringify({
-      model: "deepseek/deepseek-v3",
-      messages,
-      max_tokens: 2000,
-      temperature: 0.4,
-      stream: false,
+      message,
+      chat_history: history,
+      validation_context: {
+        fileType: validationContext.fileType,
+        detectedModality: validationContext.detectedModality,
+        selectedModality: validationContext.selectedModality,
+        imageQuality: validationContext.imageQuality,
+        provisionalOpinion: validationContext.provisionalOpinion,
+      },
     }),
     signal,
   });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`OpenRouter API error: ${response.status} - ${errorText}`);
+  if (!res.ok) {
+    throw new Error(await readGatewayError(res));
   }
 
-  const data = await response.json();
-  return data.choices[0]?.message?.content || "";
+  const data = (await res.json()) as { content?: string };
+  return data.content || "";
 }
 
-/**
- * Wrapper to prepare file and validate
- */
 export async function validateFile(
   file: File,
   selectedModality: string,
   patientContext: PatientContext,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  subscriptionTier?: string
 ): Promise<PreValidationResponse> {
   const imageBase64 = await prepareImageForDeepSeek(file);
   return validateWithDeepSeek(
@@ -270,6 +245,7 @@ export async function validateFile(
       selectedModality,
       patientContext,
     },
-    signal
+    signal,
+    subscriptionTier
   );
 }

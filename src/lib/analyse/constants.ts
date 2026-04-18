@@ -21,6 +21,45 @@ export const AI_ORCHESTRATION_ENABLED =
 export const AI_DYNAMIC_SECTIONS_ENABLED =
   process.env.NEXT_PUBLIC_AI_DYNAMIC_SECTIONS_ENABLED !== "false";
 
+/** Optional UI hint that Premium 3D uses NVIDIA NIM on the backend (no secrets in the client). */
+export const NIM_FEATURES_UI_ENABLED =
+  process.env.NEXT_PUBLIC_NIM_FEATURES_ENABLED === "true";
+
+/** Labs orchestration rollout: must match server ORCH_ALLOWED_GROUPS policy. */
+export type OrchLaunchPhase = "A" | "B" | "C";
+
+export const ORCH_PHASE = (process.env.NEXT_PUBLIC_ORCH_PHASE ?? "A") as OrchLaunchPhase;
+
+export const PHASE_ALLOWED_GROUPS: Record<OrchLaunchPhase, string[]> = {
+  A: ["reports", "cardiac_functional"],
+  B: [
+    "reports",
+    "cardiac_functional",
+    "xray",
+    "ophthalmology_dental",
+    "oncology",
+  ],
+  C: [
+    "reports",
+    "cardiac_functional",
+    "xray",
+    "ophthalmology_dental",
+    "oncology",
+    "ultrasound",
+    "pathology",
+    "specialized",
+    "nuclear",
+    "mri",
+    "ct",
+  ],
+};
+
+export function isGroupAllowedInPhase(group: string | undefined): boolean {
+  if (!group) return true;
+  const allowed = PHASE_ALLOWED_GROUPS[ORCH_PHASE];
+  return allowed?.includes(group) ?? false;
+}
+
 const AUTO_MODALITY: Modality = {
   id: "auto",
   label: "Auto-Detect",
