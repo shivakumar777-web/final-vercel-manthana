@@ -8,7 +8,6 @@ import { MODALITIES } from "@/lib/analyse/constants";
 import { modalityBarIdFromBackendCt } from "@/lib/analyse/ct-upload-wizard";
 import { useMediaQuery } from "@/hooks/analyse/useMediaQuery";
 import { scoreFindings } from "@/lib/analyse/structured-reports";
-import { uniqueFormattedLabsModels } from "@/lib/analyse/display-models";
 import type { PreValidationResponse, ChatMessage } from "@/lib/analyse/deepseek-validator";
 
 interface Props {
@@ -741,36 +740,6 @@ export default function IntelligencePanel({
               </div>
             );
           })()}
-
-          {/* Models used */}
-          {result.models_used?.length > 0 && (
-            <div style={{ marginBottom: 20 }}>
-              <p
-                className="text-caption"
-                style={{ color: "var(--text-15)", marginBottom: 6 }}
-              >
-                MODELS USED
-              </p>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
-                {uniqueFormattedLabsModels(result.models_used).map((m) => (
-                  <span
-                    key={m}
-                    className="font-mono"
-                    style={{
-                      fontSize: 9,
-                      color: "var(--text-30)",
-                      padding: "3px 8px",
-                      background: "rgba(255,255,255,0.03)",
-                      borderRadius: "var(--r-full)",
-                      border: "1px solid rgba(255,255,255,0.05)",
-                    }}
-                  >
-                    {m}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
 
           {/* Action buttons */}
           <div style={{ marginTop: "auto", paddingTop: 20, display: "flex", flexDirection: "column", gap: 8 }}>

@@ -6,8 +6,6 @@ import { MODALITIES } from "@/lib/analyse/constants";
 import DualArcGauge from "./DualArcGauge";
 import { scoreFindings } from "@/lib/analyse/structured-reports";
 import LanguageSelector, { getPersistedLanguage } from "@/components/analyse/shared/LanguageSelector";
-import { uniqueFormattedLabsModels } from "@/lib/analyse/display-models";
-
 interface Props {
   unifiedResult: UnifiedAnalysisResult;
   individualResults: MultiModelResult[];
@@ -362,36 +360,6 @@ export default function UnifiedReportPanel({
             {unifiedResult.prognosis}
           </p>
         </div>
-
-        {/* Models used */}
-        {unifiedResult.models_used.length > 0 && (
-          <div style={{ marginBottom: 20 }}>
-            <p
-              className="text-caption"
-              style={{ color: "var(--text-15)", marginBottom: 6, fontSize: 8 }}
-            >
-              MODELS USED
-            </p>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
-              {uniqueFormattedLabsModels(unifiedResult.models_used).map((m) => (
-                <span
-                  key={m}
-                  className="font-mono"
-                  style={{
-                    fontSize: 8,
-                    color: "var(--text-30)",
-                    padding: "3px 8px",
-                    background: "rgba(255,255,255,0.03)",
-                    borderRadius: "var(--r-full)",
-                    border: "1px solid rgba(255,255,255,0.05)",
-                  }}
-                >
-                  {m}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* Action buttons */}
         <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", gap: 8 }}>

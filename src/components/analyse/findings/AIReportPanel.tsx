@@ -513,11 +513,6 @@ export default function AIReportPanel({
         }}
       >
         {formatInterpretationDisclaimer(report.disclaimer)}
-        {report.models_used && report.models_used.length > 0 ? (
-          <div style={{ marginTop: 8, fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 10, opacity: 0.75 }}>
-            {report.models_used.join(" · ")}
-          </div>
-        ) : null}
       </footer>
 
       {re ? (
