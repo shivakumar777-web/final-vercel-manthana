@@ -158,8 +158,8 @@ export function getPlanNameFromRazorpayId(planId: string): PlanId {
 /** Stored in Postgres when plan has unlimited scans (Infinity is not JSON/DB-safe). */
 export const SCANS_LIMIT_UNLIMITED_SENTINEL = 99_999_999;
 
-/** Active Pro (₹399): monthly Labs cap enforced in app + `consume_labs_scan` RPC. */
-export const PRO_LABS_MONTHLY_SCAN_CAP = 150;
+/** Active Pro (₹299): monthly Labs cap enforced in app + `consume_labs_scan` RPC. */
+export const PRO_LABS_MONTHLY_SCAN_CAP = 90;
 
 /**
  * Get scans limit for each plan

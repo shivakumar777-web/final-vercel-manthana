@@ -49,7 +49,7 @@ export function labsScanTierForModality(modalityId: string): LabsScanTier {
 }
 
 export const PRO_LABS_LIMITS = {
-  totalMonthly: 150,
+  totalMonthly: 90,
   dailyMax: 15,
   lightMonthly: 120,
   ctMriMonthly: 15,
