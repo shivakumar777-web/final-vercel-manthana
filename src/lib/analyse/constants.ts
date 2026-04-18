@@ -28,7 +28,19 @@ export const NIM_FEATURES_UI_ENABLED =
 /** Labs orchestration rollout: must match server ORCH_ALLOWED_GROUPS policy. */
 export type OrchLaunchPhase = "A" | "B" | "C";
 
-export const ORCH_PHASE = (process.env.NEXT_PUBLIC_ORCH_PHASE ?? "A") as OrchLaunchPhase;
+/** Default C = full 1D/2D orchestration picker; override with A/B for staged rollout. */
+export const ORCH_PHASE = (process.env.NEXT_PUBLIC_ORCH_PHASE ?? "C") as OrchLaunchPhase;
+
+const ORCH_VOLUMETRIC_GROUPS = new Set(["ct", "mri", "nuclear"]);
+
+/** Non-null hint for volumetric orchestration modalities (multi-slice DICOM behaviour). */
+export function orchDicomSeriesHintForModality(modalityId: string | undefined): string | null {
+  if (!modalityId || modalityId === "auto") return null;
+  const row = ORCHESTRATION_MODALITIES.find((m) => m.id === modalityId);
+  const g = row?.group;
+  if (!g || !ORCH_VOLUMETRIC_GROUPS.has(g)) return null;
+  return "Multi-slice DICOM: the AI pipeline uses a representative slice from your series (often mid-volume). For a specific level, export or select the slice you want reviewed.";
+}
 
 export const PHASE_ALLOWED_GROUPS: Record<OrchLaunchPhase, string[]> = {
   A: ["reports", "cardiac_functional"],

@@ -50,7 +50,10 @@ export type {
   InterrogateResult,
   InterpretResult,
   ModalityGroupDef,
+  StructuredInterpretationDisclaimer,
 } from "./types";
+
+export { formatInterpretationDisclaimer } from "./interpretation-disclaimer";
 
 // API surface
 export * from "./client";

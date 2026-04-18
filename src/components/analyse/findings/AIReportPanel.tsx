@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { formatInterpretationDisclaimer } from "@manthana/api";
 import type { AIInterpretationReport } from "@/lib/analyse/types";
 import type { ReportEnginePhase } from "@/hooks/analyse/useReportEngineLaunch";
 import { AI_DYNAMIC_SECTIONS_ENABLED } from "@/lib/analyse/constants";
@@ -508,9 +509,10 @@ export default function AIReportPanel({
           fontSize: 11,
           color: E.textMuted,
           lineHeight: 1.55,
+          whiteSpace: "pre-wrap",
         }}
       >
-        {report.disclaimer}
+        {formatInterpretationDisclaimer(report.disclaimer)}
         {report.models_used && report.models_used.length > 0 ? (
           <div style={{ marginTop: 8, fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 10, opacity: 0.75 }}>
             {report.models_used.join(" · ")}

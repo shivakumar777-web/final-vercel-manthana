@@ -411,6 +411,14 @@ export interface DynamicReportSection {
   emphasis?: "info" | "clinical" | "technical";
 }
 
+/** Gateway `_inject_disclaimer` shape; plain string kept for older payloads. */
+export interface StructuredInterpretationDisclaimer {
+  text: string;
+  version?: string;
+  regulatory_note?: string;
+  generated_at_utc?: string;
+}
+
 export interface AIInterpretationReport {
   findings: {
     primary: StructuredReportFinding[];
@@ -431,7 +439,7 @@ export interface AIInterpretationReport {
   research_references: ResearchReferenceLink[];
   indian_clinical_notes: string;
   models_used: string[];
-  disclaimer: string;
+  disclaimer: string | StructuredInterpretationDisclaimer;
   /** AI-generated extra sections (omit if gateway does not emit yet). */
   dynamic_sections?: DynamicReportSection[];
 }

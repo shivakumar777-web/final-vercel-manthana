@@ -36,6 +36,8 @@ interface Props {
   acceptOverride?: string;
   /** Active Pro: strip video from accept (2D-only CT/MRI/USG-style uploads). */
   pro2dOnly?: boolean;
+  /** Extra line under the empty-state upload hint (e.g. multi-slice DICOM orchestration). */
+  secondaryUploadHint?: string | null;
   // DICOM
   dicomFiles?: File[];
   onMetadataExtracted?: (meta: DicomMetadataType) => void;
@@ -67,6 +69,7 @@ export default function ScanViewport({
   findings = [],
   acceptOverride,
   pro2dOnly,
+  secondaryUploadHint,
 }: Props) {
   const { isCompactLayout: compact } = useMediaQuery();
   const acceptTypes =
@@ -178,6 +181,21 @@ export default function ScanViewport({
             ? "Upload a PDF, text, or CSV file of any lab report"
             : "DICOM (.dcm), JPEG, PNG, MP4 — supports multi-slice series"}
         </p>
+        {secondaryUploadHint && !isLabReport ? (
+          <p
+            style={{
+              fontFamily: "var(--font-body)",
+              fontSize: 11,
+              color: "var(--text-40)",
+              lineHeight: 1.45,
+              maxWidth: 420,
+              margin: 0,
+              padding: "0 12px",
+            }}
+          >
+            {secondaryUploadHint}
+          </p>
+        ) : null}
       </div>
 
       <div style={{ display: "flex", flexDirection: compact ? "column" : "row", gap: compact ? 8 : 12, alignItems: "center" }}>

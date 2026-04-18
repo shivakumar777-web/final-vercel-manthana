@@ -54,7 +54,12 @@ import {
   buildClinicalNotesForApi,
   buildPatientContextJsonForApi,
 } from "@/lib/analyse/clinical-notes";
-import { AI_ORCHESTRATION_ENABLED, getUploadAcceptTypes, MODALITIES } from "@/lib/analyse/constants";
+import {
+  AI_ORCHESTRATION_ENABLED,
+  getUploadAcceptTypes,
+  MODALITIES,
+  orchDicomSeriesHintForModality,
+} from "@/lib/analyse/constants";
 import { formatModalityPeek } from "@/lib/analyse/modality-display";
 import { normalizeSubscriptionPlan } from "@/lib/product-access";
 import { preflightLabsScan, recordLabsScan } from "@/lib/labs/client";
@@ -1222,6 +1227,9 @@ export default function ScannerPage() {
                     heatmapState={heatmapState}
                     onHeatmapStateChange={setHeatmapState}
                     findings={orchestrationActive ? undefined : result?.findings}
+                    secondaryUploadHint={
+                      orchestrationActive ? orchDicomSeriesHintForModality(modality) : null
+                    }
                   />
                   {modality === "premium_ct_unified" && stage === "analyzing" ? (
                     <div style={{ marginTop: 10, flexShrink: 0 }}>

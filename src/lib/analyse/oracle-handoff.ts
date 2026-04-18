@@ -2,6 +2,7 @@
  * One-time handoff from Manthana Labs (/analyse) → Manthana Oracle (/).
  * Uses sessionStorage + ?labsHandoff=1 so the Oracle page can seed chat context.
  */
+import { formatInterpretationDisclaimer } from "@manthana/api";
 import type {
   AIInterpretationReport,
   AnalysisResponse,
@@ -295,9 +296,10 @@ export function formatAIInterpretationReportForOracle(
     lines.push(`**Models:** ${uniqueFormattedLabsModels(report.models_used).join(", ")}`);
     lines.push("");
   }
-  if (report.disclaimer?.trim()) {
+  const disc = formatInterpretationDisclaimer(report.disclaimer);
+  if (disc) {
     lines.push("### Disclaimer");
-    lines.push(report.disclaimer.trim());
+    lines.push(disc);
   }
   return lines.join("\n");
 }
