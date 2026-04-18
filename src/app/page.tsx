@@ -699,7 +699,7 @@ export default function OraclePage() {
       className={`flex flex-col min-h-screen ${
         oracleMobileConstrainedChat
           ? /* ~2.75rem mobile top strip + ~3.5rem bottom nav reserve (matches main padding) */
-            "max-md:h-[calc(100dvh-6.5rem)] max-md:min-h-0 max-md:max-h-[calc(100dvh-6.5rem)] max-md:overflow-hidden"
+            "max-md:h-[calc(100dvh-6.5rem)] max-md:min-h-0 max-md:max-h-[calc(100dvh-6.5rem)]"
           : ""
       }`}
     >
@@ -848,7 +848,7 @@ export default function OraclePage() {
       {/* ── ACTIVE CHAT STATE ── */}
       {hasMessages && mode !== "search" && (
         <div
-          className={`flex-1 min-h-0 overflow-y-auto overscroll-contain pb-4 max-md:pb-3 md:pb-32 transition-all duration-700 ${
+          className={`flex-1 min-h-0 overflow-y-auto overscroll-contain pb-4 max-md:pb-3 md:pb-32 transition-all duration-700 max-md:-webkit-overflow-scrolling-touch ${
             mode === "deep-research"
               ? "ring-1 ring-purple-500/10 bg-purple-950/[0.03]"
               : ""
