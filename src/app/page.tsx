@@ -19,6 +19,7 @@ import { useProductAccess } from "@/components/ProductAccessProvider";
 import {
   consumeOracleLabsHandoff,
   ORACLE_LABS_HANDOFF_QUERY,
+  ORACLE_LABS_HANDOFF_ID_QUERY,
 } from "@/lib/analyse/oracle-handoff";
 
 function newMessageId(): string {
@@ -83,6 +84,7 @@ export default function OraclePage() {
 
   const labsHandoffFlag = searchParams.get(ORACLE_LABS_HANDOFF_QUERY);
   const labsHandoffConsumedRef = useRef(false);
+  const [labsPreloadedImage, setLabsPreloadedImage] = useState<{ dataUrl: string; label: string } | null>(null);
 
   const reserveOracleSlot = async (): Promise<boolean> => {
     if (!oracleLimited) return true;
@@ -117,12 +119,13 @@ export default function OraclePage() {
     setMode((m) => (m === "search" || m === "deep-research" ? "auto" : m));
   }, [access.loading, access.oracleTier]);
 
-  // Manthana Labs → Oracle: load one-shot report context from sessionStorage (?labsHandoff=1)
+  // Manthana Labs → Oracle: load one-shot report context from localStorage/sessionStorage (?labsHandoff=1)
   useEffect(() => {
     if (labsHandoffFlag !== "1" || access.loading || labsHandoffConsumedRef.current) return;
 
     const params = new URLSearchParams(searchParams.toString());
     params.delete(ORACLE_LABS_HANDOFF_QUERY);
+    params.delete(ORACLE_LABS_HANDOFF_ID_QUERY);
     const qs = params.toString();
     const cleanPath = qs ? `/?${qs}` : "/";
 
@@ -139,19 +142,40 @@ export default function OraclePage() {
         ? crypto.randomUUID()
         : `labs-${Date.now()}`;
 
-    setMessages([
-      {
-        id: msgId,
-        role: "user",
-        content: payload.reportMarkdown,
-      },
-    ]);
+    // Build first user message — include scan image thumbnail if present.
+    const firstMsg = {
+      id: msgId,
+      role: "user" as const,
+      content: payload.reportMarkdown,
+      ...(payload.sourceImageDataUrl
+        ? {
+            imageDataUrl: payload.sourceImageDataUrl,
+            imageLabel: (payload as unknown as { sourceImageLabel?: string }).sourceImageLabel
+              ?? payload.labsModalityLabel
+              ?? "Scan",
+          }
+        : {}),
+    };
+
+    setMessages([firstMsg]);
     setQuery(payload.suggestedFollowUp);
     setSearchResults(null);
     setMode("m5");
     setActiveDomain("m5");
     setIntensity("clinical");
     setPersona("clinician");
+
+    // Show image chip in SearchBar input so user sees the scan is attached before sending.
+    if (payload.sourceImageDataUrl) {
+      setLabsPreloadedImage({
+        dataUrl: payload.sourceImageDataUrl,
+        label:
+          (payload as unknown as { sourceImageLabel?: string }).sourceImageLabel
+          ?? payload.labsModalityLabel
+          ?? "Scan",
+      });
+    }
+
     addToast(
       "Labs report loaded. M5 — All 5 is selected; adjust domain or intensity, then press send.",
       "success",
@@ -650,6 +674,7 @@ export default function OraclePage() {
     }
 
     setQuery("");
+    setLabsPreloadedImage(null);
     await coreSubmit(trimmed);
   };
 
@@ -945,6 +970,8 @@ export default function OraclePage() {
           isThinking={isThinking}
           onStop={() => abortRef.current?.abort()}
           oracleLimited={oracleLimited}
+          preloadedImage={labsPreloadedImage}
+          onClearPreloadedImage={() => setLabsPreloadedImage(null)}
         />
       </div>
     </div>

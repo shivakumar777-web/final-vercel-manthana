@@ -1100,13 +1100,27 @@ function showInfo(msg) {
 }
 
 function openWhatsAppWithText(text) {
-  const a = document.createElement('a');
-  a.href = 'https://wa.me/?text=' + encodeURIComponent(text);
-  a.target = '_blank';
-  a.rel = 'noopener noreferrer';
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
+  var encoded = encodeURIComponent(text);
+  var isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  if (isMobile) {
+    // Mobile: whatsapp:// deep-link opens the app directly.
+    var a = document.createElement('a');
+    a.href = 'whatsapp://send?text=' + encoded;
+    a.rel = 'noopener noreferrer';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  } else {
+    // Desktop: open WhatsApp Desktop via app scheme; after 1.5 s open WhatsApp Web as fallback.
+    var appA = document.createElement('a');
+    appA.href = 'whatsapp://send?text=' + encoded;
+    document.body.appendChild(appA);
+    appA.click();
+    appA.remove();
+    setTimeout(function () {
+      window.open('https://web.whatsapp.com/send?text=' + encoded, '_blank', 'noopener,noreferrer');
+    }, 1500);
+  }
 }
 
 /** Saves HTML, then shares via Web Share API (file → WhatsApp on supported devices) or opens wa.me with attach instructions. */
@@ -1178,21 +1192,52 @@ function setOracleButtonEnabled(on) {
 function openOracleFromEngine() {
   try {
     if (!oracleHandoffFromLabs || !oracleHandoffFromLabs.reportMarkdown) {
-      const raw = sessionStorage.getItem(MANTHANA_REPORT_ENGINE_STORAGE_KEY);
-      if (raw) {
-        const sess = JSON.parse(raw);
-        if (sess && sess.oracleHandoff) oracleHandoffFromLabs = sess.oracleHandoff;
+      var _raw = sessionStorage.getItem(MANTHANA_REPORT_ENGINE_STORAGE_KEY);
+      if (_raw) {
+        var _s = JSON.parse(_raw);
+        if (_s && _s.oracleHandoff) oracleHandoffFromLabs = _s.oracleHandoff;
       }
     }
     if (!oracleHandoffFromLabs || !oracleHandoffFromLabs.reportMarkdown) return;
-    sessionStorage.setItem(ORACLE_LABS_HANDOFF_STORAGE_KEY, JSON.stringify(oracleHandoffFromLabs));
-    const u = new URL('/', window.location.origin);
+
+    // Enrich handoff with the scan image (downscaled ≤512px already; cap at 220KB base64).
+    var _handoff = Object.assign({}, oracleHandoffFromLabs);
+    try {
+      var _sess = readLabsSessionPayload();
+      var _sm = _sess && _sess.enginePayload && _sess.enginePayload.source_media
+               ? _sess.enginePayload.source_media : null;
+      var _imgUrl = _sm ? _sm.data_url : null;
+      if (_imgUrl && typeof _imgUrl === 'string' && _imgUrl.length <= 220000) {
+        _handoff.sourceImageDataUrl = _imgUrl;
+        _handoff.sourceImageLabel = _sm && _sm.caption ? _sm.caption : (_sess && _sess.modalityLabel ? _sess.modalityLabel : 'Scan');
+      }
+    } catch (_e) { /* ignore */ }
+
+    // Use localStorage + UUID for reliable cross-tab delivery (sessionStorage is tab-isolated).
+    var _hid = (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function')
+      ? crypto.randomUUID()
+      : 'oh_' + Date.now() + '_' + Math.random().toString(36).slice(2, 10);
+    var _hkey = 'manthana_oracle_handoff_' + _hid;
+    var _stored = false;
+    try {
+      localStorage.setItem(_hkey, JSON.stringify(_handoff));
+      _stored = true;
+    } catch (_e) {
+      // Storage full: retry without image.
+      try {
+        localStorage.setItem(_hkey, JSON.stringify(oracleHandoffFromLabs));
+        _stored = true;
+      } catch (_e2) { /* ignore */ }
+    }
+
+    var u = new URL('/', window.location.origin);
     u.searchParams.set('mode', 'm5');
     u.searchParams.set('domain', 'm5');
     u.searchParams.set('labsHandoff', '1');
+    if (_stored) u.searchParams.set('ohi', _hid);
     window.open(u.toString(), '_blank', 'noopener,noreferrer');
   } catch (e) {
-    console.error(e);
+    console.error('openOracleFromEngine', e);
   }
 }
 

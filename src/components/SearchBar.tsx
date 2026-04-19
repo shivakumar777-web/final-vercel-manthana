@@ -67,6 +67,9 @@ interface SearchBarProps {
   oracleLimited?: boolean;
   /** Oracle home: set M5 mode + URL without full page reload (keeps domain pills in sync). */
   onM5Select?: () => void;
+  /** Preloaded scan image from Manthana Labs handoff — shown as a chip inside the input bar. */
+  preloadedImage?: { dataUrl: string; label: string } | null;
+  onClearPreloadedImage?: () => void;
 }
 
 export default function SearchBar({
@@ -87,6 +90,8 @@ export default function SearchBar({
   onStop,
   oracleLimited = false,
   onM5Select,
+  preloadedImage,
+  onClearPreloadedImage,
 }: SearchBarProps) {
   const [placeholderIdx, setPlaceholderIdx] = useState(0);
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -395,6 +400,30 @@ export default function SearchBar({
                   Done
                 </button>
               </div>
+            </div>
+          )}
+
+          {/* Preloaded Labs image chip */}
+          {preloadedImage && (
+            <div className="flex items-center gap-1.5 flex-shrink-0 bg-teal/10 border border-teal/25 rounded-lg pl-1 pr-1.5 py-0.5 max-w-[120px]">
+              <img
+                src={preloadedImage.dataUrl}
+                alt={preloadedImage.label}
+                className="w-7 h-7 rounded object-cover flex-shrink-0 bg-black/30"
+              />
+              <span className="text-[10px] text-teal font-ui truncate leading-tight">
+                {preloadedImage.label || "Scan"}
+              </span>
+              <button
+                type="button"
+                onClick={onClearPreloadedImage}
+                className="flex-shrink-0 w-4 h-4 rounded-full flex items-center justify-center text-teal/60 hover:text-cream hover:bg-white/10 transition-colors"
+                aria-label="Remove attached image"
+              >
+                <svg width="8" height="8" viewBox="0 0 10 10" fill="currentColor">
+                  <path d="M8.5 1.5 5 5l-3.5-3.5L.5 2 4 5.5.5 9l1 1L5 6.5 8.5 10l1-1L6 5.5 9.5 2z"/>
+                </svg>
+              </button>
             </div>
           )}
 

@@ -41,6 +41,9 @@ export interface ChatMessageData {
   m5Query?: string;
   m5Answers?: M5DomainAnswer[];
   m5Summary?: M5Summary;
+  /** Optional scan image attached from Manthana Labs (data URL, shown as thumbnail). */
+  imageDataUrl?: string;
+  imageLabel?: string;
 }
 
 interface ChatMessageProps {
@@ -64,6 +67,20 @@ export default function ChatMessage({ message }: ChatMessageProps) {
           className="max-w-[72%] rounded-2xl rounded-tr-sm px-5 py-3.5
             bg-teal/[0.06] border-l-2 border-teal-m"
         >
+          {message.imageDataUrl && (
+            <div className="mb-3">
+              <img
+                src={message.imageDataUrl}
+                alt={message.imageLabel || "Scan image"}
+                className="max-h-40 max-w-full rounded-lg border border-teal/20 object-contain bg-black/30"
+              />
+              {message.imageLabel && (
+                <p className="mt-1 text-[10px] text-cream/40 font-ui tracking-wide uppercase">
+                  {message.imageLabel}
+                </p>
+              )}
+            </div>
+          )}
           <p className="font-body text-sm text-cream/80 leading-relaxed">
             {message.content}
           </p>

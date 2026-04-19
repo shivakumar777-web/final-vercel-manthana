@@ -14,6 +14,10 @@ import { uniqueFormattedLabsModels } from "@/lib/analyse/display-models";
 export const ORACLE_LABS_HANDOFF_STORAGE_KEY = "manthana_oracle_labs_handoff_v1";
 /** Query flag consumed once on Oracle home to load handoff from sessionStorage */
 export const ORACLE_LABS_HANDOFF_QUERY = "labsHandoff";
+/** Query param carrying the localStorage handoff ID for cross-tab delivery */
+export const ORACLE_LABS_HANDOFF_ID_QUERY = "ohi";
+/** localStorage key prefix for cross-tab handoff entries */
+export const ORACLE_LABS_HANDOFF_LS_PREFIX = "manthana_oracle_handoff_";
 
 export type OracleLabsHandoffPayload = {
   reportMarkdown: string;
@@ -22,6 +26,8 @@ export type OracleLabsHandoffPayload = {
   labsModalityLabel: string;
   patientId: string;
   labsSessionId?: string;
+  /** Original scan image data URL (downscaled JPEG ≤512px) for display in Oracle chat */
+  sourceImageDataUrl?: string;
 };
 
 const MAX_STORE_CHARS = 4_000_000;
@@ -306,6 +312,23 @@ export function formatAIInterpretationReportForOracle(
 
 export function consumeOracleLabsHandoff(): OracleLabsHandoffPayload | null {
   if (typeof window === "undefined") return null;
+
+  // Primary: localStorage with handoff ID (cross-tab delivery, works with noopener).
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const handoffId = params.get(ORACLE_LABS_HANDOFF_ID_QUERY);
+    if (handoffId) {
+      const key = `${ORACLE_LABS_HANDOFF_LS_PREFIX}${handoffId}`;
+      const raw = localStorage.getItem(key);
+      if (raw) {
+        try { localStorage.removeItem(key); } catch { /* ignore */ }
+        const o = JSON.parse(raw) as OracleLabsHandoffPayload;
+        if (o?.reportMarkdown && typeof o.reportMarkdown === "string") return o;
+      }
+    }
+  } catch { /* ignore */ }
+
+  // Fallback: sessionStorage (same-tab or non-noopener delivery).
   const raw = sessionStorage.getItem(ORACLE_LABS_HANDOFF_STORAGE_KEY);
   if (!raw) return null;
   sessionStorage.removeItem(ORACLE_LABS_HANDOFF_STORAGE_KEY);
