@@ -131,7 +131,7 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
       <LangProvider>
         <ToastProvider>
           <ProductAccessProvider>
-            <div className="analyse-app-shell relative min-h-dvh overflow-x-hidden">
+            <div className="analyse-app-shell relative min-h-dvh [overflow-x:clip]">
               <ErrorBoundary>{children}</ErrorBoundary>
               <ToastContainer />
             </div>
@@ -145,7 +145,7 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
     return (
       <LangProvider>
         <ToastProvider>
-          <div className="relative min-h-dvh bg-[#020610] overflow-x-hidden">
+          <div className="relative min-h-dvh bg-[#020610] [overflow-x:clip]">
             <CosmicBackground />
             {/* Welcome is outside (auth) layout — same PWA nudge as sign-in */}
             {pathname === "/welcome" && <MobilePwaInstallBanner />}
@@ -163,7 +163,7 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
     <LangProvider>
       <ToastProvider>
       <ProductAccessProvider>
-      <div className="relative min-h-dvh bg-[#020610] overflow-x-hidden manthana-main-shell">
+      <div className="relative min-h-dvh bg-[#020610] [overflow-x:clip] manthana-main-shell">
       <MobilePwaInstallBanner />
       {/* Cosmic background canvas */}
       <CosmicBackground />

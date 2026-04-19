@@ -691,20 +691,10 @@ export default function OraclePage() {
     setSearchPage(1);
   };
 
-  /** Mobile transcript layout: constrain column height so flex-1 + overflow-y scrolls here (not the whole page). */
-  const oracleMobileConstrainedChat = hasMessages && mode !== "search";
-
   return (
-    <div
-      className={`flex flex-col min-h-screen ${
-        oracleMobileConstrainedChat
-          ? /* ~2.75rem mobile top strip + ~3.5rem bottom nav reserve (matches main padding) */
-            "max-md:h-[calc(100dvh-6.5rem)] max-md:min-h-0 max-md:max-h-[calc(100dvh-6.5rem)]"
-          : ""
-      }`}
-    >
+    <div className="flex flex-col min-h-screen">
       {/* Domain Pills only (Oracle domains) */}
-      <div className="shrink-0 px-4 py-3">
+      <div className="px-4 py-3">
         <DomainPills activeDomain={activeDomain} onSelect={handleDomainChange} />
       </div>
 
@@ -848,7 +838,7 @@ export default function OraclePage() {
       {/* ── ACTIVE CHAT STATE ── */}
       {hasMessages && mode !== "search" && (
         <div
-          className={`flex-1 min-h-0 overflow-y-auto overscroll-contain pb-4 max-md:pb-3 md:pb-32 transition-all duration-700 max-md:-webkit-overflow-scrolling-touch ${
+          className={`flex-1 overflow-y-auto pb-32 transition-all duration-700 ${
             mode === "deep-research"
               ? "ring-1 ring-purple-500/10 bg-purple-950/[0.03]"
               : ""
@@ -872,8 +862,8 @@ export default function OraclePage() {
         </div>
       )}
 
-      {/* ── INPUT BAR: mobile = flex footer (always in view); md+ = sticky above desktop chrome ── */}
-      <div className="shrink-0 max-md:relative max-md:z-30 max-md:py-3 md:sticky md:bottom-8 md:z-20 md:py-4">
+      {/* ── INPUT BAR (sticky) ── */}
+      <div className="sticky bottom-16 md:bottom-8 py-4 z-20">
         {pendingBanner && (
           <InlineTriggerBanner
             icon={pendingBanner.type === "drug" ? "💊" : "🌿"}
