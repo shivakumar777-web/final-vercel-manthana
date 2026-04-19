@@ -8,7 +8,7 @@ import type {
   InterrogatorQuestion,
 } from "@/lib/analyse/types";
 import {
-  detectModalityOrchestration,
+  detectAndInterrogateOrchestration,
   interpretOrchestration,
   interrogateOrchestration,
 } from "@/lib/analyse/api";
@@ -76,33 +76,42 @@ export function useAIOrchestration(subscriptionTier?: string) {
       let mk = opts.modalityKey;
       const mime = opts.imageMime || opts.file.type || "image/jpeg";
       const b64 = await fileToBase64(opts.file);
-      /** Which /ai/* step was running when a timeout occurred (for clearer copy). */
+      /** Which /ai/* step was running when a timeout occurred (for clearer error copy). */
       let orchTimeoutPhase: "detect" | "interrogate" = "interrogate";
 
       try {
         if (mk === "auto") {
+          // ── COMBINED single-pass: Kimi K2.5 Thinking detects modality + generates questions
+          //    in ONE call → no NIM, no round-trip, no multimodal rejection.
           orchTimeoutPhase = "detect";
           setStage("detecting");
-          const det = await detectModalityOrchestration(
+          const combined = await detectAndInterrogateOrchestration(
             { image_b64: b64, image_mime: mime },
             { subscriptionTier, signal: opts.signal }
           );
-          if (!det.modality_key || det.modality_key === "unknown") {
-            throw new Error(det.reason || "Could not detect modality");
+          if (!combined.modality_key || combined.modality_key === "unknown") {
+            throw new Error(combined.detection_reason || "Could not detect modality. Select it manually and retry.");
           }
-          mk = det.modality_key;
+          mk = combined.modality_key;
           setDetectedModality(mk);
           setResolvedModalityKey(mk);
+          // confidence from backend is 0.0–1.0; store as 0–100 integer for display
           setDetectedConfidence(
-            typeof det.confidence === "number" && !Number.isNaN(det.confidence)
-              ? Math.round(det.confidence)
+            typeof combined.confidence === "number" && !Number.isNaN(combined.confidence)
+              ? Math.round(combined.confidence * 100)
               : null
           );
-        } else {
-          setDetectedModality(mk);
-          setResolvedModalityKey(mk);
-          setDetectedConfidence(null);
+          setInterrogatorMeta(combined as unknown as InterrogateResult);
+          setQuestions(combined.questions || []);
+          setSessionId(combined.session_id);
+          setStage("answering_questions");
+          return { ok: true };
         }
+
+        // ── Manual modality selection: interrogate only (no detect step needed)
+        setDetectedModality(mk);
+        setResolvedModalityKey(mk);
+        setDetectedConfidence(null);
 
         orchTimeoutPhase = "interrogate";
         setStage("interrogating");
@@ -125,8 +134,8 @@ export function useAIOrchestration(subscriptionTier?: string) {
           if (e.name === "TimeoutError") {
             msg =
               orchTimeoutPhase === "detect"
-                ? "Modality detection timed out. Confirm NEXT_PUBLIC_GATEWAY_URL points at the Manthana gateway (with /ai/detect-modality), then retry — or pick a modality manually instead of Auto-Detect."
-                : "Clinical questions step timed out (/ai/interrogate). Check the gateway and OpenRouter keys, then retry.";
+                ? "Detection timed out. Check NEXT_PUBLIC_GATEWAY_URL points at the Manthana gateway, then retry — or pick a modality manually."
+                : "Clinical questions step timed out (/ai/interrogate). Check gateway and OpenRouter keys, then retry.";
           } else if (e.name === "AbortError") {
             msg = "Modality pipeline was cancelled.";
           }

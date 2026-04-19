@@ -558,6 +558,59 @@ function orchestrationFetchSignal(
   return ctrl.signal;
 }
 
+/** Result returned by /ai/detect-and-interrogate (combined Stage 1+2). */
+export type DetectAndInterrogateResult = {
+  session_id: string;
+  modality_key: string;
+  group: string;
+  display_name: string;
+  confidence: number;          // 0.0–1.0
+  low_confidence: boolean;     // true when confidence < 0.50
+  scan_type?: string;
+  laterality?: string;
+  view?: string;
+  image_quality?: string;
+  urgency_flag?: string;
+  detection_reason?: string;
+  questions: import("./types").InterrogatorQuestion[];
+  model_used?: string;
+};
+
+/**
+ * Single-pass detect+interrogate: Kimi K2.5 Thinking (vision) detects the modality
+ * AND generates clinical questions in ONE LLM call. Returns session_id ready for /ai/interpret.
+ */
+export async function detectAndInterrogateOrchestration(
+  payload: {
+    image_b64?: string | null;
+    image_mime?: string;
+    patient_context_json?: string | null;
+    text_context?: string | null;
+  },
+  options?: { subscriptionTier?: string; signal?: AbortSignal }
+): Promise<DetectAndInterrogateResult> {
+  const res = await fetch(`${GATEWAY_URL}/ai/detect-and-interrogate`, {
+    method: "POST",
+    headers: orchHeaders(options?.subscriptionTier),
+    body: JSON.stringify({
+      image_b64: payload.image_b64 ?? null,
+      image_mime: payload.image_mime ?? "image/jpeg",
+      patient_context_json: payload.patient_context_json ?? null,
+      text_context: payload.text_context ?? null,
+    }),
+    // Use interrogate timeout — this call does both detect + question generation
+    signal: orchestrationFetchSignal(options?.signal, ORCH_INTERROGATE_TIMEOUT_MS),
+  });
+  if (res.status === 401) {
+    throw new Error("Authentication required. Please log in.");
+  }
+  if (!res.ok) {
+    const err = await readGatewayError(res);
+    throw new Error(`detect-and-interrogate failed (${res.status}): ${err}`);
+  }
+  return res.json() as Promise<DetectAndInterrogateResult>;
+}
+
 export async function detectModalityOrchestration(
   payload: {
     image_b64?: string | null;
